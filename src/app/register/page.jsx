@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import Logo from "../components/Logo";
 
 export default function RegisterPage() {
   const [password, setPassword] = useState("");
@@ -43,10 +44,9 @@ export default function RegisterPage() {
         </div>
 
         <div className="w-1/2 p-8 flex flex-col justify-center">
-          <h1 className="text-5xl font-extrabold mb-8 text-center">
-            T<span className="text-[#EDCF5D]">K</span>L
-            <span className="text-[#EDCF5D]">K</span>
-          </h1>
+          <div className="mb-8 text-center">
+            <Logo />
+          </div>
           <h1 className="text-3xl font-bold text-left">
             Bergabung bersama kami
           </h1>

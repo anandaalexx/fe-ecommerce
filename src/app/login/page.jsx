@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import Logo from "../components/Logo";
 
 export default function LoginPage() {
   const [password, setPassword] = useState("");
@@ -24,10 +25,9 @@ export default function LoginPage() {
       <div className="bg-white shadow-lg rounded-lg flex overflow-hidden max-w-4xl w-full h-[600px]">
         {/* Sisi Kiri - Form Login */}
         <div className="w-1/2 p-8 flex flex-col justify-center">
-          <h1 className="text-5xl font-extrabold mb-8 text-center">
-            T<span className="text-[#EDCF5D]">K</span>L
-            <span className="text-[#EDCF5D]">K</span>
-          </h1>
+          <div className="mb-8 text-center">
+            <Logo />
+          </div>
           <h1 className="text-3xl font-bold text-left">Masuk ke akun anda</h1>
           <p className="text-gray-500 mt-2 text-left font-light">
             Belum punya akun?{" "}

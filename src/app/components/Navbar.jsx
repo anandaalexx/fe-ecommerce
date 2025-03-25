@@ -6,6 +6,8 @@ import {
   Wallet,
 } from "lucide-react";
 
+import Logo from "./Logo.jsx";
+
 export default function Navbar() {
   return (
     <nav className="w-full border-b border-gray-300">
@@ -22,10 +24,7 @@ export default function Navbar() {
       {/* Navbar Tengah */}
       <div className="flex items-center justify-between py-4 px-6">
         {/* Logo */}
-        <h1 className="text-5xl font-extrabold">
-          T<span className="text-[#EDCF5D]">K</span>L
-          <span className="text-[#EDCF5D]">K</span>
-        </h1>
+        <Logo />
 
         {/* Search Bar */}
         <div className="relative flex-1 mx-8 max-w-lg">
