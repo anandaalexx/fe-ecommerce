@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, User, Mail, LockKeyhole } from "lucide-react";
 import Logo from "../components/Logo";
+import Button from "../components/Button";
 
 export default function RegisterPage() {
   const [password, setPassword] = useState("");
@@ -52,7 +53,10 @@ export default function RegisterPage() {
           </h1>
           <p className="text-gray-500 mt-2 text-left font-light">
             Sudah punya akun?{" "}
-            <a href="#" className="text-[#EDCF5D] font-light hover:underline">
+            <a
+              href="/login"
+              className="text-[#EDCF5D] font-light hover:underline"
+            >
               Masuk!
             </a>
           </p>
@@ -60,28 +64,43 @@ export default function RegisterPage() {
           <form className="mt-6">
             <div>
               <label className="block text-sm font-medium">Username</label>
-              <input
-                type="text"
-                className="w-full border border-gray-300 rounded-md p-2 mt-1"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
+                  <User size={18} />
+                </span>
+                <input
+                  type="text"
+                  className="w-full border border-gray-300 rounded-md p-2 pl-10"
+                />
+              </div>
             </div>
             <div className="mt-4">
               <label className="block text-sm font-medium">Email</label>
-              <input
-                type="email"
-                className="w-full border border-gray-300 rounded-md p-2 mt-1"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
+                  <Mail size={18} />
+                </span>
+                <input
+                  type="email"
+                  className="w-full border border-gray-300 rounded-md p-2 pl-10"
+                />
+              </div>
             </div>
             <div className="mt-4 relative">
               <label className="block text-sm font-medium">Password</label>
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                value={password}
-                onChange={handlePasswordChange}
-                autoComplete="new-password"
-                className="w-full border border-gray-300 rounded-md p-2 mt-1 pr-10"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
+                  <LockKeyhole size={18} />
+                </span>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  autoComplete="new-password"
+                  className="w-full border border-gray-300 rounded-md p-2 px-10"
+                />
+              </div>
               {password.length > 0 && (
                 <span
                   className="absolute right-3 top-[70%] transform -translate-y-1/2 cursor-pointer text-black hover:text-gray-900"
@@ -95,14 +114,19 @@ export default function RegisterPage() {
               <label className="block text-sm font-medium">
                 Konfirmasi Password
               </label>
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={handleConfirmPasswordChange}
-                autoComplete="new-password"
-                className="w-full border border-gray-300 rounded-md p-2 mt-1 pr-10"
-              />
+              <div className="relative">
+                <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
+                  <LockKeyhole size={18} />
+                </span>
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  value={confirmPassword}
+                  onChange={handleConfirmPasswordChange}
+                  autoComplete="new-password"
+                  className="w-full border border-gray-300 rounded-md p-2 px-10"
+                />
+              </div>
               {confirmPassword.length > 0 && (
                 <span
                   className="absolute right-3 top-[70%] transform -translate-y-1/2 cursor-pointer text-black hover:text-gray-900"
@@ -117,9 +141,7 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <button className="w-full bg-[#EDCF5D] drop-shadow-lg text-white py-2 rounded-md mt-6 hover:bg-[rgba(237,207,93,0.8)] cursor-pointer">
-              Daftar
-            </button>
+            <Button>Daftar</Button>
           </form>
         </div>
       </div>
