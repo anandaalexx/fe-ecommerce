@@ -3,11 +3,13 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 
-const banners = ["/banner1.jpg", "/banner2.jpg", "/banner3.jpg"];
+const banners = ["/banner1.jpg", "/banner2.jpg", "/banner3.jpg"]; // Ganti dengan path gambar banner
 
 export default function BannerSection() {
   return (
-    <div className="bg-gray-100 min-h-screen py-6">
+    <div className="bg-gray-100 min-h-[350px] py-6">
+      {" "}
+      {/* Pastikan tinggi cukup untuk banner */}
       <div className="max-w-7xl mx-auto px-6 py-4">
         <Swiper
           spaceBetween={20}
@@ -22,7 +24,7 @@ export default function BannerSection() {
         >
           {banners.map((src, i) => (
             <SwiperSlide key={i}>
-              <div className="flex items-center justify-center rounded-xl overflow-hidden shadow-md h-[300px]">
+              <div className="flex items-center justify-center rounded-xl overflow-hidden shadow-md h-[350px]">
                 <img
                   src={src}
                   alt={`Slide ${i + 1}`}
