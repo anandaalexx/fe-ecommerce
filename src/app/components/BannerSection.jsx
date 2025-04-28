@@ -1,7 +1,8 @@
 "use client";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
+import "swiper/css/pagination";
 
 const banners = ["/banner1.jpg", "/banner2.jpg", "/banner3.jpg"]; // Ganti dengan path gambar banner
 
@@ -20,7 +21,8 @@ export default function BannerSection() {
             disableOnInteraction: false,
             pauseOnMouseEnter: true,
           }}
-          modules={[Autoplay]}
+          pagination={{ clickable: true }}
+          modules={[Autoplay, Pagination]}
         >
           {banners.map((src, i) => (
             <SwiperSlide key={i}>
@@ -35,6 +37,15 @@ export default function BannerSection() {
           ))}
         </Swiper>
       </div>
+      <style jsx global>{`
+        .swiper-pagination-bullet {
+          background: #d1d5db;
+          opacity: 1;
+        }
+        .swiper-pagination-bullet-active {
+          background: #edcf5d;
+        }
+      `}</style>
     </div>
   );
 }
