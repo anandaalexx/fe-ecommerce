@@ -8,7 +8,7 @@ const banners = ["/banner1.jpg", "/banner2.jpg", "/banner3.jpg"]; // Ganti denga
 
 export default function BannerSection() {
   return (
-    <div className="bg-gray-100 min-h-[350px] py-6">
+    <div className="min-h-[350px] py-6">
       {" "}
       {/* Pastikan tinggi cukup untuk banner */}
       <div className="max-w-7xl mx-auto px-6 py-4">

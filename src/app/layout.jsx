@@ -1,8 +1,8 @@
-import { Roboto } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
-const roboto = Roboto({
-  variable: "--font-roboto",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
   weight: ["100", "300", "400", "500", "700", "800"],
 });
@@ -15,7 +15,7 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${roboto.variable} antialiased`}>{children}</body>
+      <body className={`${outfit.variable} antialiased`}>{children}</body>
     </html>
   );
 }

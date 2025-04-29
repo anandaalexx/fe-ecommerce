@@ -5,6 +5,7 @@ import TabsDetail from "../components/TabDetail";
 import ReviewList from "../components/ReviewList";
 import RatingSummary from "../components/RatingSummary";
 import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 const ProductDetailPage = ({ params }) => {
   const dummyProduct = {
@@ -71,6 +72,7 @@ const ProductDetailPage = ({ params }) => {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 };
