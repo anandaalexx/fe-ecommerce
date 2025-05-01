@@ -2,6 +2,11 @@
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { useState } from "react";
+import AdminDashboard from "./admin/Dashboard";
+import KelolaPengguna from "./admin/Pengguna";
+import KelolaBarang from "./admin/Barang";
+import KelolaKurir from "./admin/Kurir";
+import TambahProduk from "./pengguna/TambahProduk";
 
 const DashboardLayout = ({ role, username }) => {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -10,13 +15,13 @@ const DashboardLayout = ({ role, username }) => {
     if (role === "admin") {
       switch (activePage) {
         case "Dashboard":
-          return <p>Ini adalah dashboard admin.</p>;
+          return <AdminDashboard />;
         case "Kelola Pengguna":
-          return <p>Admin dapat mengelola pengguna di sini.</p>;
+          return <KelolaPengguna />;
         case "Kelola Kurir":
-          return <p>Admin dapat mengelola data kurir di sini.</p>;
+          return <KelolaKurir />;
         case "Kelola Barang":
-          return <p>Admin dapat mengelola barang di sini.</p>;
+          return <KelolaBarang />;
         case "Kategori":
           return <p>Admin dapat mengelola kategori barang.</p>;
         default:
@@ -24,11 +29,11 @@ const DashboardLayout = ({ role, username }) => {
       }
     } else if (role === "seller") {
       switch (activePage) {
-        case "Add Product":
+        case "Dashboard":
           return <p>Form untuk menambah produk baru.</p>;
-        case "Product List":
-          return <p>Daftar produk milik penjual.</p>;
-        case "Orders":
+        case "Tambah Produk":
+          return <TambahProduk />;
+        case "List Produk":
           return <p>Daftar pesanan yang masuk.</p>;
         default:
           return <p>Halaman tidak ditemukan.</p>;

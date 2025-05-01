@@ -19,9 +19,9 @@ const menuByRole = {
     { label: "Kategori", icon: <List size={20} /> },
   ],
   seller: [
-    { label: "Add Product", icon: <PlusCircle size={20} /> },
-    { label: "Product List", icon: <List size={20} /> },
-    { label: "Orders", icon: <CheckSquare size={20} /> },
+    { label: "Dashboard", icon: <House size={20} /> },
+    { label: "Tambah Produk", icon: <PlusCircle size={20} /> },
+    { label: "List Produk", icon: <List size={20} /> },
   ],
   courier: [
     { label: "Dashboard", icon: <PlusCircle size={20} /> },
