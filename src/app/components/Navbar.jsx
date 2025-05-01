@@ -60,7 +60,7 @@ export default function Navbar() {
       {/* Navbar Bawah */}
       <div className="flex justify-between items-center py-3 border-t border-gray-300 text-sm">
         {/* Menu di Tengah */}
-        <div className="flex font-medium justify-left gap-6 flex-1 px-6">
+        <div className="flex font-medium text-md justify-left gap-6 flex-1 px-6">
           {[...Array(6)].map((_, i) => (
             <span
               key={i}
@@ -72,7 +72,7 @@ export default function Navbar() {
         </div>
 
         {/* Saldo Elektronik */}
-        <div className="px-6 font-bold flex items-center gap-2 text-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+        <div className="px-6 font-semibold flex items-center gap-2 text-lg cursor-pointer">
           <Wallet size={20} />
           <span>Rp 150.000</span>
         </div>

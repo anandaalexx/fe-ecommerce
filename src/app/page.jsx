@@ -10,7 +10,8 @@ const dummyProducts = [
     id: 1,
     image: "iPhone16.png",
     name: "Produk 1",
-    description: "Brand A",
+    description:
+      "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
     price: 20000000,
   },
   {
@@ -112,7 +113,7 @@ export default function Home() {
       <Navbar />
       <Banner />
       <div className="max-w-7xl mx-auto px-6 py-6">
-        <h2 className="text-2xl font-bold mb-6">Produk Unggulan</h2>
+        <h2 className="text-2xl font-semibold mb-6">Produk Unggulan</h2>
         <ProductList products={dummyProducts} />
       </div>
       <Footer />
