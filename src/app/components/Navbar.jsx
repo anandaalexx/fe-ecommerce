@@ -15,7 +15,7 @@ export default function Navbar() {
   return (
     <nav className="w-full border-b border-gray-300">
       {/* Navbar Atas */}
-      <div className="text-center text-sm py-2 px-4 font-semibold border-b border-gray-300">
+      <div className="text-center text-sm py-2 px-4 font-medium border-b border-gray-300">
         <p>
           Bergabung bersama kami |{" "}
           <a

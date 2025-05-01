@@ -1,25 +1,40 @@
 "use client";
+import { Heart } from "lucide-react";
 import React from "react";
 
-const ProductCard = ({ product }) => {
+const CardProduk = ({ product }) => {
   return (
-    <div className="w-40 bg-white shadow-md rounded-md overflow-hidden hover:scale-105 hover:ring-2 hover:ring-[#EDCF5D] transition-transform duration-300 cursor-pointer">
-      <img
-        src={product.image}
-        alt={product.name}
-        className="w-full h-36 object-contain p-2"
-      />
-      <div className="p-2">
-        <p className="text-gray-600 text-sm">{product.brand}</p>
-        <h3 className="text-gray-800 text-base font-semibold mt-1 truncate">
-          {product.name}
-        </h3>
-        <p className="text-[#EDCF5D] font-bold mt-1 text-md">
+    <div className="w-full flex flex-col items-start gap-2 cursor-pointer group">
+      {/* Gambar Produk dengan Icon */}
+      <div className="w-full h-52 bg-gray-500/10 rounded-xl relative p-4">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="w-full h-40 object-contain transition-transform group-hover:scale-110"
+        />
+      </div>
+
+      {/* Nama Produk */}
+      <h3 className="text-gray-900 font-medium text-lg leading-tight truncate w-full">
+        {product.name}
+      </h3>
+
+      {/* Deskripsi Singkat */}
+      <p className="text-gray-500/70 text-sm leading-tight truncate w-full">
+        {product.description}
+      </p>
+
+      {/* Harga & Tombol */}
+      <div className="flex justify-between items-center w-full mt-1">
+        <span className="text-md font-medium text-gray-900">
           Rp {product.price.toLocaleString("id-ID")}
-        </p>
+        </span>
+        <button className="px-3 py-1 text-sm border border-gray-500/20 rounded-full text-gray-500 hover:bg-slate-50 transition cursor cursor-pointer">
+          Beli
+        </button>
       </div>
     </div>
   );
 };
 
-export default ProductCard;
+export default CardProduk;

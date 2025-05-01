@@ -2,6 +2,7 @@
 import React from "react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
+import Footer from "../components/Footer";
 import { MapPin } from "lucide-react"; // Import icon MapPin
 
 // Data dummy
@@ -107,6 +108,7 @@ export default function CheckoutPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </>
   );
 }
