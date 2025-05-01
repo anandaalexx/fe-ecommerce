@@ -1,3 +1,5 @@
+"use client";
+import { useRouter } from "next/navigation";
 import {
   Search,
   ShoppingCart,
@@ -5,10 +7,11 @@ import {
   CircleUserRound,
   Wallet,
 } from "lucide-react";
-
+import Link from "next/link";
 import Logo from "./Logo.jsx";
 
 export default function Navbar() {
+  const router = useRouter();
   return (
     <nav className="w-full border-b border-gray-300">
       {/* Navbar Atas */}
@@ -42,13 +45,18 @@ export default function Navbar() {
         {/* Ikon dan Profil */}
         <div className="flex items-center gap-6">
           {[
-            { icon: <Store size={24} />, label: "Toko Anda" },
+            // { icon: <Store size={24} />, label: "Toko Anda" },
             { icon: <ShoppingCart size={24} />, label: "Keranjang" },
-            { icon: <CircleUserRound size={24} />, label: "Akun" },
+            { icon: <CircleUserRound size={24} />, label: "Akun", path: "/profile" },
           ].map((item, i) => (
             <div
               key={i}
               className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D] hover:-translate-y-1 hover:scale-105"
+              onClick={() => {
+                if (item.path) {
+                  router.push(item.path);
+                }
+              }}
             >
               {item.icon}
               <span className="mt-1">{item.label}</span>
