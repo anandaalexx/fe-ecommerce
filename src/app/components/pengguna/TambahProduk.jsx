@@ -87,8 +87,11 @@ const AddProduct = () => {
               </>
             ) : (
               <>
-                <CloudUpload className="absolute text-gray-500" size={24} />
-                <label className="text-gray-500 absolute text-xs top-10">
+                <CloudUpload
+                  className="absolute bottom-11 text-gray-500"
+                  size={24}
+                />
+                <label className="text-gray-500 absolute text-xs top-13">
                   Upload Gambar
                 </label>
               </>
