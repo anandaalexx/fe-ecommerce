@@ -48,7 +48,7 @@ export default function Navbar() {
           ].map((item, i) => (
             <div
               key={i}
-              className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D] hover:-translate-y-1 hover:scale-105"
+              className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
             >
               {item.icon}
               <span className="mt-1">{item.label}</span>
