@@ -30,12 +30,10 @@ const menuByRole = {
   ],
 };
 
-const Sidebar = ({ role = "seller", onMenuSelect }) => {
+const Sidebar = ({ role = "seller", activePage, onMenuSelect }) => {
   const menu = menuByRole[role] || [];
-  const [activeIndex, setActiveIndex] = useState(0);
 
-  const handleClick = (i, label) => {
-    setActiveIndex(i);
+  const handleClick = (label) => {
     if (onMenuSelect) onMenuSelect(label);
   };
 
@@ -45,9 +43,9 @@ const Sidebar = ({ role = "seller", onMenuSelect }) => {
         {menu.map((item, i) => (
           <div
             key={i}
-            onClick={() => handleClick(i, item.label)}
+            onClick={() => handleClick(item.label)}
             className={`flex items-center gap-3 px-4 py-3 cursor-pointer ${
-              i === activeIndex
+              activePage === item.label
                 ? "bg-[#f0e6c0] border-r-5 border-[#EDCF5D] text-[#0f172a] font-medium"
                 : "text-[#0f172a] hover:bg-[#f0e6c0]"
             }`}

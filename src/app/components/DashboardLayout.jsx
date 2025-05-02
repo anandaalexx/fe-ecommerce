@@ -15,7 +15,7 @@ const DashboardLayout = ({ role, username }) => {
     if (role === "admin") {
       switch (activePage) {
         case "Dashboard":
-          return <AdminDashboard />;
+          return <AdminDashboard onNavigate={setActivePage} />;
         case "Kelola Pengguna":
           return <KelolaPengguna />;
         case "Kelola Kurir":
@@ -55,7 +55,11 @@ const DashboardLayout = ({ role, username }) => {
   return (
     <div>
       <Header username={username} onLogout={() => alert("Logout")} />
-      <Sidebar role={role} onMenuSelect={setActivePage} />
+      <Sidebar
+        role={role}
+        activePage={activePage}
+        onMenuSelect={setActivePage}
+      />
       <main className="ml-64 pt-24 px-6">
         <h1 className="text-2xl font-bold mb-4">{activePage}</h1>
         {renderContent()}
