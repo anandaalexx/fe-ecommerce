@@ -7,6 +7,10 @@ import KelolaPengguna from "./admin/Pengguna";
 import KelolaBarang from "./admin/Barang";
 import KelolaKurir from "./admin/Kurir";
 import TambahProduk from "./pengguna/TambahProduk";
+import Kategori from "./admin/Kategori";
+import KurirDashboard from "./kurir/Dashboard";
+import Pengiriman from "./kurir/Pengiriman";
+import HarusDiantar from "./kurir/HarusDiantar";
 
 const DashboardLayout = ({ role, username }) => {
   const [activePage, setActivePage] = useState("Dashboard");
@@ -23,7 +27,7 @@ const DashboardLayout = ({ role, username }) => {
         case "Kelola Barang":
           return <KelolaBarang />;
         case "Kategori":
-          return <p>Admin dapat mengelola kategori barang.</p>;
+          return <Kategori />;
         default:
           return <p>Halaman tidak ditemukan.</p>;
       }
@@ -41,11 +45,11 @@ const DashboardLayout = ({ role, username }) => {
     } else if (role === "courier") {
       switch (activePage) {
         case "Dashboard":
-          return <p>Dashboard kurir hari ini.</p>;
-        case "Pengiriman Hari Ini":
-          return <p>Daftar pengiriman hari ini.</p>;
-        case "Riwayat":
-          return <p>Riwayat pengiriman oleh kurir.</p>;
+          return <KurirDashboard />;
+        case "Pengiriman":
+          return <Pengiriman />;
+        case "Harus Diantar":
+          return <HarusDiantar />;
         default:
           return <p>Halaman tidak ditemukan.</p>;
       }

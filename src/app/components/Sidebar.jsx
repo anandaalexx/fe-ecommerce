@@ -8,7 +8,8 @@ import {
   List,
   Package,
   CheckSquare,
-} from "lucide-react"; // contoh icon dari lucide-react
+  Send,
+} from "lucide-react";
 
 const menuByRole = {
   admin: [
@@ -24,9 +25,9 @@ const menuByRole = {
     { label: "List Produk", icon: <List size={20} /> },
   ],
   courier: [
-    { label: "Dashboard", icon: <PlusCircle size={20} /> },
-    { label: "Pengiriman Hari Ini", icon: <List size={20} /> },
-    { label: "Riwayat", icon: <CheckSquare size={20} /> },
+    { label: "Dashboard", icon: <House size={20} /> },
+    { label: "Pengiriman", icon: <Send size={20} /> },
+    { label: "Harus Diantar", icon: <Truck size={20} /> },
   ],
 };
 

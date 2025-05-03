@@ -1,16 +1,25 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis } from "lucide-react";
+import ModalKonfirmasi from "./modals/Konfirmasi";
 
 const users = [
   { id: 1, nama: "Ayu", email: "ayu@mail.com", role: "Seller" },
   { id: 2, nama: "Budi", email: "budi@mail.com", role: "Kurir" },
 ];
 
-const TablePengguna = () => {
+const TablePengguna = ({ onEdit }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  const handleDeleteClick = (user) => {
+    setUserToDelete(user);
+    setIsConfirmOpen(true);
+    setOpenDropdownId(null);
+  };
 
   const handleEllipsisClick = (e, userId) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -33,9 +42,13 @@ const TablePengguna = () => {
     };
   }, []);
 
+  const handleConfirmDelete = () => {
+    console.log("Menghapus user:", userToDelete);
+  };
+
   return (
     <>
-      <div className="overflow-x-auto border border-gray-200 rounded-xl shadow-sm relative z-0">
+      <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
@@ -74,14 +87,34 @@ const TablePengguna = () => {
             left: dropdownPos.left,
           }}
         >
-          <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer">
+          <button
+            onClick={() => {
+              const user = users.find((u) => u.id === openDropdownId);
+              if (user) onEdit(user);
+              setOpenDropdownId(null);
+            }}
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer"
+          >
             <FilePenLine size={16} /> Edit
           </button>
-          <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer">
+          <button
+            onClick={() => {
+              const user = users.find((u) => u.id === openDropdownId);
+              if (user) handleDeleteClick(user);
+            }}
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
+          >
             <Trash2 size={16} /> Hapus
           </button>
         </div>
       )}
+      <ModalKonfirmasi
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Konfirmasi Hapus"
+        message={`Apakah Anda yakin ingin menghapus pengguna "${userToDelete?.nama}"?`}
+      />
     </>
   );
 };

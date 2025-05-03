@@ -78,7 +78,7 @@ export default function CheckoutPage() {
                     &nbsp;|&nbsp; Size{" "}
                     <span className="font-medium">{order.size}</span>
                   </p>
-                  <p className="text-lg font-bold text-[#EDCF5D] mt-9">
+                  <p className="text-lg font-semibold mt-9">
                     Rp {order.price.toLocaleString("id-ID")}
                   </p>
                 </div>
