@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import TablePengguna from "./TablePengguna";
 import ModalTambahPengguna from "./modals/TambahPengguna";
@@ -8,10 +8,43 @@ const Pengguna = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [users, setUsers] = useState([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const fetchUsers = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/admin/users`);
+      const data = await res.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("Gagal mengambil data users:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const handleEditUser = (user) => {
     setSelectedUser(user);
     setIsEditModalOpen(true);
+  };
+
+  const handleEdit = async (updatedUser) => {
+    const res = await fetch(`${apiUrl}/admin/users/${updatedUser.id}`, {
+      method: "PUT",
+      body: JSON.stringify(updatedUser),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Gagal mengedit pengguna");
+      return;
+    }
+
+    await fetchUsers();
   };
 
   return (
@@ -27,19 +60,23 @@ const Pengguna = () => {
         </button>
       </div>
 
-      <TablePengguna onEdit={handleEditUser} />
+      <TablePengguna
+        users={users}
+        setUsers={setUsers}
+        onEdit={handleEditUser}
+      />
 
       <ModalTambahPengguna
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchUsers}
       />
+
       <ModalEditPengguna
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedUser}
-        onSubmit={(updatedUser) => {
-          console.log("User diedit:", updatedUser);
-        }}
+        onSubmit={handleEdit}
       />
     </div>
   );

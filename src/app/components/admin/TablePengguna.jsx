@@ -3,17 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis } from "lucide-react";
 import ModalKonfirmasi from "./modals/Konfirmasi";
 
-const users = [
-  { id: 1, nama: "Ayu", email: "ayu@mail.com", role: "Seller" },
-  { id: 2, nama: "Budi", email: "budi@mail.com", role: "Kurir" },
-];
-
-const TablePengguna = ({ onEdit }) => {
+const TablePengguna = ({ users, setUsers, onEdit }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleDeleteClick = (user) => {
     setUserToDelete(user);
@@ -42,8 +38,22 @@ const TablePengguna = ({ onEdit }) => {
     };
   }, []);
 
-  const handleConfirmDelete = () => {
-    console.log("Menghapus user:", userToDelete);
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/admin/users/${userToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus pengguna");
+
+      setUsers((prevUsers) =>
+        prevUsers.filter((u) => u.id !== userToDelete.id)
+      );
+      setIsConfirmOpen(false);
+      setUserToDelete(null);
+    } catch (err) {
+      console.error("Error saat menghapus user:", err);
+    }
   };
 
   return (
@@ -52,18 +62,24 @@ const TablePengguna = ({ onEdit }) => {
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
+              <th className="px-6 py-3 text-left">ID</th>
               <th className="px-6 py-3 text-left">Nama</th>
               <th className="px-6 py-3 text-left">Email</th>
+              <th className="px-6 py-3 text-left">Alamat</th>
               <th className="px-6 py-3 text-left">Role</th>
+              <th className="px-6 py-3 text-left">Saldo</th>
               <th className="px-6 py-3 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {users.map((user) => (
               <tr key={user.id}>
+                <td className="px-6 py-4">{user.id}</td>
                 <td className="px-6 py-4">{user.nama}</td>
                 <td className="px-6 py-4">{user.email}</td>
-                <td className="px-6 py-4">{user.role}</td>
+                <td className="px-6 py-4">{user.alamat}</td>
+                <td className="px-6 py-4 capitalize">{user.role}</td>
+                <td className="px-6 py-4">{user.saldo}</td>
                 <td className="px-6 py-4 text-center">
                   <button
                     onClick={(e) => handleEllipsisClick(e, user.id)}

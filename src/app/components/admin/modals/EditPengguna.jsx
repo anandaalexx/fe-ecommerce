@@ -5,26 +5,87 @@ import Button from "../../Button";
 
 const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
   const [form, setForm] = useState({
+    id: "",
     nama: "",
     email: "",
-    role: "Seller",
+    alamat: "",
+    saldo: 0,
+    roleId: 1,
   });
 
+  const [roles, setRoles] = useState([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  // Menyinkronkan data form dengan initialData ketika modal dibuka
   useEffect(() => {
     if (initialData) {
-      setForm(initialData);
+      setForm({
+        id: initialData.id || "",
+        nama: initialData.nama || "",
+        email: initialData.email || "",
+        alamat: initialData.alamat || "",
+        saldo: initialData.saldo || 0,
+        roleId: initialData.roleId || 1,
+      });
     }
   }, [initialData]);
 
+  useEffect(() => {
+    const fetchRoles = async () => {
+      if (!apiUrl) return;
+      try {
+        const res = await fetch(`${apiUrl}/admin/role`);
+        const data = await res.json();
+        setRoles(data);
+      } catch (err) {
+        console.error("Gagal mengambil role:", err);
+      }
+    };
+    fetchRoles();
+  }, [apiUrl]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
+    setForm((prev) => ({
+      ...prev,
+      [name]: name === "saldo" || name === "roleId" ? Number(value) : value,
+    }));
   };
 
-  const handleSubmit = (e) => {
+  // Menangani pengiriman form untuk mengupdate pengguna
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit(form);
-    onClose();
+    try {
+      const { id, nama, email, alamat, roleId, saldo } = form;
+      console.log("Mengirim data:", { id, nama, email, alamat, roleId, saldo });
+      // Membuat permintaan PUT untuk mengupdate pengguna
+      const res = await fetch(`${apiUrl}/admin/users/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama,
+          email,
+          alamat,
+          roleId,
+          saldo,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Gagal mengupdate pengguna");
+
+      // Mendapatkan respons pengguna yang telah diperbarui
+      const updatedUser = await res.json();
+      console.log(updatedUser);
+
+      // Panggil onSubmit jika perlu pembaruan di state induk
+      onSubmit(updatedUser);
+
+      onClose();
+    } catch (err) {
+      console.error("Error saat mengupdate user:", err);
+    }
   };
 
   return (
@@ -47,7 +108,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
           >
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black cursor-pointer"
+              className="absolute top-3 right-3 text-gray-600 hover:text-black"
             >
               <X size={20} />
             </button>
@@ -60,7 +121,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
                   name="nama"
                   value={form.nama}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
               <div>
@@ -70,23 +131,46 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
                   name="email"
                   value={form.email}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Alamat</label>
+                <input
+                  type="text"
+                  name="alamat"
+                  value={form.alamat}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
               <div>
                 <label className="block mb-1 text-sm font-medium">Role</label>
                 <select
-                  name="role"
-                  value={form.role}
+                  name="roleId"
+                  value={form.roleId}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D] capitalize"
                 >
-                  <option>Seller</option>
-                  <option>Kurir</option>
+                  {roles.map((role) => (
+                    <option key={role.id} value={role.id}>
+                      {role.namaRole}
+                    </option>
+                  ))}
                 </select>
               </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Saldo</label>
+                <input
+                  type="number"
+                  name="saldo"
+                  value={form.saldo}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
               <div className="text-right">
-                <Button>Simpan</Button>
+                <Button type="submit">Simpan</Button>
               </div>
             </form>
           </motion.div>

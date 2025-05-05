@@ -35,7 +35,7 @@ const TableBarang = () => {
 
   return (
     <>
-      <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
+      <div className="overflow-x-auto border border-gray-200 rounded-sm  shadow-sm relative z-0">
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
