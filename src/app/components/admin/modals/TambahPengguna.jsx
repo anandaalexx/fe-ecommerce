@@ -67,7 +67,7 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
       setPassword("");
       setAlamat("");
       setRoleId(1);
-      setSaldo(0);
+      setSaldo();
       onClose();
       onSuccess();
     } catch (err) {

@@ -1,10 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import TableKategori from "./TableKategori";
 import TambahKategori from "./modals/TambahKategori";
 
 const Kategori = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const fetchCategories = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/category/view`);
+      const data = await res.json();
+      setCategories(data);
+    } catch (err) {
+      console.error("Gagal mengambil data kategori:", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   return (
     <div className="p-6 space-y-6">
@@ -19,11 +35,12 @@ const Kategori = () => {
         </button>
       </div>
 
-      <TableKategori />
+      <TableKategori categories={categories} setCategories={setCategories} />
 
       <TambahKategori
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        onSuccess={fetchCategories}
       />
     </div>
   );

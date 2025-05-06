@@ -3,20 +3,16 @@ import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis } from "lucide-react";
 import ModalKonfirmasi from "./modals/Konfirmasi";
 
-const kategoris = [
-  { id: 1, nama: "Elektronik" },
-  { id: 2, nama: "Pakaian" },
-];
-
-const TableKategori = () => {
+const TableKategori = ({ categories, setCategories }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [kategoriToDelete, setkategoriToDelete] = useState(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const handleDeleteClick = (kategori) => {
-    setkategoriToDelete(kategori);
+  const handleDeleteClick = (category) => {
+    setkategoriToDelete(category);
     setIsConfirmOpen(true);
     setOpenDropdownId(null);
   };
@@ -42,8 +38,25 @@ const TableKategori = () => {
     };
   }, []);
 
-  const handleConfirmDelete = () => {
-    console.log("Menghapus kategori:", kategoriToDelete);
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await fetch(
+        `${apiUrl}/category/delete/${kategoriToDelete.id}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!res.ok) throw new Error("Gagal menghapus pengguna");
+
+      setUsers((prevCategories) =>
+        prevCategories.filter((u) => u.id !== kategoriToDelete.id)
+      );
+      setIsConfirmOpen(false);
+      setkategoriToDelete(null);
+    } catch (err) {
+      console.error("Error saat menghapus kategori:", err);
+    }
   };
 
   return (
@@ -52,17 +65,19 @@ const TableKategori = () => {
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
+              <th className="px-6 py-3 text-left">ID</th>
               <th className="px-6 py-3 text-left">Nama</th>
               <th className="px-6 py-3 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {kategoris.map((kategori) => (
-              <tr key={kategori.id}>
-                <td className="px-6 py-4">{kategori.nama}</td>
+            {categories.map((category) => (
+              <tr key={category.id}>
+                <td className="px-6 py-4">{category.id}</td>
+                <td className="px-6 py-4">{category.nama}</td>
                 <td className="px-6 py-4 text-center">
                   <button
-                    onClick={(e) => handleEllipsisClick(e, kategori.id)}
+                    onClick={(e) => handleEllipsisClick(e, category.id)}
                     className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
                   >
                     <Ellipsis size={20} />
@@ -85,8 +100,8 @@ const TableKategori = () => {
         >
           <button
             onClick={() => {
-              const kategori = kategoris.find((u) => u.id === openDropdownId);
-              if (kategori) handleDeleteClick(kategori);
+              const category = categories.find((u) => u.id === openDropdownId);
+              if (category) handleDeleteClick(category);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
           >
