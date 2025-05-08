@@ -3,17 +3,13 @@ import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis } from "lucide-react";
 import ModalKonfirmasi from "./modals/Konfirmasi";
 
-const kurirs = [
-  { id: 1, nama: "Ayu", email: "ayu@mail.com", role: "Seller" },
-  { id: 2, nama: "Budi", email: "budi@mail.com", role: "Kurir" },
-];
-
-const TableKurir = ({ onEdit }) => {
+const TableKurir = ({ kurirs, setKurirs, onEdit }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [kurirToDelete, setkurirToDelete] = useState(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleDeleteClick = (kurir) => {
     setkurirToDelete(kurir);
@@ -42,8 +38,22 @@ const TableKurir = ({ onEdit }) => {
     };
   }, []);
 
-  const handleConfirmDelete = () => {
-    console.log("Menghapus kurir:", kurirToDelete);
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/admin/couriers/${kurirToDelete.id}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) throw new Error("Gagal menghapus kurir");
+
+      setKurirs((prevKurir) =>
+        prevKurir.filter((k) => k.id !== kurirToDelete.id)
+      );
+      setIsConfirmOpen(false);
+      setkurirToDelete(null);
+    } catch (err) {
+      console.error("Error saat menghapus kurir:", err);
+    }
   };
 
   return (
@@ -52,18 +62,24 @@ const TableKurir = ({ onEdit }) => {
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left">Nama</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-left">Role</th>
+              <th className="px-6 py-3 text-left">ID</th>
+              <th className="px-6 py-3 text-left">Nama Kurir</th>
+              <th className="px-6 py-3 text-left">Nomor Telepon</th>
+              <th className="px-6 py-3 text-left">Nomor Polisi</th>
+              <th className="px-6 py-3 text-left">Kendaraan</th>
+              <th className="px-6 py-3 text-left">Warna Kendaraan</th>
               <th className="px-6 py-3 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
             {kurirs.map((kurir) => (
               <tr key={kurir.id}>
-                <td className="px-6 py-4">{kurir.nama}</td>
-                <td className="px-6 py-4">{kurir.email}</td>
-                <td className="px-6 py-4">{kurir.role}</td>
+                <td className="px-6 py-4">{kurir.id}</td>
+                <td className="px-6 py-4">{kurir.namaUser}</td>
+                <td className="px-6 py-4">{kurir.nomorTelepon}</td>
+                <td className="px-6 py-4">{kurir.nomorPolisi}</td>
+                <td className="px-6 py-4">{kurir.merkKendaraan}</td>
+                <td className="px-6 py-4">{kurir.warnaKendaraan}</td>
                 <td className="px-6 py-4 text-center">
                   <button
                     onClick={(e) => handleEllipsisClick(e, kurir.id)}
@@ -99,7 +115,7 @@ const TableKurir = ({ onEdit }) => {
           </button>
           <button
             onClick={() => {
-              const kurir = kurirs.find((u) => u.id === openDropdownId);
+              const kurir = kurirs.find((k) => k.id === openDropdownId);
               if (kurir) handleDeleteClick(kurir);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
@@ -113,7 +129,7 @@ const TableKurir = ({ onEdit }) => {
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Konfirmasi Hapus"
-        message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.nama}"?`}
+        message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.namaUser}"?`}
       />
     </>
   );

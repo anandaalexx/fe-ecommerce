@@ -7,7 +7,11 @@ const EditKurir = ({ isOpen, onClose, initialData, onSubmit }) => {
   const [form, setForm] = useState({
     nama: "",
     email: "",
-    role: "Seller",
+    password: "",
+    nomorTelepon: "",
+    nomorPolisi: "",
+    merkKendaraan: "",
+    warnaKendaraan: "",
   });
 
   useEffect(() => {
@@ -74,16 +78,64 @@ const EditKurir = ({ isOpen, onClose, initialData, onSubmit }) => {
                 />
               </div>
               <div>
-                <label className="block mb-1 text-sm font-medium">Role</label>
-                <select
-                  name="role"
-                  value={form.role}
+                <label className="block mb-1 text-sm font-medium">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={form.password}
                   onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
-                >
-                  <option>Seller</option>
-                  <option>Kurir</option>
-                </select>
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">
+                  Nomor Telepon
+                </label>
+                <input
+                  type="text"
+                  name="nomorTelepon"
+                  value={form.nomorTelepon}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">
+                  Nomor Polisi
+                </label>
+                <input
+                  type="text"
+                  name="nomorPolisi"
+                  value={form.nomorPolisi}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">
+                  Merk Kendaraan
+                </label>
+                <input
+                  type="text"
+                  name="merkKendaraan"
+                  value={form.merkKendaraan}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">
+                  Warna Kendaraan
+                </label>
+                <input
+                  type="text"
+                  name="warnaKendaraan"
+                  value={form.warnaKendaraan}
+                  onChange={handleChange}
+                  className="w-full border border-gray-300 rounded px-3 py-2 outline-none focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
               </div>
               <div className="text-right">
                 <Button>Simpan</Button>

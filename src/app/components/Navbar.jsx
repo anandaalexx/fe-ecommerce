@@ -10,7 +10,7 @@ import Logo from "./Logo.jsx";
 
 export default function Navbar() {
   return (
-    <nav className="fixed w-full border-b border-gray-300 bg-white">
+    <nav className="fixed w-full z-99 border-b border-gray-300 bg-white">
       {/* Navbar Atas */}
       <div className="text-center text-sm py-2 px-4 font-medium border-b border-gray-300">
         <p>
