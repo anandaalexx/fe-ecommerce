@@ -42,11 +42,26 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+      console.log(data);
 
       if (response.ok) {
-        router.push("/home");
-      } else {
-        alert(data.message);
+        const { user, token } = data;
+        localStorage.setItem("token", token);
+        localStorage.setItem("role", user.roleId);
+
+        // Arahkan berdasarkan role
+        switch (user.roleId) {
+          case 4:
+            router.push("/admin/dashboard");
+            break;
+          case 3:
+            router.push("/kurir/dashboard");
+            break;
+          case 1 && 2:
+          default:
+            router.push("/home");
+            break;
+        }
       }
     } catch (error) {
       console.error("Login error:", error);

@@ -51,7 +51,7 @@ const menuByRole = {
   courier: [
     {
       label: "Dashboard",
-      path: "/courier/dashboard",
+      path: "/kurir/dashboard",
       icon: <House size={20} />,
     },
     {

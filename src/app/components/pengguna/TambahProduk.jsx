@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { CloudUpload } from "lucide-react";
 import Button from "../Button";
+import { useRouter } from "next/navigation";
 
 const AddProduct = () => {
   const [images, setImages] = useState(Array(6).fill(null));
@@ -14,6 +15,7 @@ const AddProduct = () => {
   const [variantOptions, setVariantOptions] = useState([]);
   const [variantInput, setVariantInput] = useState("");
   const inputRefs = useRef([]);
+  const router = useRouter();
 
   const handleImageChange = (e, index) => {
     const files = e.target.files;
@@ -136,52 +138,17 @@ const AddProduct = () => {
       </div>
 
       {/* Varian */}
-      <div className="mb-4">
+      <div className="mb-6">
         <label className="block text-md font-medium text-gray-700 mb-2">
-          Nama Varian (contoh: Warna, Ukuran)
+          Varian Produk
         </label>
-        <input
-          type="text"
-          value={variantName}
-          onChange={(e) => setVariantName(e.target.value)}
-          className="w-full p-3 border border-gray-300 rounded-sm mb-2"
-          placeholder="Masukkan nama varian"
-        />
-
-        <div className="flex mb-2">
-          <input
-            type="text"
-            value={variantInput}
-            onChange={(e) => setVariantInput(e.target.value)}
-            className="flex-grow p-3 border border-gray-300 rounded-sm mr-2"
-            placeholder="Tambahkan jenis varian (contoh: Merah, XL)"
-          />
-          <button
-            type="button"
-            onClick={handleAddVariantOption}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-[#EDCF5D] active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] text-white font-medium rounded hover:brightness-110 transition duration-200 cursor-pointer"
-          >
-            Tambah
-          </button>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          {variantOptions.map((option, idx) => (
-            <span
-              key={idx}
-              className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full text-sm"
-            >
-              {option}
-              <button
-                onClick={() => handleRemoveVariantOption(idx)}
-                className="text-gray-700 hover:text-red-700 text-sm cursor-pointer"
-                type="button"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
+        <button
+          type="button"
+          onClick={() => router.push("/pengguna/tambah-produk/tambah-varian")}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#EDCF5D] active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] text-white font-medium rounded hover:brightness-110 transition duration-200 cursor-pointer"
+        >
+          Tambah Varian
+        </button>
       </div>
 
       {/* Kategori, Harga, dan Stok */}
