@@ -3,12 +3,18 @@ import { useState } from "react";
 import { Eye, EyeOff, User, Mail, LockKeyhole } from "lucide-react";
 import Logo from "../components/Logo";
 import Button from "../components/Button";
+import SuccessDialog from "../components/SuccessDialog";
 
 export default function RegisterPage() {
+  const [nama, setNama] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handlePasswordToggle = () => {
     setShowPassword((prev) => !prev);
@@ -29,6 +35,38 @@ export default function RegisterPage() {
     setConfirmPassword(e.target.value);
     if (e.target.value === "") {
       setShowConfirmPassword(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (password !== confirmPassword) {
+      alert("Password dan konfirmasi password tidak sama");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          nama,
+          email,
+          password,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShowDialog(true);
+      } else {
+        const error = await response.json();
+        alert(error.message || "Registrasi gagal!");
+      }
+    } catch (error) {
+      console.error("Error saat register:", error);
+      alert("Terjadi kesalahan pada server.");
     }
   };
 
@@ -61,16 +99,19 @@ export default function RegisterPage() {
             </a>
           </p>
 
-          <form className="mt-6">
+          <form className="mt-6" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-medium">Username</label>
+              <label className="block text-sm font-medium">Nama</label>
               <div className="relative">
                 <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
                   <User size={18} />
                 </span>
                 <input
                   type="text"
+                  value={nama}
+                  onChange={(e) => setNama(e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 pl-10"
+                  required
                 />
               </div>
             </div>
@@ -82,7 +123,10 @@ export default function RegisterPage() {
                 </span>
                 <input
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full border border-gray-300 rounded-md p-2 pl-10"
+                  required
                 />
               </div>
             </div>
@@ -99,6 +143,7 @@ export default function RegisterPage() {
                   onChange={handlePasswordChange}
                   autoComplete="new-password"
                   className="w-full border border-gray-300 rounded-md p-2 px-10"
+                  required
                 />
               </div>
               {password.length > 0 && (
@@ -125,6 +170,7 @@ export default function RegisterPage() {
                   onChange={handleConfirmPasswordChange}
                   autoComplete="new-password"
                   className="w-full border border-gray-300 rounded-md p-2 px-10"
+                  required
                 />
               </div>
               {confirmPassword.length > 0 && (
@@ -141,7 +187,12 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <Button>Daftar</Button>
+            <Button type="submit">Daftar</Button>
+            <SuccessDialog
+              isOpen={showDialog}
+              onClose={() => (window.location.href = "/login")}
+              message="Silakan cek email Anda untuk melakukan verifikasi sebelum login."
+            />
           </form>
         </div>
       </div>
