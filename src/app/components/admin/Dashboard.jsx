@@ -1,3 +1,5 @@
+"use client";
+import { useRouter } from "next/navigation"; // import router
 import { useState, useEffect } from "react";
 import {
   Users,
@@ -7,7 +9,8 @@ import {
   ChartBarStacked,
 } from "lucide-react";
 
-const Dashboard = ({ onNavigate }) => {
+const Dashboard = () => {
+  const router = useRouter(); // inisialisasi router
   const [jumlahPengguna, setJumlahPengguna] = useState(0);
   const [jumlahKurir, setJumlahKurir] = useState(0);
   const [jumlahKategori, setJumlahKategori] = useState(0);
@@ -41,28 +44,28 @@ const Dashboard = ({ onNavigate }) => {
       value: jumlahPengguna,
       icon: <Users className="w-6 h-6 text-white" />,
       bg: "from-yellow-400 to-yellow-600",
-      targetPage: "Kelola Pengguna",
+      targetPath: "/admin/kelola-pengguna",
     },
     {
       title: "Jumlah Kurir",
       value: jumlahKurir,
       icon: <Truck className="w-6 h-6 text-white" />,
       bg: "from-green-400 to-green-600",
-      targetPage: "Kelola Kurir",
+      targetPath: "/admin/kelola-kurir",
     },
     {
       title: "Jumlah Barang",
       value: 340,
       icon: <Package className="w-6 h-6 text-white" />,
       bg: "from-blue-400 to-blue-600",
-      targetPage: "Kelola Barang",
+      targetPath: "/admin/kelola-barang",
     },
     {
       title: "Jumlah Kategori",
       value: jumlahKategori,
       icon: <ChartBarStacked className="w-6 h-6 text-white" />,
       bg: "from-red-400 to-red-600",
-      targetPage: "Kategori",
+      targetPath: "/admin/kategori",
     },
   ];
 
@@ -72,7 +75,7 @@ const Dashboard = ({ onNavigate }) => {
         {stats.map((item, index) => (
           <div
             key={index}
-            onClick={() => onNavigate(item.targetPage)}
+            onClick={() => router.push(item.targetPath)}
             className="bg-white border border-gray-100 p-6 rounded-2xl shadow-md hover:shadow-xl transform hover:scale-[1.02] transition-all duration-300 cursor-pointer group"
           >
             <div className="flex items-center justify-between">

@@ -1,11 +1,11 @@
 import DashboardLayout from "../components/DashboardLayout";
 
-const PenggunaDashboard = () => {
+const PenggunaLayout = ({ children }) => {
   return (
     <DashboardLayout role="seller" username="Tokoloko">
-      <p>Konten statistik admin atau laporan bisa ditaruh di sini nanti.</p>
+      {children}
     </DashboardLayout>
   );
 };
 
-export default PenggunaDashboard;
+export default PenggunaLayout;

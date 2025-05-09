@@ -10,9 +10,9 @@ const AddProduct = () => {
   const [kategori, setKategori] = useState("");
   const [harga, setHarga] = useState("");
   const [stok, setStok] = useState("");
-  const [variantName, setVariantName] = useState(""); // contoh: Warna, Ukuran
-  const [variantOptions, setVariantOptions] = useState([]); // list jenis varian
-  const [variantInput, setVariantInput] = useState(""); // input untuk menambah opsi varian\
+  const [variantName, setVariantName] = useState("");
+  const [variantOptions, setVariantOptions] = useState([]);
+  const [variantInput, setVariantInput] = useState("");
   const inputRefs = useRef([]);
 
   const handleImageChange = (e, index) => {
