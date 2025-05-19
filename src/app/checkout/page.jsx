@@ -6,11 +6,15 @@ import Button from "../components/Button";
 import Footer from "../components/Footer";
 import { MapPin } from "lucide-react";
 import dynamic from "next/dynamic";
+import { includes } from "lodash";
+import { useSearchParams } from "next/navigation";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
   ssr: false,
 });
+
+const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const orders = [
   {
@@ -25,6 +29,40 @@ const orders = [
 ];
 
 export default function CheckoutPage() {
+  const searchParams = useSearchParams();
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const itemsParam = searchParams.get("items");
+
+    if (!itemsParam) return;
+
+    try {
+      const decoded = decodeURIComponent(itemsParam);
+      const idList = JSON.parse(decoded); // hasilnya array of idDetailKeranjang
+      fetchDetailProduk(idList);
+    } catch (error) {
+      console.error("Gagal decode / parse items:", error);
+    }
+  }, [searchParams]);
+
+  const fetchDetailProduk = async (idList) => {
+    try {
+      const res = await fetch(`${apiUrl}/checkout/selected`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idDetailKeranjang: idList }), // ✅ sesuai dengan controller-mu
+      });
+
+      if (!res.ok) throw new Error("Gagal ambil detail produk");
+
+      const data = await res.json();
+      setItems(data); // ← simpan data produk ke state
+    } catch (err) {
+      console.error("Fetch gagal:", err);
+    }
+  };
   const [alamat, setAlamat] = useState(
     "Kos Dalam Ningrat, Jl. Sei Wain RT 033 Karang Joang, Balikpapan Utara-Balikpapan. (Dekat Masjid Nurul Hidayah) (Kost gedung warna hijau, pagar hitam)"
   );
@@ -123,9 +161,6 @@ export default function CheckoutPage() {
     setForm((prev) => ({
       ...prev,
       jalan: `${suggestion.street || ""} ${suggestion.housenumber || ""}`,
-      detail: `${suggestion.suburb || ""}, ${suggestion.district || ""}, ${
-        suggestion.city || ""
-      }`,
       autocomplete: suggestion.formatted,
       latitude: suggestion.lat,
       longitude: suggestion.lon,
@@ -247,8 +282,23 @@ export default function CheckoutPage() {
     }
   };
 
-  const handleSubmitAlamat = () => {
-    // Cari nama provinsi, kabupaten, kecamatan, dan desa dari list berdasarkan kode yang di-select
+  const handleSubmitAlamat = async () => {
+    if (
+      !form.nama ||
+      !form.telepon ||
+      !form.provinsi ||
+      !form.kabupaten ||
+      !form.kecamatan ||
+      !form.desa ||
+      !form.jalan ||
+      !form.detail ||
+      form.latitude === null ||
+      form.longitude === null
+    ) {
+      alert("Mohon lengkapi semua data!");
+      return;
+    }
+
     const namaProvinsi =
       provinsiList.find(
         (p) => Number(p.kode_provinsi) === Number(form.provinsi)
@@ -265,39 +315,47 @@ export default function CheckoutPage() {
       desaList.find((d) => Number(d.kode_desa) === Number(form.desa))
         ?.nama_desa || "";
 
-    // Gabungkan nama-nama yang sudah diambil tadi
     const alamatBaru = `${form.nama}, ${form.telepon}, ${form.jalan}, ${form.detail}, Desa ${namaDesa}, Kecamatan ${namaKecamatan}, Kabupaten ${namaKabupaten}, Provinsi ${namaProvinsi}`;
-    setAlamat(alamatBaru);
-    setShowModal(false);
-    //   try {
-    //   await updateProfile(userId, {
-    //     alamat: alamatBaru,
-    //     latitude: form.latitude,
-    //     longitude: form.longitude,
-    //   });
-    //   alert("Alamat berhasil disimpan!");
-    // } catch (error) {
-    //   console.error("Gagal menyimpan alamat:", error);
-    //   alert("Terjadi kesalahan saat menyimpan alamat.");
-    // }
 
-    if (
-      !form.nama ||
-      !form.telepon ||
-      !form.provinsi ||
-      !form.kabupaten ||
-      !form.kecamatan
-    ) {
-      alert("Mohon lengkapi semua data!");
-      return;
+    // ✅ Tampilkan koordinat yang akan dikirim
+    console.log("Latitude yang dikirim:", form.latitude);
+    console.log("Longitude yang dikirim:", form.longitude);
+    // Simpan ke backend
+    try {
+      const res = await fetch(`${apiUrl}/user/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          // Tambahkan Authorization jika perlu
+          // Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          alamat: alamatBaru,
+          latitude: Number(form.latitude.toFixed(7)),
+          longitude: Number(form.longitude.toFixed(7)),
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text(); // 👈 lihat isi respons error
+        console.error("Respon error dari server:", res.status, errorText);
+        throw new Error("Gagal mengupdate alamat");
+      }
+
+      setAlamat(alamatBaru);
+      setShowModal(false);
+      alert("Alamat berhasil diperbarui!");
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat menyimpan alamat");
     }
-    handleCloseModal();
   };
 
   return (
     <>
       <Navbar />
-      <div className="bg-gray-100 min-h-screen py-44">
+      <div className="bg-gray-100 min-h-screen pt-12">
         <div className="max-w-7xl mx-auto px-4 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-4">
             <div className="rounded-lg p-4 shadow-lg bg-white">
@@ -316,35 +374,54 @@ export default function CheckoutPage() {
               <p className="text-sm font-medium mt-2">{alamat}</p>
             </div>
 
-            {orders.map((order) => (
+            {items.map((item) => (
               <div
-                key={order.id}
+                key={item.idDetailKeranjang}
                 className="rounded-xl p-5 shadow-md bg-white flex gap-5 items-start hover:shadow-lg transition-all duration-300"
               >
                 <img
-                  src={order.image}
-                  alt={order.name}
+                  src={item.gambar}
+                  alt={item.namaProduk}
                   className="w-28 h-28 object-contain rounded-md border border-gray-200 bg-gray-50"
                 />
                 <div className="flex-1">
                   <div className="flex justify-between items-start">
                     <h4 className="font-semibold text-lg text-gray-800">
-                      {order.name}
+                      {item.namaProduk}
                     </h4>
                     <span className="text-sm bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md font-medium">
-                      x{order.quantity}
+                      x{item.kuantitas}
                     </span>
                   </div>
                   <p className="text-sm text-gray-500 mt-1">
-                    Warna <span className="font-medium">{order.color}</span> |
-                    Size <span className="font-medium">{order.size}</span>
+                    <span className="font-medium">{item.namaVarianProduk}</span>
                   </p>
                   <p className="text-lg font-bold text-[#EDCF5D] mt-9">
-                    Rp {order.price.toLocaleString("id-ID")}
+                    Rp {item.totalHarga.toLocaleString("id-ID")}
                   </p>
                 </div>
               </div>
             ))}
+
+            {/* {items.length === 0 ? (
+              <p>Loading produk...</p>
+            ) : (
+              <ul className="space-y-4">
+                {items.map((item) => (
+                  <div key={item.idDetailKeranjang}>
+                    <img src={item.gambar} alt={item.namaVarianProduk} />
+                    <div>{item.namaVarianProduk}</div>
+                    <div>{item.namaToko}</div>
+                    <div>{item.namaPenjual}</div>
+                    <div>{item.alamatPenjual}</div>
+                    <div>
+                      {item.kuantitas} x Rp{item.hargaSatuan}
+                    </div>
+                    <div>Total: Rp{item.totalHarga}</div>
+                  </div>
+                ))}
+              </ul>
+            )} */}
           </div>
 
           <div className="rounded-lg p-4 shadow-xl h-fit bg-white">
@@ -370,8 +447,8 @@ export default function CheckoutPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-xl">
+        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
             <div className="grid grid-cols-1 gap-4">
               <input
@@ -379,17 +456,20 @@ export default function CheckoutPage() {
                 placeholder="Nama Lengkap"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.nama}
               />
               <input
                 name="telepon"
                 placeholder="Nomor Telepon"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.telepon}
               />
               <select
                 name="provinsi"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.provinsi}
               >
                 <option>Pilih Provinsi</option>
                 {provinsiList.map((prov) => (
@@ -402,6 +482,7 @@ export default function CheckoutPage() {
                 name="kabupaten"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.kabupaten}
               >
                 <option>Pilih Kabupaten</option>
                 {kabupatenList.map((kab) => (
@@ -415,6 +496,7 @@ export default function CheckoutPage() {
                 name="kecamatan"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.kecamatan}
               >
                 <option>Pilih Kecamatan</option>
                 {kecamatanList.map((kec) => (
@@ -428,6 +510,7 @@ export default function CheckoutPage() {
                 name="desa"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.desa}
               >
                 <option>Pilih Desa</option>
                 {desaList.map((des) => (
@@ -464,6 +547,7 @@ export default function CheckoutPage() {
                 placeholder="Detail Lainnya"
                 className="border p-2 rounded"
                 onChange={handleChange}
+                value={form.detail}
               />
 
               <MapPicker
