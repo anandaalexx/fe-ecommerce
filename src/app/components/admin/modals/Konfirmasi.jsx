@@ -1,11 +1,17 @@
 "use client";
 import { Dialog } from "@headlessui/react";
 
-const ModalKonfirmasi = ({ isOpen, onClose, onConfirm, title, message }) => {
+const ModalKonfirmasi = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  message,
+  confirmText = "Hapus",
+}) => {
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/20" aria-hidden="true" />
-
       <div className="fixed inset-0 flex items-center justify-center p-4">
         <Dialog.Panel className="bg-white rounded-xl p-6 shadow-md max-w-sm w-full">
           <Dialog.Title className="text-lg font-semibold mb-2">
@@ -28,7 +34,7 @@ const ModalKonfirmasi = ({ isOpen, onClose, onConfirm, title, message }) => {
               }}
               className="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 cursor-pointer"
             >
-              Hapus
+              {confirmText}
             </button>
           </div>
         </Dialog.Panel>

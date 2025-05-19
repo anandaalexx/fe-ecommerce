@@ -73,7 +73,7 @@ const TambahVarian = () => {
 
   const handleSubmit = () => {
     localStorage.setItem("variantData", JSON.stringify(variants));
-    router.push("/produk/tambah");
+    router.push("/pengguna/tambah-produk");
   };
 
   return (
@@ -100,7 +100,7 @@ const TambahVarian = () => {
             <button
               onClick={handleStartAddVariant}
               className="relative w-1/3 bg-[#EDCF5D] text-white font-medium py-2 rounded-md transition-all duration-150 cursor-pointer 
-              hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
             >
               Tambah Varian
             </button>
@@ -149,7 +149,7 @@ const TambahVarian = () => {
             <button
               onClick={handleFinishVariant}
               className="relative w-1/3 bg-[#EDCF5D] text-white font-medium py-2 rounded-md mt-6 transition-all duration-150 cursor-pointer 
-      hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+        hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
             >
               Selesai Tambah Varian
             </button>
@@ -175,7 +175,7 @@ const TambahVarian = () => {
           <button
             onClick={generateCombinations}
             className="relative w-1/3 bg-[#EDCF5D] text-white font-medium py-2 rounded-md transition-all duration-150 cursor-pointer 
-        hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+          hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
           >
             Atur Harga & Stok
           </button>
@@ -228,10 +228,10 @@ const TambahVarian = () => {
                   "variantCombinations",
                   JSON.stringify(combinations)
                 );
-                router.push("/produk/tambah");
+                router.push("/pengguna/tambah-produk");
               }}
               className="relative w-1/3 bg-[#EDCF5D] text-white font-medium py-2 rounded-md transition-all duration-150 cursor-pointer 
-          hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+            hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
             >
               Simpan Kombinasi
             </button>
@@ -245,7 +245,7 @@ const TambahVarian = () => {
           <button
             onClick={handleSubmit}
             className="relative w-1/3 bg-[#EDCF5D] text-white font-medium py-2 rounded-md transition-all duration-150 cursor-pointer 
-              hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
           >
             Simpan Semua Varian
           </button>

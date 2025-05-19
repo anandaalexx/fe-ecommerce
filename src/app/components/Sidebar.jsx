@@ -13,7 +13,7 @@ import Spinner from "./Spinner";
 
 const menuByRole = {
   admin: [
-    { label: "Dashboard", path: "/admin/dashboard", icon: <House size={20} /> },
+    { label: "Dashboard", path: "/admin", icon: <House size={20} /> },
     {
       label: "Kelola Pengguna",
       path: "/admin/kelola-pengguna",
@@ -34,7 +34,7 @@ const menuByRole = {
   seller: [
     {
       label: "Dashboard",
-      path: "/pengguna/dashboard",
+      path: "/pengguna",
       icon: <House size={20} />,
     },
     {
@@ -51,7 +51,7 @@ const menuByRole = {
   courier: [
     {
       label: "Dashboard",
-      path: "/kurir/dashboard",
+      path: "/kurir",
       icon: <House size={20} />,
     },
     {

@@ -1,4 +1,4 @@
-import Dashboard from "../../components/kurir/Dashboard";
+import Dashboard from "../components/kurir/Dashboard";
 
 const DashboardPage = () => {
   return <Dashboard />;

@@ -130,6 +130,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit }) => {
         onConfirm={handleConfirmDelete}
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.namaUser}"?`}
+        confirmText="Hapus"
       />
     </>
   );
