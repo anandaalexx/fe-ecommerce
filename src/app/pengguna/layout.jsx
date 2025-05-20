@@ -13,7 +13,7 @@ const PenggunaLayout = ({ children }) => {
   const [user, setUser] = useState(null); // ✅ Tambahkan ini
 
   useEffect(() => {
-    fetch(`${apiUrl}/me`, {
+    fetch(`${apiUrl}/admin/users`, {
       method: "GET",
       credentials: "include",
     })
