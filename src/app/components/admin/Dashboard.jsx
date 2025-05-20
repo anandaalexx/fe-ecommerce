@@ -14,6 +14,7 @@ const Dashboard = () => {
   const [jumlahPengguna, setJumlahPengguna] = useState(0);
   const [jumlahKurir, setJumlahKurir] = useState(0);
   const [jumlahKategori, setJumlahKategori] = useState(0);
+  const [jumlahBarang, setJumlahBarang] = useState(0);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -22,14 +23,17 @@ const Dashboard = () => {
         const resUsers = await fetch(`${apiUrl}/admin/users`);
         const resKurirs = await fetch(`${apiUrl}/admin/couriers`);
         const resCategories = await fetch(`${apiUrl}/category/view`);
+        const resProducts = await fetch(`${apiUrl}/product/`);
 
         const users = await resUsers.json();
         const kurirs = await resKurirs.json();
         const categories = await resCategories.json();
+        const products = await resProducts.json();
 
         setJumlahPengguna(users.length);
         setJumlahKurir(kurirs.length);
         setJumlahKategori(categories.length);
+        setJumlahBarang(products.length);
       } catch (err) {
         console.error("Gagal memuat data:", err);
       }
@@ -55,7 +59,7 @@ const Dashboard = () => {
     },
     {
       title: "Jumlah Barang",
-      value: 340,
+      value: jumlahBarang,
       icon: <Package className="w-6 h-6 text-white" />,
       bg: "from-blue-400 to-blue-600",
       targetPath: "/admin/kelola-barang",

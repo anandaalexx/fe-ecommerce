@@ -10,10 +10,10 @@ const PenggunaLayout = ({ children }) => {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [user, setUser] = useState(null); // ✅ Tambahkan ini
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch(`${apiUrl}/admin/users`, {
+    fetch(`${apiUrl}/me`, {
       method: "GET",
       credentials: "include",
     })
@@ -24,16 +24,9 @@ const PenggunaLayout = ({ children }) => {
       })
       .then((data) => {
         console.log("User data:", data);
-        setUser(data); // ✅ Fix error
+        setUser(data);
         setIsAuthorized(true);
         setChecked(true);
-
-        // Bisa redirect berdasarkan role
-        if (data.roleId === 2) {
-          // seller
-        } else if (data.roleId === 1) {
-          // buyer
-        }
       })
       .catch((err) => {
         console.error("Gagal ambil data user:", err);

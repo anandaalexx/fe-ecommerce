@@ -62,6 +62,9 @@ const AddProduct = () => {
     setShowVariantModal(false);
   };
 
+  console.log("varian:", parsedVariants);
+  console.log("variantCombinations:", variantCombinations);
+
   const handleSubmit = async () => {
     if (!namaProduk || !deskripsi || !kategori) {
       alert("Nama produk, deskripsi, dan kategori wajib diisi!");
@@ -102,6 +105,10 @@ const AddProduct = () => {
         nama: variant.nama,
         nilai: variant.options,
       }));
+
+      variantCombinations.forEach((combo, index) => {
+        console.log(`Combo ${index}:`, combo.nama.split(" / "));
+      });
 
       payload.produkVarian = variantCombinations.map((combo) => ({
         harga: parseInt(combo.harga),
@@ -232,7 +239,7 @@ const AddProduct = () => {
             {parsedVariants.map((variant, i) => (
               <div key={i} className="border border-gray-300 rounded-md p-3">
                 <p className="font-medium text-sm text-gray-800">
-                  {variant.name}
+                  {variant.nama}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {variant.options.map((opt, j) => (

@@ -8,18 +8,36 @@ const AdminLayout = ({ children }) => {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [user, setUser] = useState(null);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
-    const token = Cookies.get("token");
-    const role = Cookies.get("role");
+    fetch(`${apiUrl}/me`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("Status:", res.status);
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("User data:", data);
+        setUser(data); // ✅ Fix error
+        setIsAuthorized(true);
+        setChecked(true);
 
-    if (!token || role !== "4") {
-      router.replace("/");
-    } else {
-      setIsAuthorized(true);
-    }
-
-    setChecked(true);
+        // // Bisa redirect berdasarkan role
+        // if (data.roleId === 4) {
+        //   router.push("/admin");
+        // }
+      })
+      .catch((err) => {
+        console.error("Gagal ambil data user:", err);
+        setChecked(true);
+        router.push("/login");
+      });
   }, []);
 
   if (!checked) {
@@ -27,7 +45,7 @@ const AdminLayout = ({ children }) => {
   }
 
   return isAuthorized ? (
-    <DashboardLayout role="admin" username="Admin">
+    <DashboardLayout role="admin" username={user?.email || "Admin"}>
       {children}
     </DashboardLayout>
   ) : null;

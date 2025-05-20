@@ -1,24 +1,54 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { FilePenLine, Trash2, Ellipsis } from "lucide-react";
+import { Eye, Trash2, Ellipsis } from "lucide-react";
+import ModalKonfirmasi from "./modals/Konfirmasi";
 
-const users = [
-  { id: 1, nama: "Ayu", email: "ayu@mail.com", role: "Seller" },
-  { id: 2, nama: "Budi", email: "budi@mail.com", role: "Kurir" },
-];
-
-const TableBarang = () => {
+const TableProduk = ({ onView }) => {
+  const [produkList, setProdukList] = useState([]);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
-  const handleEllipsisClick = (e, userId) => {
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const handleDeleteClick = (product) => {
+    setProductToDelete(product);
+    setIsConfirmOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  useEffect(() => {
+    async function fetchProduk() {
+      try {
+        const res = await fetch(`${apiUrl}/product/`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const json = await res.json();
+
+        if (Array.isArray(json)) {
+          console.log(json);
+          setProdukList(json);
+        } else {
+          console.error("Format data tidak valid:", json);
+        }
+      } catch (err) {
+        console.error("Gagal fetch produk:", err);
+      }
+    }
+
+    fetchProduk();
+  }, []);
+
+  const handleEllipsisClick = (e, produkId) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setDropdownPos({
       top: rect.bottom + 8,
       left: rect.left,
     });
-    setOpenDropdownId(userId);
+    setOpenDropdownId(produkId);
   };
 
   useEffect(() => {
@@ -33,27 +63,57 @@ const TableBarang = () => {
     };
   }, []);
 
+  const handleConfirmDelete = async () => {
+    try {
+      const res = await fetch(
+        `${apiUrl}/product/delete/${productToDelete.id}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+
+      console.log(res);
+      if (!res.ok) throw new Error("Gagal menghapus produk");
+
+      setProdukList((prevProducts) =>
+        prevProducts.filter((u) => u.id !== productToDelete.id)
+      );
+      setIsConfirmOpen(false);
+      setProductToDelete(null);
+    } catch (err) {
+      console.error("Error saat menghapus produk:", err);
+    }
+  };
+
   return (
     <>
-      <div className="overflow-x-auto border border-gray-200 rounded-sm  shadow-sm relative z-0">
+      <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
         <table className="min-w-full text-sm divide-y divide-gray-200">
           <thead className="bg-gray-100 text-gray-700">
             <tr>
-              <th className="px-6 py-3 text-left">Nama</th>
-              <th className="px-6 py-3 text-left">Email</th>
-              <th className="px-6 py-3 text-left">Role</th>
+              <th className="px-6 py-3 text-left">Produk</th>
+              <th className="px-6 py-3 text-left">Harga</th>
+              <th className="px-6 py-3 text-left">Kategori</th>
               <th className="px-6 py-3 text-center">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
-            {users.map((user) => (
-              <tr key={user.id}>
-                <td className="px-6 py-4">{user.nama}</td>
-                <td className="px-6 py-4">{user.email}</td>
-                <td className="px-6 py-4">{user.role}</td>
+            {produkList.map((produk) => (
+              <tr key={produk.id}>
+                <td className="px-6 py-4 flex items-center gap-4">
+                  <img
+                    src={produk.gambarUrl}
+                    alt={produk.nama}
+                    className="w-12 h-12 object-cover rounded"
+                  />
+                  <span>{produk.nama}</span>
+                </td>
+                <td className="px-6 py-4">{produk.harga}</td>
+                <td className="px-6 py-4">{produk.kategori}</td>
                 <td className="px-6 py-4 text-center">
                   <button
-                    onClick={(e) => handleEllipsisClick(e, user.id)}
+                    onClick={(e) => handleEllipsisClick(e, produk.id)}
                     className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
                   >
                     <Ellipsis size={20} />
@@ -74,16 +134,37 @@ const TableBarang = () => {
             left: dropdownPos.left,
           }}
         >
-          <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer">
-            <FilePenLine size={16} /> Edit
+          <button
+            onClick={() => {
+              const produk = produkList.find((p) => p.id === openDropdownId);
+              if (produk) onView(produk);
+              setOpenDropdownId(null);
+            }}
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer"
+          >
+            <Eye size={16} /> Lihat
           </button>
-          <button className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer">
+          <button
+            onClick={() => {
+              const product = produkList.find((u) => u.id === openDropdownId);
+              if (product) handleDeleteClick(product);
+            }}
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
+          >
             <Trash2 size={16} /> Hapus
           </button>
         </div>
       )}
+      <ModalKonfirmasi
+        isOpen={isConfirmOpen}
+        onClose={() => setIsConfirmOpen(false)}
+        onConfirm={handleConfirmDelete}
+        title="Konfirmasi Hapus"
+        message={`Apakah Anda yakin ingin menghapus pengguna "${productToDelete?.nama}"?`}
+        confirmText="Hapus"
+      />
     </>
   );
 };
 
-export default TableBarang;
+export default TableProduk;

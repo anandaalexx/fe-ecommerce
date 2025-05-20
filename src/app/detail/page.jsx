@@ -55,7 +55,7 @@ const ProductDetailPage = ({ params }) => {
   return (
     <>
       <Navbar />
-      <div className="bg-gray-100 py-6">
+      <div className="bg-gray-100 pt-48 pb-12">
         <div className="max-w-7xl bg-white shadow-xl rounded-md overflow-hidden mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
           <ProductGallery images={dummyProduct.images} />
           <ProductInfo product={dummyProduct} />
