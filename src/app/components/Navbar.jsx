@@ -13,7 +13,7 @@ import Logo from "./Logo.jsx";
 export default function Navbar() {
   const router = useRouter();
   return (
-    <nav className="w-full border-b border-gray-300">
+    <nav className="fixed w-full z-99 border-b border-gray-300 bg-white">
       {/* Navbar Atas */}
       <div className="text-center text-sm py-2 px-4 font-medium border-b border-gray-300">
         <p>
@@ -37,7 +37,7 @@ export default function Navbar() {
           <input
             type="text"
             placeholder="Cari produk..."
-            className="w-full pl-10 pr-4 py-2 outline-none ring-1 ring-gray-300 focus:ring-[#EDCF5D] focus:ring-opacity-50 rounded-md bg-gray-100 text-gray-700 transition-all duration-300 group-hover:scale-[1.02]"
+            className="w-full pl-10 pr-4 py-2 outline-none ring-1 ring-gray-300 focus:ring-[#EDCF5D] focus:ring-opacity-50 rounded-md bg-gray-100 text-gray-700"
           />
           <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
         </div>
@@ -51,7 +51,7 @@ export default function Navbar() {
           ].map((item, i) => (
             <div
               key={i}
-              className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D] hover:-translate-y-1 hover:scale-105"
+              className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
               onClick={() => {
                 if (item.path) {
                   router.push(item.path);
@@ -68,7 +68,7 @@ export default function Navbar() {
       {/* Navbar Bawah */}
       <div className="flex justify-between items-center py-3 border-t border-gray-300 text-sm">
         {/* Menu di Tengah */}
-        <div className="flex font-medium justify-left gap-6 flex-1 px-6">
+        <div className="flex font-medium text-md justify-left gap-6 flex-1 px-6">
           {[...Array(6)].map((_, i) => (
             <span
               key={i}
@@ -80,7 +80,7 @@ export default function Navbar() {
         </div>
 
         {/* Saldo Elektronik */}
-        <div className="px-6 font-bold flex items-center gap-2 text-lg hover:scale-105 transition-transform duration-300 cursor-pointer">
+        <div className="px-6 font-semibold flex items-center gap-2 text-lg cursor-pointer">
           <Wallet size={20} />
           <span>Rp 150.000</span>
         </div>

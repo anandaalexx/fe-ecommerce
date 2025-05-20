@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [type, setType] = useState("password");
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleToggle = () => {
     setType((prevType) => (prevType === "password" ? "text" : "password"));
@@ -29,22 +30,22 @@ export default function LoginPage() {
   // };
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); 
+    e.preventDefault();
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/login`, {
+      const response = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({ email, password }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        alert(data.message);
-        router.push("/dashboard"); // arahkan ke halaman lain
+        router.push("/home");
       } else {
         alert(data.message);
       }

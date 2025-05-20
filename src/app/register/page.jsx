@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Eye, EyeOff, User, Mail, LockKeyhole } from "lucide-react";
 import Logo from "../components/Logo";
 import Button from "../components/Button";
+import SuccessDialog from "../components/SuccessDialog";
 
 export default function RegisterPage() {
   const [nama, setNama] = useState("");
@@ -11,6 +12,9 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showDialog, setShowDialog] = useState(false);
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handlePasswordToggle = () => {
     setShowPassword((prev) => !prev);
@@ -41,11 +45,11 @@ export default function RegisterPage() {
       alert("Password dan konfirmasi password tidak sama");
       return;
     }
-    
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch(`${apiUrl}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nama,
           email,
@@ -55,9 +59,7 @@ export default function RegisterPage() {
 
       if (response.ok) {
         const data = await response.json();
-        alert("Registrasi berhasil!");
-        console.log(data);
-        window.location.href = "/login";
+        setShowDialog(true);
       } else {
         const error = await response.json();
         alert(error.message || "Registrasi gagal!");
@@ -99,7 +101,7 @@ export default function RegisterPage() {
 
           <form className="mt-6" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-medium">Username</label>
+              <label className="block text-sm font-medium">Nama</label>
               <div className="relative">
                 <span className="absolute left-3 top-[50%] transform -translate-y-1/2 ">
                   <User size={18} />
@@ -186,6 +188,11 @@ export default function RegisterPage() {
             </div>
 
             <Button type="submit">Daftar</Button>
+            <SuccessDialog
+              isOpen={showDialog}
+              onClose={() => (window.location.href = "/login")}
+              message="Silakan cek email Anda untuk melakukan verifikasi sebelum login."
+            />
           </form>
         </div>
       </div>
