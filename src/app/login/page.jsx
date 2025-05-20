@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [type, setType] = useState("password");
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleToggle = () => {
     setType((prevType) => (prevType === "password" ? "text" : "password"));
@@ -22,6 +23,7 @@ export default function LoginPage() {
   //   const value = e.target.value;
 
   //   setPassword(value);
+  //   setPassword(value);
 
   //   if (value.length === 0) {
   //     setType("password");
@@ -32,7 +34,7 @@ export default function LoginPage() {
     e.preventDefault(); 
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/login`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

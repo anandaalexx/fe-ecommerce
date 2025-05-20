@@ -2,7 +2,7 @@ import Logo from "./Logo";
 
 const Footer = () => {
   return (
-    <footer className="bg-white border-t border-gray-200 text-gray-700 mt-6">
+    <footer className="bg-whitez border-gray-200 text-gray-700 mt-6">
       <div className="mx-auto flex flex-col md:flex-row items-start justify-center px-6 md:px-16 lg:px-32 gap-10 py-14 border-b border-gray-200 text-gray-500">
         {/* Logo & Deskripsi */}
         <div className="w-full md:w-2/5">

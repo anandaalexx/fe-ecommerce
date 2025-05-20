@@ -12,7 +12,7 @@ const ReviewList = ({ reviews }) => {
             className="w-10 h-10 rounded-full object-cover"
           />
           <div>
-            <p className="font-semibold">
+            <p className="font-medium">
               {review.name}{" "}
               <span className="text-gray-400 text-sm">{review.timeAgo}</span>
             </p>

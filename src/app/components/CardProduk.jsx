@@ -6,7 +6,7 @@ const CardProduk = ({ product }) => {
   return (
     <div className="w-full flex flex-col items-start gap-2 cursor-pointer group">
       {/* Gambar Produk dengan Icon */}
-      <div className="w-full h-52 bg-gray-500/10 rounded-xl relative p-4">
+      <div className="w-full h-52 bg-gray-500/10 rounded-lg relative p-4">
         <img
           src={product.image}
           alt={product.name}
@@ -20,7 +20,7 @@ const CardProduk = ({ product }) => {
       </h3>
 
       {/* Deskripsi Singkat */}
-      <p className="text-gray-500/70 text-sm leading-tight truncate w-full">
+      <p className="text-gray-500/70 text-xs leading-tight truncate w-full">
         {product.description}
       </p>
 
@@ -29,7 +29,7 @@ const CardProduk = ({ product }) => {
         <span className="text-md font-medium text-gray-900">
           Rp {product.price.toLocaleString("id-ID")}
         </span>
-        <button className="px-3 py-1 text-sm border border-gray-500/20 rounded-full text-gray-500 hover:bg-slate-50 transition cursor cursor-pointer">
+        <button className="px-3 py-1 text-sm font-light border border-gray-500/20 rounded-full text-gray-500 hover:bg-slate-50 transition cursor cursor-pointer">
           Beli
         </button>
       </div>

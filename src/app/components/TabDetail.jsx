@@ -31,13 +31,13 @@ const TabsDetail = ({ description, specification }) => {
 
       {activeTab === "detail" && (
         <div className="mt-4">
-          <h3 className="font-bold text-lg">Deskripsi Produk</h3>
-          <p className="text-md font-semibold text-gray-600 mt-2">
+          <h3 className="font-medium text-lg">Deskripsi Produk</h3>
+          <p className="text-md font-normal text-gray-600 mt-2">
             {description}
           </p>
 
-          <h3 className="font-bold text-lg mt-6">Spesifikasi</h3>
-          <p className="text-md font-semibold text-gray-600 mt-2">
+          <h3 className="font-medium text-md mt-6">Spesifikasi</h3>
+          <p className="text-sm font-normal text-gray-600 mt-2">
             {specification}
           </p>
         </div>
