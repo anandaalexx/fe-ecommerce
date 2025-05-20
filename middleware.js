@@ -37,7 +37,7 @@ export function middleware(request) {
     }
 
     // pembeli tidak boleh ke /admin atau /penjual atau /kurir
-    if (
+    if (  
       role === "1" &&
       ["/admin", "/pengguna", "/kurir"].some((p) => currentPath.startsWith(p))
     ) {
