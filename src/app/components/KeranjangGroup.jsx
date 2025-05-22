@@ -26,7 +26,7 @@ const KeranjangGroup = ({
             checked={item.isSelected}
             onChange={() => onSelectProduct(idx)}
           />
-          <div className="flex-1">{item.namaProduk}</div>
+          <div className="flex-1">{item.namaVarianProduk}</div>
           <div className="w-40 text-center">{item.harga.toLocaleString()}</div>
           <div className="w-40 text-center">
             <input

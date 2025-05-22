@@ -50,7 +50,12 @@ export default function KeranjangList({
                     alt={product.namaProduk}
                     className="w-16 h-16 object-cover rounded-md"
                   />
-                  <span>{product.namaProduk}</span>
+                  <span>
+                    {product.namaProduk}{" "}
+                    <span className="text-sm text-gray-500">
+                      ({product.namaVarianLengkap})
+                    </span>
+                  </span>
                 </div>
                 <div className="w-40 text-center">
                   Rp {product.harga.toLocaleString()}
@@ -90,7 +95,7 @@ export default function KeranjangList({
                     onClick={() => onDeleteProduct(tokoIdx, produkIdx)}
                     className="text-red-500 hover:text-red-700 font-semibold"
                   >
-                   <Trash2/>
+                    <Trash2 />
                   </button>
                 </div>
               </div>
