@@ -25,8 +25,12 @@ const PenggunaLayout = ({ children }) => {
       .then((data) => {
         console.log("User data:", data);
         setUser(data);
-        setIsAuthorized(true);
         setChecked(true);
+        if (data.roleId === 2) {
+          setIsAuthorized(true);
+        } else {
+          router.push("/");
+        }
       })
       .catch((err) => {
         console.error("Gagal ambil data user:", err);

@@ -1,17 +1,25 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Eye, Trash2, Ellipsis } from "lucide-react";
-import ModalKonfirmasi from "./modals/Konfirmasi";
+import ModalKonfirmasi from "../admin/modals/Konfirmasi";
+import ModalDetailProduk from "@/app/components/pengguna/modals/DetailProduk";
 
-const TableProduk = ({ onView }) => {
+const TableProduk = () => {
   const [produkList, setProdukList] = useState([]);
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
   const [productToDelete, setProductToDelete] = useState(null);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const handleViewProduct = (product) => {
+    setSelectedProduct(product);
+    setIsDetailOpen(true);
+  };
 
   const handleDeleteClick = (product) => {
     setProductToDelete(product);
@@ -93,6 +101,7 @@ const TableProduk = ({ onView }) => {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-6 py-3 text-left">Produk</th>
+              <th className="px-6 py-3 text-left">Penjual</th>
               <th className="px-6 py-3 text-left">Harga</th>
               <th className="px-6 py-3 text-left">Kategori</th>
               <th className="px-6 py-3 text-center">Aksi</th>
@@ -109,6 +118,7 @@ const TableProduk = ({ onView }) => {
                   />
                   <span>{produk.nama}</span>
                 </td>
+                <td className="px-6 py-4">{produk.penjual}</td>
                 <td className="px-6 py-4">{produk.harga}</td>
                 <td className="px-6 py-4">{produk.kategori}</td>
                 <td className="px-6 py-4 text-center">
@@ -137,12 +147,12 @@ const TableProduk = ({ onView }) => {
           <button
             onClick={() => {
               const produk = produkList.find((p) => p.id === openDropdownId);
-              if (produk) onView(produk);
+              if (produk) handleViewProduct(produk);
               setOpenDropdownId(null);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer"
           >
-            <Eye size={16} /> Lihat
+            <Eye size={16} /> Detail
           </button>
           <button
             onClick={() => {
@@ -162,6 +172,11 @@ const TableProduk = ({ onView }) => {
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus pengguna "${productToDelete?.nama}"?`}
         confirmText="Hapus"
+      />
+      <ModalDetailProduk
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        produk={selectedProduct}
       />
     </>
   );

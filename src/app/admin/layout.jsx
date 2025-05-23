@@ -24,14 +24,15 @@ const AdminLayout = ({ children }) => {
       })
       .then((data) => {
         console.log("User data:", data);
-        setUser(data); // ✅ Fix error
-        setIsAuthorized(true);
+        setUser(data);
         setChecked(true);
 
-        // // Bisa redirect berdasarkan role
-        // if (data.roleId === 4) {
-        //   router.push("/admin");
-        // }
+        // Bisa redirect berdasarkan role
+        if (data.roleId === 4) {
+          setIsAuthorized(true);
+        } else {
+          router.push("/");
+        }
       })
       .catch((err) => {
         console.error("Gagal ambil data user:", err);
