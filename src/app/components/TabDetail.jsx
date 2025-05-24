@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 
-const TabsDetail = ({ description, specification }) => {
+const TabsDetail = ({ description }) => {
   const [activeTab, setActiveTab] = useState("detail");
 
   return (
@@ -34,11 +34,6 @@ const TabsDetail = ({ description, specification }) => {
           <h3 className="font-medium text-lg">Deskripsi Produk</h3>
           <p className="text-md font-normal text-gray-600 mt-2">
             {description}
-          </p>
-
-          <h3 className="font-medium text-md mt-6">Spesifikasi</h3>
-          <p className="text-sm font-normal text-gray-600 mt-2">
-            {specification}
           </p>
         </div>
       )}
