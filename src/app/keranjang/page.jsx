@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
+import Footer from "../components/Footer";
 import KeranjangList from "../components/KeranjangList";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -231,6 +232,7 @@ const KeranjangPage = () => {
           </div>
         </div>
       )}
+      <Footer />
     </div>
   );
 };

@@ -41,7 +41,7 @@ export default function LoginPage() {
         // Arahkan berdasarkan role
         switch (user.roleId) {
           case 4:
-            router.push("/home");
+            router.push("/admin");
             break;
           case 3:
             router.push("/kurir");
