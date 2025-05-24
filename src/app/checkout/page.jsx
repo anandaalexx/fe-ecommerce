@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Footer from "../components/Footer";
-import { MapPin } from "lucide-react";
+import { MapPin, SquarePen } from "lucide-react";
 import dynamic from "next/dynamic";
 import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
@@ -31,6 +31,7 @@ const orders = [
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
+  const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -41,6 +42,7 @@ export default function CheckoutPage() {
       const decoded = decodeURIComponent(itemsParam);
       const idList = JSON.parse(decoded); // hasilnya array of idDetailKeranjang
       fetchDetailProduk(idList);
+      fetchPreCheckout(idList);
     } catch (error) {
       console.error("Gagal decode / parse items:", error);
     }
@@ -61,6 +63,26 @@ export default function CheckoutPage() {
       setItems(data); // ← simpan data produk ke state
     } catch (err) {
       console.error("Fetch gagal:", err);
+    }
+  };
+
+  const fetchPreCheckout = async (idList) => {
+    try {
+      const res = await fetch(`${apiUrl}/pre-checkout`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idDetailKeranjang: idList }),
+      });
+
+      if (!res.ok) throw new Error("Gagal ambil info precheckout");
+
+      const data = await res.json();
+      console.log("data:", data);
+      setPreCheckoutInfo(data);
+      // ⬅️ simpan hasil precheckout
+    } catch (err) {
+      console.error("Fetch precheckout gagal:", err);
     }
   };
   const [alamat, setAlamat] = useState(
@@ -365,9 +387,9 @@ export default function CheckoutPage() {
                 </h2>
                 <button
                   onClick={() => setShowModal(true)}
-                  className="text-sm text-blue-600 underline"
+                  className="hover:brightness-110 cursor-pointer"
                 >
-                  Edit
+                  <SquarePen size={18} />
                 </button>
               </div>
               <hr className="my-3 text-[#A4A4A4]" />
@@ -428,17 +450,25 @@ export default function CheckoutPage() {
             <h2 className="font-semibold text-lg mb-4">Ringkasan Pesanan</h2>
             <div className="flex justify-between text-sm mb-2">
               <span>Total Harga</span>
-              <span>Rp {totalHarga.toLocaleString("id-ID")}</span>
+              <span>
+                Rp{" "}
+                {preCheckoutInfo?.totalHargaProdukKeseluruhan?.toLocaleString() ||
+                  "0"}
+              </span>
             </div>
             <div className="flex justify-between text-sm mb-2">
               <span>Total Ongkos Kirim</span>
-              <span>Rp {ongkosKirim.toLocaleString("id-ID")}</span>
+              <span>
+                Rp{" "}
+                {preCheckoutInfo?.totalOngkirKeseluruhan?.toLocaleString() ||
+                  "0"}
+              </span>
             </div>
             <hr className="my-3" />
             <div className="flex justify-between font-semibold text-base mb-4">
               <span>Total Tagihan</span>
               <span className="text-black">
-                Rp {totalTagihan.toLocaleString("id-ID")}
+                Rp {preCheckoutInfo?.totalHargaAkhir?.toLocaleString() || "0"}
               </span>
             </div>
             <Button>Bayar Sekarang</Button>

@@ -17,6 +17,7 @@ const KeranjangPage = () => {
       credentials: "include",
     });
     const data = await res.json();
+    console.log("Data dari backend:", data); // 👈 Cek ini
 
     const grouped = data.reduce((acc, item) => {
       const toko = item.namaToko;
