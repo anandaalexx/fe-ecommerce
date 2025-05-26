@@ -22,8 +22,12 @@ const Dashboard = () => {
       try {
         const resUsers = await fetch(`${apiUrl}/admin/users`);
         const resKurirs = await fetch(`${apiUrl}/admin/couriers`);
-        const resCategories = await fetch(`${apiUrl}/category/view`);
-        const resProducts = await fetch(`${apiUrl}/product/`);
+        const resCategories = await fetch(`${apiUrl}/category/view`, {
+          credentials: "include",
+        });
+        const resProducts = await fetch(`${apiUrl}/product/`, {
+          credentials: "include",
+        });
 
         const users = await resUsers.json();
         const kurirs = await resKurirs.json();

@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 
-const ProductInfo = ({ product, onAddToCart }) => {
-  const [quantity, setQuantity] = useState(1);
+const ProductInfo = ({ product, onAddToCart, quantity, setQuantity }) => {
   const [selectedVariants, setSelectedVariants] = useState({});
   const [displayedPrice, setDisplayedPrice] = useState(null);
 

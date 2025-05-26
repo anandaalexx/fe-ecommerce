@@ -11,7 +11,9 @@ const Kategori = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch(`${apiUrl}/category/view`);
+      const res = await fetch(`${apiUrl}/category/view`, {
+        credentials: "include",
+      });
       const data = await res.json();
       setCategories(data);
     } catch (err) {
