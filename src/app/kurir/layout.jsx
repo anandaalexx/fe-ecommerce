@@ -1,0 +1,51 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
+import DashboardLayout from "../components/DashboardLayout";
+
+const KurirLayout = ({ children }) => {
+  const router = useRouter();
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    fetch(`${apiUrl}/me`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("Status:", res.status);
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("User data:", data);
+        setUser(data);
+        setChecked(true);
+        if (data.roleId === 3) {
+          setIsAuthorized(true);
+        } else {
+          console.log("masuk sini");
+          router.push("/");
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal ambil data user:", err);
+        setChecked(true);
+        router.push("/login");
+      });
+  }, []);
+
+  if (!checked) {
+    return null;
+  }
+
+  return isAuthorized ? (
+    <DashboardLayout role="kurir" username="Mansur">
+      {children}
+    </DashboardLayout>
+  ) : null;
+};
+
+export default KurirLayout;

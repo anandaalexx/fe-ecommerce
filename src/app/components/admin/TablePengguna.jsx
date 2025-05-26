@@ -130,6 +130,7 @@ const TablePengguna = ({ users, setUsers, onEdit }) => {
         onConfirm={handleConfirmDelete}
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus pengguna "${userToDelete?.nama}"?`}
+        confirmText="Hapus"
       />
     </>
   );

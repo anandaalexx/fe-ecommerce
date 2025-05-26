@@ -10,29 +10,19 @@ import {
 } from "lucide-react";
 
 const Dashboard = () => {
-  const router = useRouter(); // inisialisasi router
-  const [jumlahPengguna, setJumlahPengguna] = useState(0);
-  const [jumlahKurir, setJumlahKurir] = useState(0);
-  const [jumlahKategori, setJumlahKategori] = useState(0);
+  const router = useRouter();
   const [jumlahBarang, setJumlahBarang] = useState(0);
+  const [jumlahPesanan, setJumlahPesanan] = useState(0);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const resUsers = await fetch(`${apiUrl}/admin/users`);
-        const resKurirs = await fetch(`${apiUrl}/admin/couriers`);
-        const resCategories = await fetch(`${apiUrl}/category/view`);
-        const resProducts = await fetch(`${apiUrl}/product/`);
+        const resProducts = await fetch(`${apiUrl}/product/`, {
+          credentials: "include",
+        });
 
-        const users = await resUsers.json();
-        const kurirs = await resKurirs.json();
-        const categories = await resCategories.json();
         const products = await resProducts.json();
-
-        setJumlahPengguna(users.length);
-        setJumlahKurir(kurirs.length);
-        setJumlahKategori(categories.length);
         setJumlahBarang(products.length);
       } catch (err) {
         console.error("Gagal memuat data:", err);
@@ -44,38 +34,24 @@ const Dashboard = () => {
 
   const stats = [
     {
-      title: "Jumlah Pengguna",
-      value: jumlahPengguna,
-      icon: <Users className="w-6 h-6 text-white" />,
-      bg: "from-yellow-400 to-yellow-600",
-      targetPath: "/admin/kelola-pengguna",
-    },
-    {
-      title: "Jumlah Kurir",
-      value: jumlahKurir,
-      icon: <Truck className="w-6 h-6 text-white" />,
-      bg: "from-green-400 to-green-600",
-      targetPath: "/admin/kelola-kurir",
-    },
-    {
       title: "Jumlah Barang",
       value: jumlahBarang,
       icon: <Package className="w-6 h-6 text-white" />,
       bg: "from-blue-400 to-blue-600",
-      targetPath: "/admin/kelola-barang",
+      targetPath: "/pengguna/list-produk",
     },
     {
-      title: "Jumlah Kategori",
-      value: jumlahKategori,
+      title: "Jumlah Pesanan",
+      value: 20,
       icon: <ChartBarStacked className="w-6 h-6 text-white" />,
       bg: "from-red-400 to-red-600",
-      targetPath: "/admin/kategori",
+      targetPath: "/pengguna/pesanan",
     },
   ];
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {stats.map((item, index) => (
           <div
             key={index}

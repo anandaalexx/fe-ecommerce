@@ -115,6 +115,7 @@ const TableKategori = ({ categories, setCategories }) => {
         onConfirm={handleConfirmDelete}
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus kategori "${kategoriToDelete?.nama}"?`}
+        confirmText="Hapus"
       />
     </>
   );

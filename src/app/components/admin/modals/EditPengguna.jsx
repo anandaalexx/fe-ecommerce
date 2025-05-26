@@ -108,7 +108,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
           >
             <button
               onClick={onClose}
-              className="absolute top-3 right-3 text-gray-600 hover:text-black"
+              className="absolute top-3 right-3 text-gray-600 hover:text-black cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -150,7 +150,12 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
                   name="roleId"
                   value={form.roleId}
                   onChange={handleChange}
-                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D] capitalize"
+                  disabled={initialData?.roleId === 3}
+                  className={`w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D] capitalize ${
+                    initialData?.roleId === 3
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : ""
+                  }`}
                 >
                   {roles.map((role) => (
                     <option key={role.id} value={role.id}>
@@ -159,6 +164,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
                   ))}
                 </select>
               </div>
+
               <div>
                 <label className="block mb-1 text-sm font-medium">Saldo</label>
                 <input

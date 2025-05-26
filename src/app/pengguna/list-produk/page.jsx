@@ -1,7 +1,7 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { Eye, Trash2, Ellipsis } from "lucide-react";
-import ModalKonfirmasi from "../admin/modals/Konfirmasi";
+import ModalKonfirmasi from "../../components/admin/modals/Konfirmasi";
 import ModalDetailProduk from "@/app/components/pengguna/modals/DetailProduk";
 
 const TableProduk = () => {
@@ -101,7 +101,6 @@ const TableProduk = () => {
           <thead className="bg-gray-100 text-gray-700">
             <tr>
               <th className="px-6 py-3 text-left">Produk</th>
-              <th className="px-6 py-3 text-left">Penjual</th>
               <th className="px-6 py-3 text-left">Harga</th>
               <th className="px-6 py-3 text-left">Kategori</th>
               <th className="px-6 py-3 text-center">Aksi</th>
@@ -118,7 +117,6 @@ const TableProduk = () => {
                   />
                   <span>{produk.nama}</span>
                 </td>
-                <td className="px-6 py-4">{produk.penjual}</td>
                 <td className="px-6 py-4">{produk.harga}</td>
                 <td className="px-6 py-4">{produk.kategori}</td>
                 <td className="px-6 py-4 text-center">

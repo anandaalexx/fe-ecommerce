@@ -1,11 +1,7 @@
-import DashboardLayout from "../components/DashboardLayout";
+import Dashboard from "../components/admin/Dashboard";
 
-const AdminDashboard = () => {
-  return (
-    <DashboardLayout role="admin" username="Admin">
-      <p>Konten statistik admin atau laporan bisa ditaruh di sini nanti.</p>
-    </DashboardLayout>
-  );
+const DashboardPage = () => {
+  return <Dashboard />;
 };
 
-export default AdminDashboard;
+export default DashboardPage;

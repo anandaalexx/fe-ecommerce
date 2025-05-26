@@ -19,16 +19,6 @@ export default function LoginPage() {
   const handlePasswordChange = (e) => setPassword(e.target.value);
   const handleEmailChange = (e) => setEmail(e.target.value);
 
-  // const handlePasswordChange = (e) => {
-  //   const value = e.target.value;
-
-  //   setPassword(value);
-
-  //   if (value.length === 0) {
-  //     setType("password");
-  //   }
-  // };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -43,11 +33,27 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+      console.log(data);
 
       if (response.ok) {
-        router.push("/home");
-      } else {
-        alert(data.message);
+        const { user } = data;
+
+        // Arahkan berdasarkan role
+        switch (user.roleId) {
+          case 4:
+            router.push("/admin");
+            break;
+          case 3:
+            router.push("/kurir");
+            break;
+          case 2:
+            router.push("/pengguna");
+            break;
+          case 1:
+          default:
+            router.push("/home");
+            break;
+        }
       }
     } catch (error) {
       console.error("Login error:", error);

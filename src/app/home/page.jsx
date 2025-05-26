@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Navbar from "../components/Navbar";
 import Banner from "../components/BannerSection";
@@ -5,109 +7,30 @@ import DetailProduk from "../components/DetailProduk";
 import ProductList from "../components/ProductList";
 import Footer from "../components/Footer";
 
-const dummyProducts = [
-  {
-    id: 1,
-    image: "iPhone16.png",
-    name: "Produk 1",
-    description:
-      "Lorem Ipsum is simply dummy text of the printing and typesetting industry.",
-    price: 20000000,
-  },
-  {
-    id: 2,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 3,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 4,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 5,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 6,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 7,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 8,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 9,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 10,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 11,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 12,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 13,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-  {
-    id: 14,
-    image: "iPhone16.png",
-    name: "Produk 2",
-    description: "Brand B",
-    price: 20000000,
-  },
-];
-
 export default function Home() {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch(`${apiUrl}/product/`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        console.log(data);
+        setProducts(data);
+      } catch (error) {
+        console.error("Gagal mengambil produk:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
   return (
     <div>
       <Navbar />
@@ -116,7 +39,7 @@ export default function Home() {
       </div>
       <div className="max-w-7xl mx-auto px-6 py-6">
         <h2 className="text-2xl font-semibold mb-6">Produk Unggulan</h2>
-        <ProductList products={dummyProducts} />
+        <ProductList products={products} />
       </div>
       <Footer />
     </div>
