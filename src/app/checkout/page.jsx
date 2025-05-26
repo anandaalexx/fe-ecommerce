@@ -85,6 +85,40 @@ export default function CheckoutPage() {
       console.error("Fetch precheckout gagal:", err);
     }
   };
+
+  const handleCheckout = async () => {
+    try {
+      console.log("TOMBOL DITEKAN");
+
+      console.log("ITEMS:", items);
+      const idList = items.map((item) => item.idDetailKeranjang); // Pastikan field-nya benar
+      const res = await fetch(`${apiUrl}/checkout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ idDetailKeranjang: idList }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Checkout gagal:", res.status, errorText);
+        alert("Gagal melakukan checkout");
+        return;
+      }
+
+      const data = await res.json();
+      console.log("Checkout berhasil:", data);
+
+      // Contoh: redirect ke halaman sukses / detail transaksi
+      //window.location.href = `/transaksi/${data.idTransaksi}`;
+    } catch (error) {
+      console.error("Terjadi kesalahan saat checkout:", error);
+      alert("Terjadi kesalahan saat checkout");
+    }
+  };
+
   const [alamat, setAlamat] = useState(
     "Kos Dalam Ningrat, Jl. Sei Wain RT 033 Karang Joang, Balikpapan Utara-Balikpapan. (Dekat Masjid Nurul Hidayah) (Kost gedung warna hijau, pagar hitam)"
   );
@@ -471,7 +505,9 @@ export default function CheckoutPage() {
                 Rp {preCheckoutInfo?.totalHargaAkhir?.toLocaleString() || "0"}
               </span>
             </div>
-            <Button>Bayar Sekarang</Button>
+            <Button onClick= {handleCheckout}>
+              Bayar Sekarang
+            </Button>
           </div>
         </div>
       </div>
