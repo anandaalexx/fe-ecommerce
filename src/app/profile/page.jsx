@@ -37,6 +37,12 @@ export default function ProfilePage() {
     detail: "",
   });
 
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeForm, setUpgradeForm] = useState({
+    storeName: "",
+    storeDescription: "",
+  });
+
   async function getCoordinates(text) {
     try {
       console.log("Text yang dikirim:", text);
@@ -98,6 +104,34 @@ export default function ProfilePage() {
       }
     } catch (error) {
       setLocation("Gagal mengambil alamat.");
+    }
+  };
+
+  const handleUpgradeToSeller = async () => {
+    try {
+      const response = await fetch(`${apiUrl}/user/upgrade-to-seller`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(upgradeForm),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Upgrade error:", errorText);
+        alert("Gagal upgrade ke seller");
+        return;
+      }
+
+      alert("Berhasil upgrade ke seller!");
+      setShowUpgradeModal(false);
+      // Reload atau update UI sesuai kebutuhan
+      setRole("seller");
+    } catch (err) {
+      console.error("Error:", err);
+      alert("Terjadi kesalahan saat upgrade.");
     }
   };
 
@@ -471,7 +505,9 @@ export default function ProfilePage() {
                 </div>
               )}
               <p className="text-gray-600 text-sm mb-3">{email}</p>
-              <Button onClick={handleSave}>Simpan</Button>
+              <Button onClick={() => setShowUpgradeModal(true)}>
+                Mulai Berjualan
+              </Button>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-md col-span-2 flex flex-col gap-6">
@@ -573,7 +609,7 @@ export default function ProfilePage() {
 
       {showModal && (
         <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
-          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
             <div className="grid grid-cols-1 gap-4">
               <input
@@ -706,6 +742,46 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+
+      {showUpgradeModal && (
+        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-lg">
+            <h3 className="text-lg font-semibold mb-4">Upgrade ke Seller</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                type="text"
+                placeholder="Nama Toko"
+                value={upgradeForm.storeName}
+                onChange={(e) =>
+                  setUpgradeForm((prev) => ({
+                    ...prev,
+                    storeName: e.target.value,
+                  }))
+                }
+                className="w-full border px-3 py-2 mb-3"
+              />
+              <textarea
+                placeholder="Deskripsi Toko"
+                value={upgradeForm.storeDescription}
+                onChange={(e) =>
+                  setUpgradeForm((prev) => ({
+                    ...prev,
+                    storeDescription: e.target.value,
+                  }))
+                }
+                className="w-full border px-3 py-2 mb-3"
+              />
+              <div className="flex justify-end space-x-2">
+                <Button onClick={() => setShowUpgradeModal(false)}>
+                  Batal
+                </Button>
+                <Button onClick={handleUpgradeToSeller}>Upgrade</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );
