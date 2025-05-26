@@ -15,6 +15,7 @@ const AddProduct = () => {
   const [stok, setStok] = useState("");
   const [parsedVariants, setParsedVariants] = useState([]);
   const [variantCombinations, setVariantCombinations] = useState([]);
+  const [pendingUploads, setPendingUploads] = useState([]);
 
   const [showVariantModal, setShowVariantModal] = useState(false);
 
@@ -26,9 +27,16 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchKategori = async () => {
       try {
-        const res = await fetch(`${apiUrl}/category/view`);
+        const res = await fetch(`${apiUrl}/category/view`, {
+          method: "GET",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
+        console.log("Kategori", data);
         setKategoriList(data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -56,9 +64,12 @@ const AddProduct = () => {
   };
 
   // Simpan data varian dari modal
-  const handleSaveVariants = ({ variants, combinations }) => {
+  const handleSaveVariants = ({ variants, combinations, pendingUploads }) => {
+    console.log("✅ Pending Uploads:", pendingUploads);
+
     setParsedVariants(variants);
     setVariantCombinations(combinations);
+    setPendingUploads(pendingUploads);
     setShowVariantModal(false);
   };
 
@@ -191,6 +202,7 @@ const AddProduct = () => {
           </div>
         ))}
       </div>
+      
 
       {/* Nama Produk */}
       <div className="mb-4">
@@ -243,11 +255,8 @@ const AddProduct = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {variant.options.map((opt, j) => (
-                    <span
-                      key={j}
-                      className="bg-gray-200 text-sm px-2 py-1 rounded"
-                    >
-                      {opt}
+                    <span key={j} className="bg-gray-200 text-sm px-2 py-1 rounded">
+                      {opt.nama}   {/* Render properti nama dari objek */}
                     </span>
                   ))}
                 </div>

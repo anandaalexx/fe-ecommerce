@@ -12,6 +12,11 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
   const [combinations, setCombinations] = useState([]);
   const [showCombinations, setShowCombinations] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [pendingUploads, setPendingUploads] = useState([]);
+
+
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 
   // Sync initialVariants on modal open
   useEffect(() => {
@@ -62,12 +67,25 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     }
   };
 
+  const handleFileChange = (e, variantNama, optionNama) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setPendingUploads((prev) => [
+      ...prev,
+      { variantNama, optionNama, file },
+    ]);
+  };
+
   // Tambah opsi baru ke currentVariant
   const handleAddOption = () => {
     if (variantInput.trim() !== "") {
       setCurrentVariant({
         ...currentVariant,
-        options: [...currentVariant.options, variantInput.trim()],
+        options: [
+          ...currentVariant.options,
+          { nama: variantInput.trim(), gambar: null },
+        ],
       });
       setVariantInput("");
     }
@@ -110,7 +128,11 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
 
   // Simpan semua data varian + kombinasi ke parent lalu tutup modal
   const handleSave = () => {
-    onSave({ variants, combinations });
+    onSave({ 
+      variants, 
+      combinations, 
+      pendingUploads
+    });
     onClose();
   };
 
@@ -180,21 +202,27 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
                   Tambah
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-col gap-2">
                 {currentVariant.options.map((option, index) => (
-                  <span
-                    key={index}
-                    className="flex items-center gap-1 px-3 py-1 bg-gray-200 rounded-full text-sm"
-                  >
-                    {option}
+                  <div key={index} className="flex items-center gap-2">
+                    {/* Kotak background abu */}
+                    <div className="flex items-center gap-2 bg-gray-100 p-2 rounded">
+                      <span className="text-sm font-medium">{option.nama}</span>
+                      <input
+                        type="file"
+                        onChange={(e) => handleFileChange(e, currentVariant.nama, option.nama)}
+                      />
+                    </div>
+
+                    {/* Tombol hapus (×) di luar background abu-abu */}
                     <button
                       onClick={() => handleRemoveOption(index)}
-                      className="text-gray-700 hover:text-red-600"
+                      className="text-gray-700 hover:text-red-600 text-xl"
                       type="button"
                     >
                       ×
                     </button>
-                  </span>
+                  </div>
                 ))}
               </div>
             </div>
@@ -220,7 +248,7 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
               <li key={index} className="flex justify-between items-center">
                 <div>
                   <strong>{variant.nama}</strong> - Opsi:{" "}
-                  {variant.options.join(", ")}
+                  {variant.options.map((o) => o.nama).join(", ")}
                 </div>
                 <button
                   onClick={() => handleRemoveVariant(index)}
