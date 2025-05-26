@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Footer from "../components/Footer";
 import { MapPinned, SquarePen, Camera } from "lucide-react";
+import dynamic from "next/dynamic";
 
 export default function ProfilePage() {
   const [image, setImage] = useState("https://via.placeholder.com/100");
@@ -19,6 +20,53 @@ export default function ProfilePage() {
     email: false,
     password: false,
     alamat: false,
+  });
+  const [showModal, setShowModal] = useState(false);
+  const [provinsiList, setProvinsiList] = useState([]);
+  const [kabupatenList, setKabupatenList] = useState([]);
+  const [kecamatanList, setKecamatanList] = useState([]);
+  const [desaList, setDesaList] = useState([]);
+  const [form, setForm] = useState({
+    nama: "",
+    telepon: "",
+    provinsi: "",
+    kabupaten: "",
+    kecamatan: "",
+    desa: "",
+    jalan: "",
+    detail: "",
+  });
+
+  async function getCoordinates(text) {
+    try {
+      console.log("Text yang dikirim:", text);
+      const res = await fetch(
+        `https://api.geoapify.com/v1/geocode/search?text=${encodeURIComponent(
+          text
+        )}&format=json&apiKey=1064d268f41d487191c502c672dab3bd`
+      );
+
+      const data = await res.json();
+      console.log("Hasil fetch Geoapify:", data);
+
+      // Cek jika hasilnya tidak kosong
+      if (data?.results && data.results.length > 0) {
+        const { lat, lon } = data.results[0];
+        console.log("Koordinat ditemukan:", lat, lon);
+        return { lat, lon };
+      } else {
+        console.warn("Data tidak ditemukan di respons Geoapify.");
+        return null;
+      }
+    } catch (err) {
+      console.error("Error fetching coordinates:", err);
+      return null;
+    }
+  }
+
+  // Import MapPicker secara dinamis hanya di sisi client
+  const MapPicker = dynamic(() => import("../components/MapPicker"), {
+    ssr: false,
   });
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -58,7 +106,7 @@ export default function ProfilePage() {
       const dataToUpdate = {
         nama,
         alamat,
-        email
+        email,
       };
 
       if (password.trim() !== "") {
@@ -97,7 +145,245 @@ export default function ProfilePage() {
     } catch (error) {
       console.error("Error:", error);
       setError("Gagal menyimpan perubahan. Silakan coba lagi nanti.");
-    } 
+    }
+  };
+
+  const [suggestions, setSuggestions] = useState([]);
+
+  const handleAutocompleteChange = async (e) => {
+    const text = e.target.value;
+    setForm((prev) => ({ ...prev, autocomplete: text }));
+
+    if (text.length < 3) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      // Dapatkan koordinat kecamatan dan kabupaten
+      const namaKecamatan = kecamatanList.find(
+        (k) => String(k.kode_kecamatan) === String(form.kecamatan)
+      )?.nama_kecamatan;
+
+      const namaKabupaten = kabupatenList.find(
+        (k) => String(k.kode_kabupaten) === String(form.kabupaten)
+      )?.nama_kabupaten;
+
+      console.log("Kecamatan: ", namaKecamatan);
+      console.log("Kabupaten: ", namaKabupaten);
+
+      if (!namaKecamatan || !namaKabupaten) return;
+
+      const coords = await getCoordinates(`${namaKecamatan}, ${namaKabupaten}`);
+      console.log("Koordinat Kecamatan dan Kabupaten:", coords);
+
+      if (!coords) return;
+
+      const res = await fetch(
+        `https://api.geoapify.com/v1/geocode/autocomplete?text=${encodeURIComponent(
+          text
+        )}&filter=circle:${coords.lon},${
+          coords.lat
+        },10000&format=json&apiKey=1064d268f41d487191c502c672dab3bd`
+      );
+      const data = await res.json();
+      console.log("Hasil Autocomplete:", data);
+      setSuggestions(data.results || []);
+    } catch (err) {
+      console.error("Autocomplete fetch error:", err);
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion) => {
+    setForm((prev) => ({
+      ...prev,
+      jalan: `${suggestion.street || ""} ${suggestion.housenumber || ""}`,
+      autocomplete: suggestion.formatted,
+      latitude: suggestion.lat,
+      longitude: suggestion.lon,
+    }));
+    setSuggestions([]);
+  };
+
+  useEffect(() => {
+    fetch("../api/wilayah/provinsi")
+      .then((res) => res.json())
+      .then((data) => setProvinsiList(data))
+      .catch((err) => console.error("Failed to fetch provinsi: ", err));
+  }, []);
+
+  useEffect(() => {
+    if (form.provinsi) {
+      fetch(`/api/wilayah/kabupaten?kode_provinsi=${form.provinsi}`)
+        .then((res) => res.json())
+        .then((data) => setKabupatenList(data))
+        .catch((err) => console.error("Failed to fetch kabupaten: ", err));
+    }
+  }, [form.provinsi]);
+
+  useEffect(() => {
+    if (form.kabupaten) {
+      fetch(`/api/wilayah/kecamatan?kode_kabupaten=${form.kabupaten}`)
+        .then((res) => res.json())
+        .then((data) => setKecamatanList(data))
+        .catch((err) => console.error("Failed to fetch kecamatan: ", err));
+    }
+  }, [form.kabupaten]);
+  useEffect(() => {
+    if (form.kecamatan) {
+      fetch(`/api/wilayah/desa?kode_kecamatan=${form.kecamatan}`)
+        .then((res) => res.json())
+        .then((data) => setDesaList(data))
+        .catch((err) => console.error("Failed to fetch desa: ", err));
+    }
+  }, [form.kecamatan]);
+
+  useEffect(() => {
+    if (form.kecamatan) {
+      const namaKecamatan = kecamatanList.find(
+        (k) => String(k.kode_kecamatan) === String(form.kecamatan)
+      )?.nama_kecamatan;
+
+      const namaKabupaten = kabupatenList.find(
+        (k) => String(k.kode_kabupaten) === String(form.kabupaten)
+      )?.nama_kabupaten;
+
+      if (namaKecamatan && namaKabupaten) {
+        getCoordinates(`${namaKecamatan}, ${namaKabupaten}`).then((coords) => {
+          if (coords) {
+            setForm((prev) => ({
+              ...prev,
+              latitude: coords.lat,
+              longitude: coords.lon,
+            }));
+          }
+        });
+      }
+    }
+  }, [form.kecamatan]);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/user/profile`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          throw new Error("Gagal mengambil data profil");
+        }
+
+        const data = await response.json();
+        // console.log("Profile data:", data);
+        setNama(data.nama);
+        setEmail(data.email);
+        setAlamat(data.alamat);
+        setRole(data.role?.namaRole);
+      } catch (error) {
+        console.error("Error:", error);
+      }
+    };
+    fetchProfile();
+  }, [apiUrl]);
+
+  const handleChange = async (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+
+    // Jika memilih kabupaten atau kecamatan, perbarui posisi map
+    if (name === "kabupaten" || name === "kecamatan") {
+      const namaKecamatan = kecamatanList.find(
+        (k) => String(k.kode_kecamatan) === String(value)
+      )?.nama_kecamatan;
+
+      const namaKabupaten = kabupatenList.find(
+        (k) => String(k.kode_kabupaten) === String(value)
+      )?.nama_kabupaten;
+
+      if (namaKecamatan && namaKabupaten) {
+        const coords = await getCoordinates(
+          `${namaKecamatan}, ${namaKabupaten}`
+        );
+        if (coords) {
+          setForm((prev) => ({
+            ...prev,
+            latitude: coords.lat,
+            longitude: coords.lon,
+          }));
+        }
+      }
+    }
+  };
+
+  const handleSubmitAlamat = async () => {
+    if (
+      !form.nama ||
+      !form.telepon ||
+      !form.provinsi ||
+      !form.kabupaten ||
+      !form.kecamatan ||
+      !form.desa ||
+      !form.jalan ||
+      !form.detail ||
+      form.latitude === null ||
+      form.longitude === null
+    ) {
+      alert("Mohon lengkapi semua data!");
+      return;
+    }
+
+    const namaProvinsi =
+      provinsiList.find(
+        (p) => Number(p.kode_provinsi) === Number(form.provinsi)
+      )?.nama_provinsi || "";
+    const namaKabupaten =
+      kabupatenList.find(
+        (k) => Number(k.kode_kabupaten) === Number(form.kabupaten)
+      )?.nama_kabupaten || "";
+    const namaKecamatan =
+      kecamatanList.find(
+        (k) => Number(k.kode_kecamatan) === Number(form.kecamatan)
+      )?.nama_kecamatan || "";
+    const namaDesa =
+      desaList.find((d) => Number(d.kode_desa) === Number(form.desa))
+        ?.nama_desa || "";
+
+    const alamatBaru = `${form.nama}, ${form.telepon}, ${form.jalan}, ${form.detail}, Desa ${namaDesa}, Kecamatan ${namaKecamatan}, Kabupaten ${namaKabupaten}, Provinsi ${namaProvinsi}`;
+
+    // ✅ Tampilkan koordinat yang akan dikirim
+    console.log("Latitude yang dikirim:", form.latitude);
+    console.log("Longitude yang dikirim:", form.longitude);
+    // Simpan ke backend
+    try {
+      const res = await fetch(`${apiUrl}/user/profile`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          // Tambahkan Authorization jika perlu
+          // Authorization: `Bearer ${token}`,
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          alamat: alamatBaru,
+          latitude: Number(form.latitude.toFixed(7)),
+          longitude: Number(form.longitude.toFixed(7)),
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text(); // 👈 lihat isi respons error
+        console.error("Respon error dari server:", res.status, errorText);
+        throw new Error("Gagal mengupdate alamat");
+      }
+
+      setAlamat(alamatBaru);
+      setShowModal(false);
+      alert("Alamat berhasil diperbarui!");
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat menyimpan alamat");
+    }
   };
 
   useEffect(() => {
@@ -111,9 +397,9 @@ export default function ProfilePage() {
         if (!response.ok) {
           throw new Error("Gagal mengambil data profil");
         }
-        
-        const data = await response.json();    
-        // console.log("Profile data:", data); 
+
+        const data = await response.json();
+        // console.log("Profile data:", data);
         setNama(data.nama);
         setEmail(data.email);
         setAlamat(data.alamat);
@@ -184,14 +470,8 @@ export default function ProfilePage() {
                   </button>
                 </div>
               )}
-              <p className="text-gray-600 text-sm mb-3">
-                {email}
-              </p>
-              <Button 
-                onClick={handleSave}
-              >
-                Simpan
-              </Button>
+              <p className="text-gray-600 text-sm mb-3">{email}</p>
+              <Button onClick={handleSave}>Simpan</Button>
             </div>
 
             <div className="bg-white rounded-2xl p-6 shadow-md col-span-2 flex flex-col gap-6">
@@ -261,10 +541,13 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm text-gray-500">Alamat</p>
                   <p className="text-gray-800 font-medium">
-                    {location || alamat|| "Belum dipilih"}
+                    {location || alamat || "Belum dipilih"}
                   </p>
                 </div>
-                <button className="text-gray-800">
+                <button
+                  className="text-gray-800"
+                  onClick={() => setShowModal(true)}
+                >
                   <MapPinned size={20} />
                 </button>
               </div>
@@ -287,6 +570,142 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {showModal && (
+        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
+          <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
+            <div className="grid grid-cols-1 gap-4">
+              <input
+                name="nama"
+                placeholder="Nama Lengkap"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.nama}
+              />
+              <input
+                name="telepon"
+                placeholder="Nomor Telepon"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.telepon}
+              />
+              <select
+                name="provinsi"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.provinsi}
+              >
+                <option>Pilih Provinsi</option>
+                {provinsiList.map((prov) => (
+                  <option key={prov.kode_provinsi} value={prov.kode_provinsi}>
+                    {prov.nama_provinsi}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="kabupaten"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.kabupaten}
+              >
+                <option>Pilih Kabupaten</option>
+                {kabupatenList.map((kab) => (
+                  <option key={kab.kode_kabupaten} value={kab.kode_kabupaten}>
+                    {kab.nama_kabupaten}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                name="kecamatan"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.kecamatan}
+              >
+                <option>Pilih Kecamatan</option>
+                {kecamatanList.map((kec) => (
+                  <option key={kec.kode_kecamatan} value={kec.kode_kecamatan}>
+                    {kec.nama_kecamatan}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                name="desa"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.desa}
+              >
+                <option>Pilih Desa</option>
+                {desaList.map((des) => (
+                  <option key={des.kode_desa} value={des.kode_desa}>
+                    {des.nama_desa}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                name="jalan"
+                type="text"
+                className="border p-2 rounded"
+                placeholder="Cari Alamat (contoh: Perumahan Grand City)"
+                value={form.autocomplete || ""}
+                onChange={handleAutocompleteChange}
+              />
+              {suggestions.length > 0 && (
+                <ul className="bg-white border rounded shadow max-h-60 overflow-y-auto">
+                  {suggestions.map((suggestion, index) => (
+                    <li
+                      key={index}
+                      className="p-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                    >
+                      {suggestion.formatted}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              <input
+                name="detail"
+                placeholder="Detail Lainnya"
+                className="border p-2 rounded"
+                onChange={handleChange}
+                value={form.detail}
+              />
+
+              <MapPicker
+                initialPosition={{
+                  lat: form.latitude || -1.2399,
+                  lon: form.longitude || 116.8527,
+                }}
+                onLocationChange={(coords) => {
+                  setForm((prev) => ({
+                    ...prev,
+                    latitude: coords.lat,
+                    longitude: coords.lon,
+                  }));
+                }}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowModal(false)}
+                className="px-4 py-2 bg-gray-300 rounded"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleSubmitAlamat}
+                className="px-4 py-2 bg-blue-600 text-white rounded"
+              >
+                Simpan
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <Footer />
     </>
   );
