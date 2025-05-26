@@ -555,14 +555,14 @@ export default function ProfilePage() {
           </div>
 
           {/* Peta */}
-          <div className="mt-10">
+          {/* <div className="mt-10">
             <h3 className="text-lg font-medium text-gray-800 mb-2">
               Pin Lokasi di Peta
             </h3>
             <div className="w-full h-64 rounded-xl overflow-hidden border-gray-500">
               <GoogleMap onMapClick={handleMapClick} latLng={latLng} />
             </div>
-          </div>
+          </div> */}
 
           {/* Tombol */}
           <div className="mt-8 text-right">
