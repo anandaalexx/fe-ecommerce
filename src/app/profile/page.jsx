@@ -261,7 +261,7 @@ export default function ProfilePage() {
                 <div>
                   <p className="text-sm text-gray-500">Alamat</p>
                   <p className="text-gray-800 font-medium">
-                    {location || "Belum dipilih"}
+                    {location || alamat|| "Belum dipilih"}
                   </p>
                 </div>
                 <button className="text-gray-800">
