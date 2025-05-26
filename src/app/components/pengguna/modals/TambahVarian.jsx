@@ -114,6 +114,18 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     setVariants(variants.filter((_, i) => i !== index));
   };
 
+  const handleCancel = () => {
+    setCurrentVariant({ nama: "", options: [] });
+    setVariantInput("");
+    setIsAddingOptions(false);
+    setVariants([]);
+    setCombinations([]);
+    setShowCombinations(false);
+    setPendingUploads([]);
+    onClose();
+  };
+
+
   // Update input nama varian yang sedang dibuat
   const handleChangeCurrentVariantName = (value) => {
     setCurrentVariant({ ...currentVariant, nama: value });
@@ -315,7 +327,7 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
         {/* Footer buttons */}
         <div className="flex justify-end gap-4 mt-6">
           <button
-            onClick={onClose}
+            onClick={handleCancel}
             className="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400"
             type="button"
           >
