@@ -26,7 +26,6 @@ const KurirLayout = ({ children }) => {
         if (data.roleId === 3) {
           setIsAuthorized(true);
         } else {
-          console.log("masuk sini");
           router.push("/");
         }
       })
@@ -42,7 +41,7 @@ const KurirLayout = ({ children }) => {
   }
 
   return isAuthorized ? (
-    <DashboardLayout role="kurir" username="Mansur">
+    <DashboardLayout role="kurir" username={user?.email || "kurir"}>
       {children}
     </DashboardLayout>
   ) : null;

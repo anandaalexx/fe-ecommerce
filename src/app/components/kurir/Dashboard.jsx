@@ -1,3 +1,6 @@
+"use client"
+import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   CircleCheckBig,
   Hourglass,
@@ -6,6 +9,27 @@ import {
 } from "lucide-react";
 
 const Dashboard = ({ onNavigate }) => {
+  const router = useRouter();
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [jumlahPengiriman, setJumlahPengiriman] = useState();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const resListOrder = await fetch(`${apiUrl}/pengiriman/list_order`, {
+          credentials: "include",
+        });
+
+        const listOrder = await resListOrder.json();
+        setJumlahPengiriman(listOrder.length);
+      } catch (err) {
+        console.error("Gagal memuat data:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   const stats = [
     {
       title: "Total Pengiriman yang Terselesaikan",
@@ -23,7 +47,7 @@ const Dashboard = ({ onNavigate }) => {
     },
     {
       title: "Pesanan Menunggu",
-      value: 3,
+      value: jumlahPengiriman,
       icon: <Hourglass className="w-6 h-6 text-white" />,
       bg: "from-yellow-400 to-yellow-600",
       targetPage: "Pengiriman",

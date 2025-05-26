@@ -27,7 +27,9 @@ const CardProduk = ({ product }) => {
       {/* Harga & Tombol */}
       <div className="flex justify-between items-center w-full mt-1">
         <span className="text-md font-medium text-gray-900">
-          Rp {product.hargaTerendah.toLocaleString("id-ID")}
+          {product.hargaTerendah != null
+            ? `Rp ${product.hargaTerendah.toLocaleString("id-ID")}`
+            : "Harga tidak tersedia"}
         </span>
         <button className="px-3 py-1 text-sm font-light border border-gray-500/20 rounded-full text-gray-500 hover:bg-slate-50 transition cursor cursor-pointer">
           Beli

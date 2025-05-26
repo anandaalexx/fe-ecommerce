@@ -1,5 +1,6 @@
 "use client";
 import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   Search,
   ShoppingCart,
@@ -11,7 +12,27 @@ import Link from "next/link";
 import Logo from "./Logo.jsx";
 
 export default function Navbar() {
+  const [categories, setCategories] = useState([]);
   const router = useRouter();
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  useEffect(() => {
+    const getCategories = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/category/view`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        setCategories(data);
+      } catch (error) {
+        console.error("❌ Gagal mengambil kategori:", error);
+      }
+    };
+
+    getCategories();
+  }, [apiUrl]);
+  
   return (
     <nav className="fixed w-full z-99 border-b border-gray-300 bg-white">
       {/* Navbar Atas */}
@@ -46,7 +67,7 @@ export default function Navbar() {
         <div className="flex items-center gap-6">
           {[
             // { icon: <Store size={24} />, label: "Toko Anda" },
-            { icon: <ShoppingCart size={24} />, label: "Keranjang" },
+            { icon: <ShoppingCart size={24} />, label: "Keranjang", path: "/keranjang" },
             { icon: <CircleUserRound size={24} />, label: "Akun", path: "/profile" },
           ].map((item, i) => (
             <div
@@ -69,14 +90,19 @@ export default function Navbar() {
       <div className="flex justify-between items-center py-3 border-t border-gray-300 text-sm">
         {/* Menu di Tengah */}
         <div className="flex font-medium text-md justify-left gap-6 flex-1 px-6">
-          {[...Array(6)].map((_, i) => (
-            <span
-              key={i}
-              className="cursor-pointer relative hover:text-[#EDCF5D] transition-all duration-300"
-            >
-              Menu
-            </span>
-          ))}
+          {categories.length > 0 ? (
+            categories.map((cat) => (
+              <span
+                key={cat.id}
+                className="cursor-pointer relative hover:text-[#EDCF5D] transition-all duration-300"
+                onClick={() => router.push(`/home/kategori/${cat.id}`)}
+              >
+                {cat.nama}
+              </span>
+            ))
+          ) : (
+            <span className="text-gray-400">Memuat kategori...</span>
+          )}
         </div>
 
         {/* Saldo Elektronik */}
