@@ -67,9 +67,15 @@ const Kurir = () => {
     const user = users.find((u) => String(u.id) === String(kurir.idUser));
     const combinedData = {
       ...kurir,
+      id: kurir.id,
+      idUser: kurir.idUser,
       nama: user?.nama || "",
       email: user?.email || "",
       password: user?.password || "",
+      nomorTelepon: kurir.nomorTelepon || "",
+      nomorPolisi: kurir.nomorPolisi || "",
+      merkKendaraan: kurir.merkKendaraan || "",
+      warnaKendaraan: kurir.warnaKendaraan || "",
     };
 
     setSelectedKurir(combinedData);
@@ -77,22 +83,34 @@ const Kurir = () => {
   };
 
   const handleEdit = async (updatedKurir) => {
-    const { idUser, nama, email, password, ...kurirFields } = updatedKurir;
+    const { id, idUser, nama, email, password, ...kurirFields } = updatedKurir;
 
-    await fetch(`${apiUrl}/admin/users/${idUser}`, {
-      method: "PUT",
-      body: JSON.stringify({ nama, email, password }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      await fetch(`${apiUrl}/admin/users/${idUser}`, {
+        method: "PUT",
+        body: JSON.stringify({ nama, email, password }),
+        headers: { "Content-Type": "application/json" },
+      });
 
-    await fetch(`${apiUrl}/admin/couriers/${updatedKurir.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ ...kurirFields, idUser }),
-      headers: { "Content-Type": "application/json" },
-    });
+      await fetch(`${apiUrl}/admin/couriers/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({
+          ...kurirFields,
+          idUser,
+          nomorTelepon: updatedKurir.nomorTelepon,
+          nomorPolisi: updatedKurir.nomorPolisi,
+          merkKendaraan: updatedKurir.merkKendaraan,
+          warnaKendaraan: updatedKurir.warnaKendaraan,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
 
-    await fetchKurir();
-    showToast("Pengguna berhasil diperbarui", "success");
+      await fetchKurir();
+      showToast("Pengguna berhasil diperbarui", "success");
+    } catch (error) {
+      console.error("Error updating:", error);
+      showToast("Gagal memperbarui data", "error");
+    }
   };
 
   return (
