@@ -1,0 +1,166 @@
+"use client";
+import { useEffect, useState } from "react";
+import ReviewModal from "./ReviewModal";
+
+const PesananCard = () => {
+  const [daftarPesanan, setDaftarPesanan] = useState([]);
+  const [reviewOpenRow, setReviewOpenRow] = useState(null);
+  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  useEffect(() => {
+    const fetchPesanan = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/transaksi/user`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Penting kalau pakai cookie-based auth
+        });
+
+        const data = await res.json();
+        console.log("Data dari backend:", data);
+
+        if (!data || !Array.isArray(data.transaksi)) {
+          console.error("Data transaksi tidak valid:", data);
+          return;
+        }
+
+        const formatted = data.transaksi.map((trx) => ({
+          id: `#TRX-${trx.idTransaksi}`,
+          jumlah: trx.produk.length,
+          total: parseInt(trx.totalHarga),
+          status:
+            trx.statusPengiriman?.replace(/_/g, " ") || "menunggu penjual",
+          barangSesuai: true,
+          produk: trx.produk, // ← simpan seluruh produk
+        }));
+
+        setDaftarPesanan(formatted);
+      } catch (err) {
+        console.error("Gagal memuat data transaksi:", err);
+      }
+    };
+
+    fetchPesanan();
+  }, []);
+
+  const ubahStatusPesanan = (id, statusBaru) => {
+    const update = daftarPesanan.map((p) =>
+      p.id === id && p.status === "sampai di tujuan"
+        ? { ...p, status: statusBaru }
+        : p
+    );
+    setDaftarPesanan(update);
+  };
+
+  const handleKirimReview = ({ rating, review }) => {
+    console.log("Review dikirim:", rating, review);
+    setReviewOpenRow(null);
+  };
+
+  return (
+    <div className="max-w-7xl mx-auto border border-gray-100 rounded shadow-sm">
+      <table className="min-w-full text-sm divide-y divide-gray-200">
+        <thead className="bg-gray-100 text-gray-700">
+          <tr>
+            <th className="px-6 py-3 text-left">No Pesanan</th>
+            <th className="px-6 py-3 text-left">Produk Pesanan</th>
+            <th className="px-6 py-3 text-left">Jumlah Barang</th>
+            <th className="px-6 py-3 text-left">Total</th>
+            <th className="px-6 py-3 text-left">Status</th>
+            <th className="px-6 py-3 text-center">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {daftarPesanan.map((order, index) => (
+            <tr key={order.id}>
+              <td className="px-6 py-4">{order.id}</td>
+              <td className="px-6 py-4">
+                <div className="space-y-2">
+                  {order.produk.map((item, i) => (
+                    <div key={i} className="border-b pb-1">
+                      <div className="font-medium">{item.namaProduk}</div>
+
+                      {item.varian && item.varian.length > 0 && (
+                        <ul className="ml-4 text-sm text-gray-600 list-disc">
+                          {item.varian.map((v, j) => (
+                            <li key={j}>
+                              {v.namaVarian}: {v.nilai}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      <div className="text-sm text-gray-700">
+                        Jumlah: {item.jumlah}
+                      </div>
+                      <div className="text-sm text-gray-700">
+                        Harga Satuan: Rp{" "}
+                        {parseInt(item.hargaSatuan).toLocaleString("id-ID")}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </td>
+
+              <td className="px-6 py-4">{order.jumlah}</td>
+              <td className="px-6 py-4">
+                Rp {order.total.toLocaleString("id-ID")}
+              </td>
+              <td className="px-6 py-4">
+                <span
+                  className={`px-3 py-1 rounded-full text-sm ${
+                    order.status === "sedang dikirim"
+                      ? "bg-yellow-200 text-yellow-800"
+                      : order.status === "diterima pembeli"
+                      ? "bg-green-300 text-green-900"
+                      : order.status === "sampai di tujuan"
+                      ? "bg-blue-200 text-blue-800"
+                      : "bg-gray-200 text-gray-800"
+                  }`}
+                >
+                  {order.status}
+                </span>
+              </td>
+              <td className="px-6 py-4 text-center space-y-2">
+                {order.status === "sampai di tujuan" && (
+                  <button
+                    onClick={() =>
+                      ubahStatusPesanan(order.id, "diterima pembeli")
+                    }
+                    className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
+                  >
+                    Diterima
+                  </button>
+                )}
+                {order.status === "diterima pembeli" && (
+                  <button
+                    onClick={() => setReviewOpenRow(index)}
+                    disabled={!order.barangSesuai}
+                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition duration-200 ${
+                      order.barangSesuai
+                        ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    }`}
+                  >
+                    Beri Ulasan
+                  </button>
+                )}
+                {reviewOpenRow === index && (
+                  <ReviewModal
+                    isOpen={true}
+                    onClose={() => setReviewOpenRow(null)}
+                    onSubmit={handleKirimReview}
+                  />
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+export default PesananCard;
