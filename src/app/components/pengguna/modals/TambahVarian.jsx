@@ -48,12 +48,24 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
       );
     };
 
-    const variantOptions = variants.map((v) => v.options);
+    const variantOptions = variants.map((v) =>
+      v.options.map((opt) => ({
+        value: {
+          nama: opt.nama,
+          gambar: opt.gambar || null, // Pastikan struktur konsisten
+        }
+      }))
+    );
+
     const allCombinations = combine(variantOptions);
 
     const namedCombinations = allCombinations.map((options) => {
-      const nama = options.join(" / ");
-      return { nama, harga: "", stok: "" };
+      return {
+        nama: options.map(option => option.value.nama).join(" / "),
+        nilai: options.map(option => option.value), // ← ini akan dipakai di handleSubmit
+        harga: "",
+        stok: ""
+      };
     });
 
     setCombinations(namedCombinations);

@@ -36,7 +36,6 @@ const AddProduct = () => {
         });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
-        console.log("Kategori", data);
         setKategoriList(data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -53,7 +52,6 @@ const AddProduct = () => {
       const updatedImages = [...images];
       updatedImages[index] = { preview, file };
       setImages(updatedImages);
-      console.log("Images state:", updatedImages);
     }
   };
 
@@ -77,8 +75,6 @@ const AddProduct = () => {
 
   // Simpan data varian dari modal
   const handleSaveVariants = ({ variants, combinations, pendingUploads }) => {
-    console.log("✅ Pending Uploads:", pendingUploads);
-
     setParsedVariants(variants);
     setVariantCombinations(combinations);
     setPendingUploads(pendingUploads);
@@ -86,6 +82,7 @@ const AddProduct = () => {
   };
 
   const handleSubmit = async () => {
+
     if (!namaProduk || !deskripsi || !kategori) {
       alert("Nama produk, deskripsi, dan kategori wajib diisi!");
       return;
@@ -108,6 +105,7 @@ const AddProduct = () => {
         return;
       }
     }
+
     // Siapkan payload dasar
     const payload = {
       namaProduk,
@@ -123,31 +121,27 @@ const AddProduct = () => {
       // Jika ada varian, siapkan struktur varian
       payload.varian = parsedVariants.map((variant) => ({
         nama: variant.nama,
-        nilai: variant.options.map(option => option.nama), // Ambil hanya nama
+        nilai: variant.options.map(option => option.nama), // ← Ambil hanya .nama saja
       }));
 
       variantCombinations.forEach((combo, index) => {
-        console.log(`Combo ${index}:`, combo.nama.split(" / "));
       });
 
       payload.produkVarian = variantCombinations.map((combo) => ({
         harga: parseInt(combo.harga),
         stok: parseInt(combo.stok),
-        nilaiVarian: combo.nama.split(" / ").map((nilai, idx) => ({
+        nilaiVarian: combo.nilai.map((nilaiObj, idx) => ({
           varian: parsedVariants[idx].nama,
-          nilai: nilai,
-        })),
+          nilai: nilaiObj.nama, // ← karena kamu sudah simpan object {nama, gambar}
+        }))
       }));
     }
 
-    console.log("Payload yang dikirim:", payload);
-
     try {
+      // 1. Tambahkan produk terlebih dahulu
       const res = await fetch(`${apiUrl}/product/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
       });
@@ -159,8 +153,74 @@ const AddProduct = () => {
       }
 
       const data = await res.json();
-      console.log("Produk berhasil ditambahkan:", data);
+
+      const idProdukBaru = data.data.produk.id;
+      const varianProduk = data.data.produk.varianProduk; 
+
+      // 2. Upload gambar jika ada
+      if (images.length > 0) {
+        for (const image of images) {
+          const formData = new FormData();
+          formData.append("image", image.file); // ← dari state images
+          formData.append("idProduk", idProdukBaru);
+
+          try {
+            const uploadRes = await fetch(`${apiUrl}/foto-produk`, {
+              method: "POST",
+              body: formData,
+              credentials: "include", // opsional kalau butuh cookie login
+            });
+
+            if (!uploadRes.ok) {
+              const errText = await uploadRes.text();
+              console.error("Gagal upload gambar:", errText);
+            } else {
+              const uploadData = await uploadRes.json();
+            }
+          } catch (uploadErr) {
+            console.error("Error saat upload gambar:", uploadErr.message);
+          }
+        }
+      }
+
+      // 3. Upload gambar varian produk jika ada
+      if (pendingUploads && pendingUploads.length > 0) {
+        for (let i = 0; i < pendingUploads.length; i++) {
+          const item = pendingUploads[i];
+          const formData = new FormData();
+
+          const idVarianProduk = varianProduk[i]?.id; // Ambil ID varian dari respons
+
+          if (!idVarianProduk) {
+            console.warn(`ID varian tidak ditemukan untuk upload index ke-${i}`);
+            continue;
+          }
+
+          formData.append("image", item.file);
+          formData.append("idVarianProduk", idVarianProduk);
+
+          try {
+            const resVarianUpload = await fetch(`${apiUrl}/foto-varian-produk`, {
+              method: "POST",
+              body: formData,
+              credentials: "include",
+            });
+
+            if (!resVarianUpload.ok) {
+              const errText = await resVarianUpload.text();
+              console.error("Gagal upload foto varian:", errText);
+            } else {
+              const varianData = await resVarianUpload.json();
+            }
+          } catch (err) {
+            console.error("Error upload gambar varian:", err.message);
+          }
+        }
+      }
+
+      // 3. Redirect setelah selesai semua
       router.push("/pengguna/list-produk");
+
     } catch (err) {
       console.error("Error saat submit:", err.message);
     }

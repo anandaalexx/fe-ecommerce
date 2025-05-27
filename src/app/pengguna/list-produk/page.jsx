@@ -36,8 +36,9 @@ const TableProduk = () => {
         });
         const json = await res.json();
 
+        console.log("Data produk:", json);
+
         if (Array.isArray(json)) {
-          console.log(json);
           setProdukList(json);
         } else {
           console.error("Format data tidak valid:", json);
