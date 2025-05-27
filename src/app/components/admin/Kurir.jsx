@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import TableKurir from "./TableKurir";
 import TambahKurir from "./modals/TambahKurir";
 import EditKurir from "./modals/EditKurir";
+import ToastNotification from "../ToastNotification";
 
 const Kurir = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,7 +12,16 @@ const Kurir = () => {
   const [selectedKurir, setSelectedKurir] = useState(null);
   const [kurirs, setKurirs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -82,6 +92,7 @@ const Kurir = () => {
     });
 
     await fetchKurir();
+    showToast("Pengguna berhasil diperbarui", "success");
   };
 
   return (
@@ -109,6 +120,7 @@ const Kurir = () => {
         onSuccess={async () => {
           await fetchUsers();
           await fetchKurir();
+          showToast("Kurir berhasil ditambahkan", "success");
         }}
       />
 
@@ -116,7 +128,11 @@ const Kurir = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedKurir}
-        onSubmit={handleEdit}
+        onSubmit={async (updatedKurir) => {
+          await handleEdit(updatedKurir);
+          showToast("Kurir berhasil diperbarui", "success");
+          setIsEditModalOpen(false);
+        }}
       />
     </div>
   );

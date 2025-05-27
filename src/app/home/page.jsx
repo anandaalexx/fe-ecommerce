@@ -6,6 +6,7 @@ import Banner from "../components/BannerSection";
 import DetailProduk from "../components/DetailProduk";
 import ProductList from "../components/ProductList";
 import Footer from "../components/Footer";
+import PageTransition from "../components/PageTransition";
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -32,7 +33,7 @@ export default function Home() {
   }, []);
 
   return (
-    <div>
+    <PageTransition>
       <Navbar />
       <div className="pt-38">
         <Banner />
@@ -42,6 +43,6 @@ export default function Home() {
         <ProductList products={products} />
       </div>
       <Footer />
-    </div>
+    </PageTransition>
   );
 }

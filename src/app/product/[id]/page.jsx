@@ -12,10 +12,17 @@ export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showNotification, setShowNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     async function fetchProduct() {
@@ -49,18 +56,10 @@ export default function ProductDetailPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setNotificationMessage(
-          data.message || "Produk berhasil ditambahkan ke keranjang!"
-        );
-        setShowNotification(true);
-      } else {
-        throw new Error(data.message || "Gagal menambahkan ke keranjang");
+        showToast("Produk berhasil ditambahkan ke keranjang", "success");
       }
     } catch (err) {
-      setNotificationMessage(
-        err.message || "Terjadi kesalahan saat menambahkan ke keranjang."
-      );
-      setShowNotification(true);
+      showToast("Gagal menambahkan produk ke keranjang", "error");
     }
   };
 
@@ -70,12 +69,13 @@ export default function ProductDetailPage() {
   return (
     <>
       <Navbar />
-      {showNotification && (
+      {toast.show && (
         <ToastNotification
-          key={notificationMessage}
-          message={notificationMessage}
-          show={showNotification}
-          onClose={() => setShowNotification(false)}
+          key={toast.message}
+          message={toast.message}
+          type={toast.type}
+          show={toast.show}
+          onClose={() => setToast({ ...toast, show: false })}
           action={{
             label: "Lihat Keranjang",
             onClick: () => {

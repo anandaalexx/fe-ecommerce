@@ -60,13 +60,13 @@ const PesananCard = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto border border-gray-100 rounded shadow-sm">
+    <div className="max-w-7xl mx-auto border border-gray-200 rounded shadow-sm">
       <table className="min-w-full text-sm divide-y divide-gray-200">
         <thead className="bg-gray-100 text-gray-700">
           <tr>
             <th className="px-6 py-3 text-left">No Pesanan</th>
             <th className="px-6 py-3 text-left">Produk Pesanan</th>
-            <th className="px-6 py-3 text-left">Jumlah Barang</th>
+            <th className="px-6 py-3 text-left">Jumlah Produk</th>
             <th className="px-6 py-3 text-left">Total</th>
             <th className="px-6 py-3 text-left">Status</th>
             <th className="px-6 py-3 text-center">Aksi</th>
@@ -74,12 +74,12 @@ const PesananCard = () => {
         </thead>
         <tbody>
           {daftarPesanan.map((order, index) => (
-            <tr key={order.id}>
+            <tr key={order.id} className="border-b border-gray-200">
               <td className="px-6 py-4">{order.id}</td>
               <td className="px-6 py-4">
                 <div className="space-y-2">
                   {order.produk.map((item, i) => (
-                    <div key={i} className="border-b pb-1">
+                    <div key={i} className="border-b border-gray-200 pb-1">
                       <div className="font-medium">{item.namaProduk}</div>
 
                       {item.varian && item.varian.length > 0 && (

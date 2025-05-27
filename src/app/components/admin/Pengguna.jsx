@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import TablePengguna from "./TablePengguna";
 import ModalTambahPengguna from "./modals/TambahPengguna";
 import ModalEditPengguna from "./modals/EditPengguna";
+import ToastNotification from "../ToastNotification";
 
 const Pengguna = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +12,15 @@ const Pengguna = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [users, setUsers] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -46,6 +56,7 @@ const Pengguna = () => {
     }
 
     await fetchUsers();
+    showToast("Pengguna berhasil diperbarui", "success");
   };
 
   return (
@@ -65,19 +76,34 @@ const Pengguna = () => {
         users={users}
         setUsers={setUsers}
         onEdit={handleEditUser}
+        showToast={showToast}
       />
 
       <ModalTambahPengguna
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchUsers}
+        onSuccess={() => {
+          fetchUsers();
+          showToast("Pengguna berhasil ditambahkan", "success");
+        }}
       />
 
       <ModalEditPengguna
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedUser}
-        onSubmit={handleEdit}
+        onSubmit={async (updatedUser) => {
+          await handleEdit(updatedUser);
+          showToast("Pengguna berhasil diperbarui", "success");
+          setIsEditModalOpen(false);
+        }}
+      />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );
