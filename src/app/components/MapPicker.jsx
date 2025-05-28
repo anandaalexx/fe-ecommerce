@@ -71,7 +71,7 @@ const MapPicker = ({ initialPosition, onLocationChange }) => {
             setPosition(coords);
             onLocationChange(coords);
 
-            // Tambahkan log di sini
+            // Tambahkan log di sini  
             console.log("Marker moved to:", coords.lat, coords.lon);
           },
         }}

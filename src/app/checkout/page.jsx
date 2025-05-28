@@ -511,7 +511,7 @@ export default function CheckoutPage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
+        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-999 overflow-auto">
           <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
             <div className="grid grid-cols-1 gap-4">

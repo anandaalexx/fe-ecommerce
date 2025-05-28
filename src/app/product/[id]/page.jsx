@@ -10,6 +10,7 @@ import TabsDetail from "../../components/TabDetail";
 export default function ProductDetailPage() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showNotification, setShowNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -18,13 +19,35 @@ export default function ProductDetailPage() {
   useEffect(() => {
     async function fetchProduct() {
       try {
-        const res = await fetch(`${apiUrl}/product/${id}`, {
-          credentials: "include",
-        });
-        const data = await res.json();
-        setProduct(data);
-      } catch (err) {
-        console.error("Gagal fetch produk:", err);
+        const [productRes, reviewsRes] = await Promise.all([
+          fetch(`${apiUrl}/product/${id}`, {
+            credentials: "include",
+          }),
+          fetch(`${apiUrl}/ulasan/${id}`, {
+            credentials: "include",
+          }),
+        ]);
+
+        const productData = await productRes.json();
+        const reviewData = await reviewsRes.json();
+
+        setProduct(productData);
+
+        if (reviewData.success) {
+          const mappedReviews = reviewData.data.map((review) => ({
+            name: review.nama || "Pengguna Anonim",
+            avatar: "/default-avatar.png",
+            timeAgo: new Date(review.tanggal).toLocaleDateString("id-ID"), 
+            rating: review.rating,
+            comment: review.komentar,
+          }));
+          setReviews(mappedReviews);
+        } else {
+          setReviews([]);
+        }
+       } catch (err) {
+        console.error("Gagal fetch data produk atau review:", err);
+        setReviews([]); 
       } finally {
         setLoading(false);
       }
@@ -35,7 +58,6 @@ export default function ProductDetailPage() {
 
   const handleAddToCart = async () => {
     try {
-      console.log("Product data:", product);
       const selectedVarian = product?.varianProduk?.[0];
 
       if (!selectedVarian?.id) {
@@ -56,9 +78,6 @@ export default function ProductDetailPage() {
       if (!response.ok) {
         throw new Error(data.message || "Gagal menambahkan ke keranjang");
       }
-      if (response.ok) {
-        throw new Error("Berhasil menambahkan ke keranjang");
-      }
 
       setNotificationMessage(
         data.message || "Produk berhasil ditambahkan ke keranjang!"
@@ -66,7 +85,6 @@ export default function ProductDetailPage() {
       setShowNotification(true);
       setTimeout(() => setShowNotification(false), 3000);
     } catch (err) {
-      console.error("Error details:", err);
       setNotificationMessage(
         err.message || "Terjadi kesalahan saat menambahkan ke keranjang."
       );
@@ -93,7 +111,10 @@ export default function ProductDetailPage() {
 
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 mt-10 gap-8">
             <div className="md:col-span-2">
-              <TabsDetail description={product.deskripsi} />
+              <TabsDetail 
+                description={product.deskripsi}
+                reviews={reviews} 
+              />
             </div>
           </div>
         </div>
