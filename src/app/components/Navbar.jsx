@@ -17,6 +17,7 @@ export default function Navbar() {
   const [categories, setCategories] = useState([]);
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -36,6 +37,27 @@ export default function Navbar() {
 
     getCategories();
   }, [apiUrl]);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/cart/view`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json();
+
+        // Hitung total semua jumlah produk dalam keranjang
+        const totalItems = data.reduce((acc, item) => acc + item.jumlah, 0);
+        setCartCount(totalItems);
+      } catch (error) {
+        console.error("Gagal mengambil data keranjang:", error);
+      }
+    };
+
+    fetchCartCount();
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -123,10 +145,15 @@ export default function Navbar() {
 
           {/* Keranjang */}
           <div
-            className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
+            className="relative flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
             onClick={() => router.push("/keranjang")}
           >
             <ShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 right-3 bg-[#EDCF5D] text-black text-xs font-medium rounded-full px-1.5">
+                {cartCount}
+              </span>
+            )}
             <span className="mt-1">Keranjang</span>
           </div>
 

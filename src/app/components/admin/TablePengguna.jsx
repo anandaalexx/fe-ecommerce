@@ -258,6 +258,7 @@ const TablePengguna = ({ users, setUsers, onEdit, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus pengguna "${userToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
     </>
   );

@@ -602,7 +602,9 @@ export default function ProfilePage() {
 
           {/* Tombol */}
           <div className="mt-8 text-right">
-            <Button onClick={handleSave}>Simpan Perubahan</Button>
+            <Button onClick={handleSave} className="-px-6">
+              Simpan Perubahan
+            </Button>
           </div>
         </div>
       </div>

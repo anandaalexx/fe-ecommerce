@@ -8,7 +8,18 @@ const ModalKonfirmasi = ({
   title,
   message,
   confirmText = "Hapus",
+  confirmColor = "red",
 }) => {
+  const colorClassMap = {
+    red: "bg-red-600 hover:bg-red-700",
+    green: "bg-green-600 hover:bg-green-700",
+    blue: "bg-blue-600 hover:bg-blue-700",
+    yellow: "bg-[#EDCF5D] hover:brightness-110",
+  };
+
+  const confirmButtonClass =
+    colorClassMap[confirmColor] || "bg-gray-600 hover:bg-gray-700";
+
   return (
     <Dialog open={isOpen} onClose={onClose} className="relative z-50">
       <div className="fixed inset-0 bg-black/20" aria-hidden="true" />
@@ -32,7 +43,7 @@ const ModalKonfirmasi = ({
                 onConfirm();
                 onClose();
               }}
-              className="px-4 py-2 text-sm rounded bg-red-600 text-white hover:bg-red-700 cursor-pointer"
+              className={`px-4 py-2 text-sm rounded text-white cursor-pointer ${confirmButtonClass}`}
             >
               {confirmText}
             </button>

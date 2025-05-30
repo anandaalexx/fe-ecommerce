@@ -233,6 +233,7 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus kategori "${categoryToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
     </>
   );

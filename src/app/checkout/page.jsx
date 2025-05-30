@@ -9,6 +9,7 @@ import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
+import ModalKonfirmasi from "../components/admin/modals/Konfirmasi";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
@@ -21,6 +22,7 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
   const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -506,7 +508,7 @@ export default function CheckoutPage() {
                 Rp {preCheckoutInfo?.totalHargaAkhir?.toLocaleString() || "0"}
               </span>
             </div>
-            <Button onClick={handleCheckout}>Bayar Sekarang</Button>
+            <Button onClick={() => setModalOpen(true)}>Bayar Sekarang</Button>
           </div>
         </div>
       </div>
@@ -632,13 +634,13 @@ export default function CheckoutPage() {
             <div className="flex justify-end gap-2 text-white mt-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded font-medium cursor-pointer"
+                className="px-4 py-2 border border-black hover:bg-gray-100 text-black  rounded font-medium cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleSubmitAlamat}
-                className="px-4 py-2 bg-[#EDCF5D] hover:brightness-100 cursor-pointer text-white rounded font-medium"
+                className="px-4 py-2 bg-[#EDCF5D] hover:brightness-110 cursor-pointer text-white rounded font-medium"
               >
                 Simpan
               </button>
@@ -646,8 +648,16 @@ export default function CheckoutPage() {
           </div>
         </div>
       )}
-
       <Footer />
+      <ModalKonfirmasi
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onConfirm={handleCheckout}
+        title="Konfirmasi Pembayaran"
+        message={`Apakah Anda yakin ingin membayar sekarang? Saldo Anda akan terpotong sebesar Rp ${preCheckoutInfo?.totalHargaAkhir?.toLocaleString()}!`}
+        confirmText="Bayar"
+        confirmColor="yellow"
+      />
     </>
   );
 }

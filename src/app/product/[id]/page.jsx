@@ -7,6 +7,7 @@ import ProductGallery from "../../components/ProductGallery";
 import ProductInfo from "../../components/ProductInfo";
 import TabsDetail from "../../components/TabDetail";
 import ToastNotification from "@/app/components/ToastNotification";
+import PopupNotification from "@/app/components/PopupNotification";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -19,7 +20,12 @@ export default function ProductDetailPage() {
     message: "",
     type: "success",
   });
+  const [popup, setPopup] = useState({ show: false, message: "", type: "" });
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const showPopup = (message, type) => {
+    setPopup({ show: true, message, type });
+  };
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -83,7 +89,10 @@ export default function ProductDetailPage() {
         showToast("Produk berhasil ditambahkan ke keranjang", "success");
       }
     } catch (err) {
-      showToast("Gagal menambahkan produk ke keranjang", "error");
+      showPopup(
+        "Gagal menambahkan ke keranjang. Varian belum dipilih.",
+        "error"
+      );
     }
   };
 
@@ -108,6 +117,13 @@ export default function ProductDetailPage() {
           }}
         />
       )}
+
+      <PopupNotification
+        show={popup.show}
+        message={popup.message}
+        type={popup.type}
+        onClose={() => setPopup({ ...popup, show: false })}
+      />
 
       <div className="bg-gray-100 pt-48 pb-12">
         <div className="max-w-7xl bg-white shadow-xl rounded-md overflow-hidden mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">

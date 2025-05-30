@@ -229,6 +229,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Yakin ingin menghapus produk "${produkToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
     </>
   );
