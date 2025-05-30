@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo.jsx";
+import ModalKonfirmasi from "./admin/modals/Konfirmasi.jsx";
 
 export default function Navbar() {
   const [categories, setCategories] = useState([]);
@@ -19,6 +20,7 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
+  const [modalLogoutOpen, setModalLogoutOpen] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -180,7 +182,10 @@ export default function Navbar() {
                   <UserRound size={16} />
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setShowDropdown(false);
+                    setModalLogoutOpen(true);
+                  }}
                   className="w-full flex items-center justify-between text-sm px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
                   <span>Logout</span>
@@ -218,6 +223,15 @@ export default function Navbar() {
           </span>
         </div>
       </div>
+      <ModalKonfirmasi
+        isOpen={modalLogoutOpen}
+        onClose={() => setModalLogoutOpen(false)}
+        onConfirm={handleLogout}
+        title="Konfirmasi Logout"
+        message="Apakah Anda yakin ingin keluar dari akun?"
+        confirmText="Keluar"
+        confirmColor="red"
+      />
     </nav>
   );
 }
