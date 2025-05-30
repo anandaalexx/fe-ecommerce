@@ -26,7 +26,10 @@ const AddProduct = () => {
   useEffect(() => {
     const fetchKategori = async () => {
       try {
-        const res = await fetch(`${apiUrl}/category/view`);
+        const res = await fetch(`${apiUrl}/category/view`, {
+          method: "GET",
+          credentials: "include",
+        });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
         setKategoriList(data);

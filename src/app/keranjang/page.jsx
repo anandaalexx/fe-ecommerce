@@ -1,12 +1,19 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import Navbar from "../components/Navbar";
+import Button from "../components/Button";
+import Footer from "../components/Footer";
 import KeranjangList from "../components/KeranjangList";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const KeranjangPage = () => {
   const [groupedProducts, setGroupedProducts] = useState([]);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState({
+    tokoIdx: null,
+    produkIdx: null,
+  });
 
   const fetchKeranjang = async () => {
     const res = await fetch(`${apiUrl}/cart/view`, {
@@ -17,7 +24,6 @@ const KeranjangPage = () => {
       credentials: "include",
     });
     const data = await res.json();
-    console.log("Data dari backend:", data); // 👈 Cek ini
 
     const grouped = data.reduce((acc, item) => {
       const toko = item.namaToko;
@@ -101,12 +107,12 @@ const KeranjangPage = () => {
   };
 
   // Hapus produk dari backend & frontend
-  const handleDeleteProduct = async (tokoIdx, produkIdx) => {
+  const handleDeleteProduct = async () => {
+    const { tokoIdx, produkIdx } = pendingDelete;
     const product = groupedProducts[tokoIdx].items[produkIdx];
     const idVarianProduk = product.idVarianProduk;
 
     try {
-      // Panggil API hapus produk
       const res = await fetch(`${apiUrl}/cart/remove/${idVarianProduk}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
@@ -115,20 +121,24 @@ const KeranjangPage = () => {
 
       if (!res.ok) throw new Error("Gagal hapus produk");
 
-      // Update frontend state: hapus produk
       const updated = [...groupedProducts];
       updated[tokoIdx].items.splice(produkIdx, 1);
-
-      // Jika toko sudah kosong, hapus juga grup toko
       if (updated[tokoIdx].items.length === 0) {
         updated.splice(tokoIdx, 1);
       }
 
       setGroupedProducts(updated);
+      setShowConfirmModal(false);
+      setPendingDelete({ tokoIdx: null, produkIdx: null });
     } catch (error) {
       console.error(error);
       alert("Gagal hapus produk");
     }
+  };
+
+  const confirmDelete = (tokoIdx, produkIdx) => {
+    setPendingDelete({ tokoIdx, produkIdx });
+    setShowConfirmModal(true);
   };
 
   // Menghitung total produk berdasarkan checkbox yang dipilih dan kuantitas
@@ -151,7 +161,7 @@ const KeranjangPage = () => {
       return;
     }
 
-    console.log("Yang diceklis:", selectedDetailIds); // 👈 di sini
+    console.log("Yang diceklis:", selectedDetailIds);
 
     const query = encodeURIComponent(JSON.stringify(selectedDetailIds));
     window.location.href = `/checkout?items=${query}`;
@@ -161,15 +171,15 @@ const KeranjangPage = () => {
     <div>
       <Navbar />
 
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 pt-48">
         {/* Header Tabel */}
-        <div className="bg-white border rounded-lg p-4 mb-4">
+        <div className="bg-gray-100 text-gray-800 border border-gray-200 rounded-sm p-4 mb-4">
           <div className="flex items-center">
-            <div className="flex-1 text-left font-semibold">Produk</div>
-            <div className="w-40 text-center font-semibold">Harga Satuan</div>
-            <div className="w-40 text-center font-semibold">Kuantitas</div>
-            <div className="w-40 text-center font-semibold">Total Harga</div>
-            <div className="w-16 text-center font-semibold">Aksi</div>
+            <div className="flex-1 text-left font-medium">Produk</div>
+            <div className="w-40 text-center font-medium">Harga Satuan</div>
+            <div className="w-40 text-center font-medium">Kuantitas</div>
+            <div className="w-40 text-center font-medium">Total Harga</div>
+            <div className="w-16 text-center font-medium">Aksi</div>
           </div>
         </div>
 
@@ -179,24 +189,50 @@ const KeranjangPage = () => {
           onSelectToko={handleSelectToko}
           onSelectProduct={handleSelectProduct}
           onQuantityChange={handleQuantityChange}
-          onDeleteProduct={handleDeleteProduct} // pastikan diteruskan ke KeranjangList
+          onDeleteConfirm={confirmDelete}
         />
 
         {/* Footer Checkout */}
-        <div className="max-w-md ml-auto bg-white border rounded-lg p-4 mt-6">
+        <div className="max-w-md ml-auto bg-white border border-gray-200 rounded-sm p-4 mt-6">
           <div className="flex justify-between items-center">
-            <div className="font-semibold text-gray-700">
+            <div className="font-medium">
               Total Produk Terpilih: {totalProduk}
             </div>
             <button
               onClick={handleCheckout}
-              className="bg-yellow-400 hover:bg-yellow-500 text-white font-bold py-2 px-6 rounded"
+              className="bg-[#EDCF5D] text-white font-medium py-2 px-12 rounded-md transition-all duration-150 cursor-pointer 
+      hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
             >
               Checkout
             </button>
           </div>
         </div>
       </div>
+      {showConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
+            <h2 className="text-md font-semibold mb-4">Konfirmasi Hapus</h2>
+            <p className="mb-6 text-sm">
+              Apakah Anda yakin ingin menghapus produk ini dari keranjang?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="px-4 py-1 text-sm rounded text-gray-700 hover:bg-gray-100 border border-gray-300 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                onClick={handleDeleteProduct}
+                className="px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 cursor-pointer"
+              >
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <Footer />
     </div>
   );
 };

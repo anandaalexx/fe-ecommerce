@@ -6,6 +6,7 @@ import Button from "../components/Button";
 import Footer from "../components/Footer";
 import { MapPin, SquarePen } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
 
@@ -16,22 +17,11 @@ const MapPicker = dynamic(() => import("../components/MapPicker"), {
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-const orders = [
-  {
-    id: 1,
-    name: "IPhone 16 Pro Max",
-    image: "/iPhone16.png",
-    color: "Grey",
-    size: "8/256",
-    quantity: 2,
-    price: 40000000,
-  },
-];
-
 export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
   const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
+  const router = useRouter();
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -88,8 +78,6 @@ export default function CheckoutPage() {
 
   const handleCheckout = async () => {
     try {
-      console.log("TOMBOL DITEKAN");
-
       console.log("ITEMS:", items);
       const idList = items.map((item) => item.idDetailKeranjang); // Pastikan field-nya benar
       const res = await fetch(`${apiUrl}/checkout`, {
@@ -109,19 +97,14 @@ export default function CheckoutPage() {
       }
 
       const data = await res.json();
-      console.log("Checkout berhasil:", data);
-
-      // Contoh: redirect ke halaman sukses / detail transaksi
-      //window.location.href = `/transaksi/${data.idTransaksi}`;
+      router.push("/pesanan");
     } catch (error) {
       console.error("Terjadi kesalahan saat checkout:", error);
       alert("Terjadi kesalahan saat checkout");
     }
   };
 
-  const [alamat, setAlamat] = useState(
-    "Kos Dalam Ningrat, Jl. Sei Wain RT 033 Karang Joang, Balikpapan Utara-Balikpapan. (Dekat Masjid Nurul Hidayah) (Kost gedung warna hijau, pagar hitam)"
-  );
+  const [alamat, setAlamat] = useState("");
   const [showModal, setShowModal] = useState(false);
 
   const [provinsiList, setProvinsiList] = useState([]);
@@ -248,9 +231,9 @@ export default function CheckoutPage() {
     }));
   };
 
-  const totalHarga = orders.reduce((sum, item) => sum + item.price, 0);
-  const ongkosKirim = 120000;
-  const totalTagihan = ongkosKirim + totalHarga;
+  // const totalHarga = orders.reduce((sum, item) => sum + item.price, 0);
+  // const ongkosKirim = 120000;
+  // const totalTagihan = ongkosKirim + totalHarga;
 
   useEffect(() => {
     fetch("../api/wilayah/provinsi")
@@ -309,6 +292,26 @@ export default function CheckoutPage() {
     }
   }, [form.kecamatan]);
 
+  useEffect(() => {
+    const fetchAlamat = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/user/profile`, {
+          credentials: "include",
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.alamat) {
+            setAlamat(data.alamat);
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil alamat:", err);
+      }
+    };
+
+    fetchAlamat();
+  }, []);
+
   const handleChange = async (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -359,31 +362,29 @@ export default function CheckoutPage() {
       provinsiList.find(
         (p) => Number(p.kode_provinsi) === Number(form.provinsi)
       )?.nama_provinsi || "";
+
     const namaKabupaten =
       kabupatenList.find(
         (k) => Number(k.kode_kabupaten) === Number(form.kabupaten)
       )?.nama_kabupaten || "";
+
     const namaKecamatan =
       kecamatanList.find(
         (k) => Number(k.kode_kecamatan) === Number(form.kecamatan)
       )?.nama_kecamatan || "";
+
     const namaDesa =
       desaList.find((d) => Number(d.kode_desa) === Number(form.desa))
         ?.nama_desa || "";
 
-    const alamatBaru = `${form.nama}, ${form.telepon}, ${form.jalan}, ${form.detail}, Desa ${namaDesa}, Kecamatan ${namaKecamatan}, Kabupaten ${namaKabupaten}, Provinsi ${namaProvinsi}`;
+    // Format alamat yang lebih baik
+    const alamatBaru = `${form.nama} (${form.telepon})\n${form.jalan}, ${form.detail}\n${namaDesa}, ${namaKecamatan}\n${namaKabupaten}, ${namaProvinsi}`;
 
-    // ✅ Tampilkan koordinat yang akan dikirim
-    console.log("Latitude yang dikirim:", form.latitude);
-    console.log("Longitude yang dikirim:", form.longitude);
-    // Simpan ke backend
     try {
       const res = await fetch(`${apiUrl}/user/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          // Tambahkan Authorization jika perlu
-          // Authorization: `Bearer ${token}`,
         },
         credentials: "include",
         body: JSON.stringify({
@@ -393,15 +394,13 @@ export default function CheckoutPage() {
         }),
       });
 
-      if (!res.ok) {
-        const errorText = await res.text(); // 👈 lihat isi respons error
-        console.error("Respon error dari server:", res.status, errorText);
+      if (res.ok) {
+        setAlamat(alamatBaru);
+        setShowModal(false);
+        alert("Alamat berhasil diperbarui!");
+      } else {
         throw new Error("Gagal mengupdate alamat");
       }
-
-      setAlamat(alamatBaru);
-      setShowModal(false);
-      alert("Alamat berhasil diperbarui!");
     } catch (err) {
       console.error(err);
       alert("Terjadi kesalahan saat menyimpan alamat");
@@ -427,7 +426,9 @@ export default function CheckoutPage() {
                 </button>
               </div>
               <hr className="my-3 text-[#A4A4A4]" />
-              <p className="text-sm font-medium mt-2">{alamat}</p>
+              <p className="text-sm font-medium mt-2 whitespace-pre-line">
+                {alamat || "Belum ada alamat yang disimpan"}
+              </p>
             </div>
 
             {items.map((item) => (
@@ -452,7 +453,7 @@ export default function CheckoutPage() {
                   <p className="text-sm text-gray-500 mt-1">
                     <span className="font-medium">{item.namaVarianProduk}</span>
                   </p>
-                  <p className="text-lg font-bold text-[#EDCF5D] mt-9">
+                  <p className="text-lg font-semibold mt-9">
                     Rp {item.totalHarga.toLocaleString("id-ID")}
                   </p>
                 </div>
@@ -513,7 +514,7 @@ export default function CheckoutPage() {
       {showModal && (
         <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-999 overflow-auto">
           <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
+            <h3 className="text-xl font-semibold mb-4">Atur Alamat Baru</h3>
             <div className="grid grid-cols-1 gap-4">
               <input
                 name="nama"
@@ -628,16 +629,16 @@ export default function CheckoutPage() {
                 }}
               />
             </div>
-            <div className="flex justify-end gap-2 mt-4">
+            <div className="flex justify-end gap-2 text-white mt-4">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-gray-300 rounded"
+                className="px-4 py-2 bg-gray-300 rounded font-medium cursor-pointer"
               >
                 Batal
               </button>
               <button
                 onClick={handleSubmitAlamat}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="px-4 py-2 bg-[#EDCF5D] hover:brightness-100 cursor-pointer text-white rounded font-medium"
               >
                 Simpan
               </button>

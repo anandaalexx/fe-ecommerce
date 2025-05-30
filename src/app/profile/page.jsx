@@ -448,7 +448,7 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen p-6">
+      <div className="min-h-screen p-6 pt-48">
         <div className="max-w-7xl mx-auto bg-white p-8 rounded-2xl shadow-lg">
           <h2 className="text-3xl font-bold text-gray-800 mb-2">Profil Saya</h2>
           <p className="text-sm text-gray-600 mb-6">
@@ -608,7 +608,7 @@ export default function ProfilePage() {
       </div>
 
       {showModal && (
-        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-50 overflow-auto">
+        <div className="fixed inset-0 backdrop-blur-xs flex justify-center items-center z-999 overflow-auto">
           <div className="bg-white rounded-lg p-6 w-full max-w-xl max-h-[90vh] overflow-y-auto shadow-lg">
             <h3 className="text-xl font-semibold mb-4">Edit Alamat</h3>
             <div className="grid grid-cols-1 gap-4">

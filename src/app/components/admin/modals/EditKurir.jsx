@@ -16,7 +16,17 @@ const EditKurir = ({ isOpen, onClose, initialData, onSubmit }) => {
 
   useEffect(() => {
     if (initialData) {
-      setForm(initialData);
+      setForm({
+        nama: initialData.nama || "",
+        email: initialData.email || "",
+        password: initialData.password || "",
+        nomorTelepon: initialData.nomorTelepon || "",
+        nomorPolisi: initialData.nomorPolisi || "",
+        merkKendaraan: initialData.merkKendaraan || "",
+        warnaKendaraan: initialData.warnaKendaraan || "",
+        id: initialData.id || "", // tambahkan ini
+        idUser: initialData.idUser || "", // tambahkan ini
+      });
     }
   }, [initialData]);
 
