@@ -65,7 +65,7 @@ export default function ToastNotification({
             )}
             <button
               onClick={onClose}
-              className="text-white hover:text-gray-300 text-lg"
+              className="text-white hover:text-gray-300 text-lg cursor-pointer"
             >
               <X size={20} />
             </button>

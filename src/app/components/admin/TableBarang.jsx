@@ -156,7 +156,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
                 <td className="px-6 py-4">{produk.id}</td>
                 <td className="px-6 py-4">{produk.nama}</td>
                 <td className="px-6 py-4">{produk.kategori}</td>
-                <td className="px-6 py-4">Rp {produk.harga}</td>
+                <td className="px-6 py-4">{produk.harga}</td>
                 <td className="px-6 py-4 text-center">
                   <button
                     onClick={(e) => handleEllipsisClick(e, produk.id)}

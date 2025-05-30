@@ -13,6 +13,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -40,9 +41,15 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    if (!nama || !email || !password || !confirmPassword) {
+      setErrorMessage("Semua field harus diisi.");
+      return;
+    }
 
     if (password !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak sama");
+      setErrorMessage("Password dan konfirmasi password tidak sama.");
       return;
     }
 
@@ -50,23 +57,20 @@ export default function RegisterPage() {
       const response = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nama,
-          email,
-          password,
-        }),
+        body: JSON.stringify({ nama, email, password }),
       });
 
+      const data = await response.json();
+      console.log("RESPONSE DATA:", data);
+
       if (response.ok) {
-        const data = await response.json();
         setShowDialog(true);
       } else {
-        const error = await response.json();
-        alert(error.message || "Registrasi gagal!");
+        setErrorMessage("Email sudah terdaftar. Gunakan Email lain!");
       }
     } catch (error) {
       console.error("Error saat register:", error);
-      alert("Terjadi kesalahan pada server.");
+      setErrorMessage("Terjadi kesalahan pada server.");
     }
   };
 
@@ -100,6 +104,11 @@ export default function RegisterPage() {
           </p>
 
           <form className="mt-6" onSubmit={handleSubmit}>
+            {errorMessage && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 -mt-5 rounded-md text-sm">
+                {errorMessage}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium">Nama</label>
               <div className="relative">

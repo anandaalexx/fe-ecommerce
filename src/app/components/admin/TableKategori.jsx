@@ -1,13 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis, ArrowUpDown } from "lucide-react";
-import ModalKonfirmasi from "./modals/Konfirmasi";
 
 const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
@@ -80,34 +78,6 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
-  // Delete
-  const handleDeleteClick = (category) => {
-    setCategoryToDelete(category);
-    setIsConfirmOpen(true);
-    setOpenDropdownId(null);
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      const res = await fetch(
-        `${apiUrl}/admin/kategori/${categoryToDelete.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!res.ok) throw new Error("Gagal menghapus kategori");
-
-      setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
-      setIsConfirmOpen(false);
-      setCategoryToDelete(null);
-      showToast("Kategori berhasil dihapus", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Gagal menghapus kategori", "error");
-    }
-  };
 
   return (
     <>
@@ -214,27 +184,8 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
           >
             <FilePenLine size={16} /> Edit
           </button>
-          <button
-            onClick={() => {
-              const cat = categories.find((c) => c.id === openDropdownId);
-              if (cat) handleDeleteClick(cat);
-            }}
-            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600"
-          >
-            <Trash2 size={16} /> Hapus
-          </button>
         </div>
       )}
-
-      <ModalKonfirmasi
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Konfirmasi Hapus"
-        message={`Apakah Anda yakin ingin menghapus kategori "${categoryToDelete?.nama}"?`}
-        confirmText="Hapus"
-        confirmColor="red"
-      />
     </>
   );
 };

@@ -10,6 +10,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [type, setType] = useState("password");
+  const [errorMessage, setErrorMessage] = useState("");
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleToggle = () => {
@@ -21,6 +22,13 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    // Validasi input kosong
+    if (!email || !password) {
+      setErrorMessage("Email dan password tidak boleh kosong!");
+      return;
+    }
 
     try {
       const response = await fetch(`${apiUrl}/auth/login`, {
@@ -38,7 +46,6 @@ export default function LoginPage() {
       if (response.ok) {
         const { user } = data;
 
-        // Arahkan berdasarkan role
         switch (user.roleId) {
           case 4:
             router.push("/admin");
@@ -54,10 +61,12 @@ export default function LoginPage() {
             router.push("/home");
             break;
         }
+      } else {
+        setErrorMessage("Email atau password salah!");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert("Terjadi kesalahan saat login.");
+      setErrorMessage("Terjadi kesalahan saat login!");
     }
   };
 
@@ -81,6 +90,13 @@ export default function LoginPage() {
           </p>
 
           <form className="mt-6" onSubmit={handleSubmit}>
+            {/* Error message */}
+            {errorMessage && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 rounded-md mb-4 text-sm">
+                {errorMessage}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium">Email</label>
               <div className="relative">

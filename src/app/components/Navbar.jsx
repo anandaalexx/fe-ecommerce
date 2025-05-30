@@ -8,7 +8,7 @@ import {
   CircleUserRound,
   Wallet,
   LogOut,
-  Eye,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo.jsx";
@@ -177,7 +177,7 @@ export default function Navbar() {
                   className="w-full flex items-center justify-between text-sm px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
                   <span>Profil</span>
-                  <Eye size={16} />
+                  <UserRound size={16} />
                 </button>
                 <button
                   onClick={handleLogout}

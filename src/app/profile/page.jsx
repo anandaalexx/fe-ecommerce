@@ -5,6 +5,7 @@ import Button from "../components/Button";
 import Footer from "../components/Footer";
 import { MapPinned, SquarePen, Camera } from "lucide-react";
 import dynamic from "next/dynamic";
+import ToastNotification from "../components/ToastNotification";
 
 export default function ProfilePage() {
   const [image, setImage] = useState("https://via.placeholder.com/100");
@@ -15,6 +16,14 @@ export default function ProfilePage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
   const [isEditing, setIsEditing] = useState({
     nama: false,
     email: false,
@@ -121,17 +130,16 @@ export default function ProfilePage() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("Upgrade error:", errorText);
-        alert("Gagal upgrade ke seller");
+        showToast("Gagal upgrade ke seller", "error");
         return;
       }
 
-      alert("Berhasil upgrade ke seller!");
+      showToast("Berhasil upgrade ke seller!", "success");
       setShowUpgradeModal(false);
-      // Reload atau update UI sesuai kebutuhan
       setRole("seller");
     } catch (err) {
       console.error("Error:", err);
-      alert("Terjadi kesalahan saat upgrade.");
+      showToast("Terjadi kesalahan saat upgrade.", "error");
     }
   };
 
@@ -175,10 +183,10 @@ export default function ProfilePage() {
         alamat: false,
       });
 
-      alert("Perubahan berhasil disimpan");
+      showToast("Perubahan berhasil disimpan", "success");
     } catch (error) {
       console.error("Error:", error);
-      setError("Gagal menyimpan perubahan. Silakan coba lagi nanti.");
+      showToast("Gagal menyimpan perubahan", "error");
     }
   };
 
@@ -363,7 +371,7 @@ export default function ProfilePage() {
       form.latitude === null ||
       form.longitude === null
     ) {
-      alert("Mohon lengkapi semua data!");
+      showToast("Mohon lengkapi semua data!", "warning");
       return;
     }
 
@@ -413,10 +421,10 @@ export default function ProfilePage() {
 
       setAlamat(alamatBaru);
       setShowModal(false);
-      alert("Alamat berhasil diperbarui!");
+      showToast("Alamat berhasil diperbarui!", "success");
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menyimpan alamat");
+      showToast("Terjadi kesalahan saat menyimpan alamat", "error");
     }
   };
 
@@ -454,7 +462,7 @@ export default function ProfilePage() {
           <p className="text-sm text-gray-600 mb-6">
             Kelola informasi akun Anda.
           </p>
-          <hr className="mb-6" />
+          <hr className="mb-6 text-gray-200" />
 
           <div className="grid md:grid-cols-3 gap-6">
             {/* Card Kiri: Profil */}
@@ -498,9 +506,9 @@ export default function ProfilePage() {
                     onClick={() =>
                       setIsEditing((prev) => ({ ...prev, nama: true }))
                     }
-                    className="text-gray-800 hover:text-gray-600"
+                    className="text-gray-800 hover:text-gray-600 cursor-pointer"
                   >
-                    <SquarePen size={20} />
+                    <SquarePen size={14} />
                   </button>
                 </div>
               )}
@@ -518,7 +526,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Email */}
-              <div className="flex justify-between items-center border-b pb-3">
+              <div className="flex justify-between items-center border-b border-gray-500 pb-3">
                 <div>
                   <p className="text-sm text-gray-500">Email</p>
                   {isEditing.email ? (
@@ -527,7 +535,7 @@ export default function ProfilePage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="flex-1 px-3 py-2 border rounded-md text-gray-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-200 bg-gray-100 rounded-md text-gray-800 font-medium focus:outline-none"
                       />
                     </div>
                   ) : (
@@ -540,7 +548,7 @@ export default function ProfilePage() {
                     setIsEditing((prev) => ({ ...prev, email: !prev.email }))
                   }
                 >
-                  <SquarePen size={20} />
+                  <SquarePen size={16} className="cursor-pointer" />
                 </button>
               </div>
 
@@ -553,7 +561,7 @@ export default function ProfilePage() {
                       type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md text-gray-800 font-medium"
+                      className="w-full px-3 py-2 border border-gray-200 bg-gray-100 rounded-md text-gray-800 font-medium"
                     />
                   ) : (
                     <p className="text-gray-800 font-medium">********</p>
@@ -568,7 +576,7 @@ export default function ProfilePage() {
                     }))
                   }
                 >
-                  <SquarePen size={20} />
+                  <SquarePen size={16} className="cursor-pointer" />
                 </button>
               </div>
 
@@ -584,7 +592,7 @@ export default function ProfilePage() {
                   className="text-gray-800"
                   onClick={() => setShowModal(true)}
                 >
-                  <MapPinned size={20} />
+                  <MapPinned size={16} className="cursor-pointer" />
                 </button>
               </div>
             </div>
@@ -760,7 +768,7 @@ export default function ProfilePage() {
                     storeName: e.target.value,
                   }))
                 }
-                className="w-full border px-3 py-2 mb-3"
+                className="w-full border border-gray-300 rounded-sm px-3 py-2 mb-3"
               />
               <textarea
                 placeholder="Deskripsi Toko"
@@ -771,7 +779,7 @@ export default function ProfilePage() {
                     storeDescription: e.target.value,
                   }))
                 }
-                className="w-full border px-3 py-2 mb-3"
+                className="w-full border border-gray-300 rounded-sm px-3 py-2 mb-3"
               />
               <div className="flex justify-end space-x-2">
                 <Button onClick={() => setShowUpgradeModal(false)}>
@@ -783,7 +791,12 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
       <Footer />
     </>
   );
