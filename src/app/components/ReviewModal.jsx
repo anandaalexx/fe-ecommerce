@@ -2,7 +2,16 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 
-const ReviewModal = ({ isOpen, onClose, onSuccess, idUser, idProduk, idDetailTransaksi, namaProduk }) => {
+const ReviewModal = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess, 
+  idUser, 
+  idProduk, 
+  idDetailTransaksi, 
+  namaProduk, 
+  transactionId 
+}) => {
   const [rating, setRating] = useState(0);
   const [komentar, setKomentar] = useState("");
   const [hover, setHover] = useState(0);
@@ -54,8 +63,10 @@ const ReviewModal = ({ isOpen, onClose, onSuccess, idUser, idProduk, idDetailTra
 
       setRating(0);
       setKomentar("");
+      
+      // Pass both transactionId and idProduk to onSuccess
       if (onSuccess) {
-        onSuccess(idDetailTransaksi);
+        onSuccess(transactionId, idProduk);
       } else {
         onClose();
       }
@@ -75,6 +86,10 @@ const ReviewModal = ({ isOpen, onClose, onSuccess, idUser, idProduk, idDetailTra
         <h2 className="text-xl font-semibold text-gray-800">
           Beri Rating & Ulasan
         </h2>
+        
+        <p className="text-sm text-gray-600">
+          Produk: <span className="font-medium">{namaProduk}</span>
+        </p>
 
         <div className="flex items-center gap-1">
           {[...Array(5)].map((_, index) => {

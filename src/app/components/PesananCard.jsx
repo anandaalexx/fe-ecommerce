@@ -29,6 +29,7 @@ const PesananCard = () => {
 
         const formatted = data.transaksi.map((trx) => ({
           id: `#TRX-${trx.idTransaksi}`,
+          idTransaksi: trx.idTransaksi, // Add transaction ID for tracking
           jumlah: trx.produk.length,
           total: parseInt(trx.totalHarga),
           status: trx.statusPengiriman?.replace(/_/g, " ") || "menunggu penjual",
@@ -38,7 +39,7 @@ const PesananCard = () => {
 
         setDaftarPesanan(formatted);
 
-        await fetchExistingReviews(formatted);
+        await fetchExistingReviews();
       } catch (err) {
         console.error("Gagal memuat data transaksi:", err);
       }
@@ -47,9 +48,9 @@ const PesananCard = () => {
     fetchPesanan();
   }, []);
 
-  const fetchExistingReviews = async (orders) => {
+  const fetchExistingReviews = async () => {
     try {
-      const res = await fetch(`${apiUrl}/ulasan/user`, {
+      const res = await fetch(`${apiUrl}/ulasan/user/reviewed-products`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
@@ -59,17 +60,35 @@ const PesananCard = () => {
 
       if (res.ok) {
         const reviewData = await res.json();
-        const reviewedSet = new Set();
-
-        if (reviewData && Array.isArray(reviewData.ulasan)) {
-          reviewData.ulasan.forEach(review => {
-            if (review.idDetailTransaksi) {
-              reviewedSet.add(review.idDetailTransaksi);
-            }
-          });
+        if (reviewData.success && reviewData.data && Array.isArray(reviewData.data.reviewedProducts)) {
+          const reviewedSet = new Set(reviewData.data.reviewedProducts);
+          setReviewedProducts(reviewedSet);
         }
-        
-        setReviewedProducts(reviewedSet);
+      } else {
+        // Fallback to original endpoint if new endpoint is not available
+        const fallbackRes = await fetch(`${apiUrl}/ulasan/user`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        if (fallbackRes.ok) {
+          const reviewData = await fallbackRes.json();
+          const reviewedSet = new Set();
+
+          if (reviewData && Array.isArray(reviewData.ulasan)) {
+            reviewData.ulasan.forEach(review => {
+              if (review.transaksi && review.transaksi.id && review.idProduk) {
+                const key = `${review.transaksi.id}-${review.idProduk}`;
+                reviewedSet.add(key);
+              }
+            });
+          }
+          
+          setReviewedProducts(reviewedSet);
+        }
       }
     } catch (err) {
       console.error("Gagal memuat data ulasan:", err);
@@ -85,8 +104,9 @@ const PesananCard = () => {
     setDaftarPesanan(update);
   };
 
-  const handleOpenReview = (produk) => {
+  const handleOpenReview = (produk, transactionId) => {
     console.log("Data produk untuk review:", produk);
+    console.log("Transaction ID:", transactionId);
     console.log("idUser:", produk.idUser);
     console.log("idProduk:", produk.idProduk);
     console.log("idDetailTransaksi:", produk.idDetailTransaksi);
@@ -105,7 +125,8 @@ const PesananCard = () => {
       idUser: produk.idUser,
       idProduk: produk.idProduk,
       idDetailTransaksi: produk.idDetailTransaksi,
-      namaProduk: produk.namaProduk
+      namaProduk: produk.namaProduk,
+      transactionId: transactionId
     });
   };
 
@@ -113,14 +134,33 @@ const PesananCard = () => {
     setReviewProduk(null);
   };
 
-  const handleReviewSuccess = (idDetailTransaksi) => {
-    setReviewedProducts(prev => new Set([...prev, idDetailTransaksi]));
+  const handleReviewSuccess = (transactionId, idProduk) => {
+    // Add the transaction-product combination to reviewed set
+    const key = `${transactionId}-${idProduk}`;
+    setReviewedProducts(prev => new Set([...prev, key]));
     handleCloseReview();
   };
 
-  // Check if product already has a review
-  const isProductReviewed = (idDetailTransaksi) => {
-    return reviewedProducts.has(idDetailTransaksi);
+  // Check if product already has a review in this specific transaction
+  const isProductReviewed = (transactionId, idProduk) => {
+    const key = `${transactionId}-${idProduk}`;
+    return reviewedProducts.has(key);
+  };
+
+  // Group products by idProduk to handle duplicate products in same transaction
+  const groupProductsByIdProduk = (products) => {
+    const grouped = {};
+    products.forEach(product => {
+      if (!grouped[product.idProduk]) {
+        grouped[product.idProduk] = {
+          ...product,
+          totalQuantity: product.jumlah
+        };
+      } else {
+        grouped[product.idProduk].totalQuantity += product.jumlah;
+      }
+    });
+    return Object.values(grouped);
   };
 
   return (
@@ -137,103 +177,109 @@ const PesananCard = () => {
           </tr>
         </thead>
         <tbody>
-          {daftarPesanan.map((order, index) => (
-            <tr key={order.id}>
-              <td className="px-6 py-4">{order.id}</td>
-              <td className="px-6 py-4">
-                <div className="space-y-2">
-                  {order.produk.map((item, i) => (
-                    <div key={i} className="border-b pb-1">
-                      <div className="font-medium">{item.namaProduk}</div>
+          {daftarPesanan.map((order, index) => {
+            // Group products by idProduk for this transaction
+            const groupedProducts = groupProductsByIdProduk(order.produk);
+            
+            return (
+              <tr key={order.id}>
+                <td className="px-6 py-4">{order.id}</td>
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    {order.produk.map((item, i) => (
+                      <div key={i} className="border-b pb-1">
+                        <div className="font-medium">{item.namaProduk}</div>
 
-                      {item.varian && item.varian.length > 0 && (
-                        <ul className="ml-4 text-sm text-gray-600 list-disc">
-                          {item.varian.map((v, j) => (
-                            <li key={j}>
-                              {v.namaVarian}: {v.nilai}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                        {item.varian && item.varian.length > 0 && (
+                          <ul className="ml-4 text-sm text-gray-600 list-disc">
+                            {item.varian.map((v, j) => (
+                              <li key={j}>
+                                {v.namaVarian}: {v.nilai}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
 
-                      <div className="text-sm text-gray-700">
-                        Jumlah: {item.jumlah}
+                        <div className="text-sm text-gray-700">
+                          Jumlah: {item.jumlah}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          Harga Satuan: Rp{" "}
+                          {parseInt(item.hargaSatuan).toLocaleString("id-ID")}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        Harga Satuan: Rp{" "}
-                        {parseInt(item.hargaSatuan).toLocaleString("id-ID")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </td>
+                    ))}
+                  </div>
+                </td>
 
-              <td className="px-6 py-4">{order.jumlah}</td>
-              <td className="px-6 py-4">
-                Rp {order.total.toLocaleString("id-ID")}
-              </td>
-              <td className="px-6 py-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    order.status === "sedang dikirim"
-                      ? "bg-yellow-200 text-yellow-800"
-                      : order.status === "diterima pembeli"
-                      ? "bg-green-300 text-green-900"
-                      : order.status === "sampai di tujuan"
-                      ? "bg-blue-200 text-blue-800"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-center space-y-2">
-                {order.status === "sampai di tujuan" && (
-                  <button
-                    onClick={() =>
-                      ubahStatusPesanan(order.id, "diterima pembeli")
-                    }
-                    className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
+                <td className="px-6 py-4">{order.jumlah}</td>
+                <td className="px-6 py-4">
+                  Rp {order.total.toLocaleString("id-ID")}
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      order.status === "sedang dikirim"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : order.status === "diterima pembeli"
+                        ? "bg-green-300 text-green-900"
+                        : order.status === "sampai di tujuan"
+                        ? "bg-blue-200 text-blue-800"
+                        : "bg-gray-200 text-gray-800"
+                    }`}
                   >
-                    Diterima
-                  </button>
-                )}
-                {order.status === "diterima pembeli" &&
-                order.produk.map((item, i) => {
-                  const alreadyReviewed = isProductReviewed(item.idDetailTransaksi);
-                  
-                  return (
+                    {order.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center space-y-2">
+                  {order.status === "sampai di tujuan" && (
                     <button
-                      key={i}
-                      onClick={() => handleOpenReview(item)}
-                      disabled={!order.barangSesuai || alreadyReviewed}
-                      className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition duration-200 mt-1 ${ 
-                        alreadyReviewed
-                          ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                          : order.barangSesuai
-                          ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
-                          : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                      }`}
+                      onClick={() =>
+                        ubahStatusPesanan(order.id, "diterima pembeli")
+                      }
+                      className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
                     >
-                      {alreadyReviewed ? "Sudah Diulas" : `Beri Ulasan untuk ${item.namaProduk}`}
+                      Diterima
                     </button>
-                  );
-                })}
+                  )}
+                  {order.status === "diterima pembeli" &&
+                  groupedProducts.map((item, i) => {
+                    const alreadyReviewed = isProductReviewed(order.idTransaksi, item.idProduk);
+                    
+                    return (
+                      <button
+                        key={`${item.idProduk}-${i}`}
+                        onClick={() => handleOpenReview(item, order.idTransaksi)}
+                        disabled={!order.barangSesuai || alreadyReviewed}
+                        className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition duration-200 mt-1 ${ 
+                          alreadyReviewed
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : order.barangSesuai
+                            ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        }`}
+                      >
+                        {alreadyReviewed ? "Sudah Diulas" : `Beri Ulasan untuk ${item.namaProduk}`}
+                      </button>
+                    );
+                  })}
 
-                {reviewProduk && (
-                  <ReviewModal
-                    isOpen={true}
-                    onClose={handleCloseReview}
-                    onSuccess={handleReviewSuccess}
-                    idUser={reviewProduk.idUser}
-                    idProduk={reviewProduk.idProduk}
-                    idDetailTransaksi={reviewProduk.idDetailTransaksi}
-                    namaProduk={reviewProduk.namaProduk}
-                  />
-                )}
-              </td>
-            </tr>
-          ))}
+                  {reviewProduk && (
+                    <ReviewModal
+                      isOpen={true}
+                      onClose={handleCloseReview}
+                      onSuccess={handleReviewSuccess}
+                      idUser={reviewProduk.idUser}
+                      idProduk={reviewProduk.idProduk}
+                      idDetailTransaksi={reviewProduk.idDetailTransaksi}
+                      namaProduk={reviewProduk.namaProduk}
+                      transactionId={reviewProduk.transactionId}
+                    />
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
