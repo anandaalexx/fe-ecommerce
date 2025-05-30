@@ -42,21 +42,42 @@ const Pengguna = () => {
   };
 
   const handleEdit = async (updatedUser) => {
-    const res = await fetch(`${apiUrl}/admin/users/${updatedUser.id}`, {
-      method: "PUT",
-      body: JSON.stringify(updatedUser),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const res = await fetch(`${apiUrl}/admin/users/${updatedUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: updatedUser.nama,
+          email: updatedUser.email,
+          alamat: updatedUser.alamat,
+          roleId: updatedUser.roleId,
+          saldo: updatedUser.saldo,
+        }),
+      });
 
-    if (!res.ok) {
-      console.error("Gagal mengedit pengguna");
-      return;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Gagal mengedit pengguna");
+      }
+
+      const updatedData = await res.json();
+
+      // Update local state tanpa perlu fetch ulang
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === updatedUser.id ? { ...user, ...updatedData } : user
+        )
+      );
+
+      showToast("Pengguna berhasil diperbarui", "success");
+      return true;
+    } catch (err) {
+      console.error("Error:", err);
+      showToast(err.message || "Gagal mengedit pengguna", "error");
+      return false;
     }
-
-    await fetchUsers();
-    showToast("Pengguna berhasil diperbarui", "success");
   };
 
   return (
@@ -93,9 +114,10 @@ const Pengguna = () => {
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedUser}
         onSubmit={async (updatedUser) => {
-          await handleEdit(updatedUser);
-          showToast("Pengguna berhasil diperbarui", "success");
-          setIsEditModalOpen(false);
+          const success = await handleEdit(updatedUser);
+          if (success) {
+            setIsEditModalOpen(false);
+          }
         }}
       />
 
