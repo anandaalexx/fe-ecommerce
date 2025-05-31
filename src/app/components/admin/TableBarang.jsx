@@ -20,6 +20,15 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const requestSort = (key) => {
     let direction = "asc";
@@ -205,7 +214,8 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
           <button
             onClick={() => {
               const produk = produkList.find((p) => p.id === openDropdownId);
-              if (produk) alert("Lihat detail belum diimplementasi");
+              if (produk)
+                showToast("Lihat detail belum diimplementasi", "warning");
               setOpenDropdownId(null);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm"

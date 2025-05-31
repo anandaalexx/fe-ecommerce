@@ -24,12 +24,12 @@ export default function CheckoutPage() {
   const [items, setItems] = useState([]);
   const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const router = useRouter();
   const [toast, setToast] = useState({
     show: false,
     message: "",
     type: "success",
   });
-  const router = useRouter();
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
@@ -368,7 +368,7 @@ export default function CheckoutPage() {
       form.latitude === null ||
       form.longitude === null
     ) {
-      alert("Mohon lengkapi semua data!");
+      showToast("Mohon lengkapi semua data!", "warning");
       return;
     }
 
@@ -410,13 +410,13 @@ export default function CheckoutPage() {
       if (res.ok) {
         setAlamat(alamatBaru);
         setShowModal(false);
-        alert("Alamat berhasil diperbarui!");
+        showToast("Alamat berhasil diperbarui!", "success");
       } else {
         throw new Error("Gagal mengupdate alamat");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menyimpan alamat");
+      showToast("Terjadi kesalahan saat menyimpan alamat", "error");
     }
   };
 

@@ -47,7 +47,7 @@ const TableProdukMenunggu = () => {
                   {item.produk.map((p, idx) => (
                     <li key={idx}>
                       <span className="font-semibold">{p.namaProduk}</span> (
-                      {p.varian || "-"}) – {p.kuantitas}x – Rp
+                      {p.varian || "-"}) - {p.kuantitas}x - Rp
                       {p.hargaSatuan.toLocaleString()} ={" "}
                       <span className="font-semibold">
                         Rp{p.total.toLocaleString()}

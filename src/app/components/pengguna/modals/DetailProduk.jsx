@@ -1,11 +1,21 @@
 "use client";
 import { Dialog } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
+import ToastNotification from "../../ToastNotification";
 
 const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   const [produkState, setProdukState] = useState(null);
   const [stokTambah, setStokTambah] = useState({});
   const [stokInputVisible, setStokInputVisible] = useState({});
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     setProdukState(produk);
@@ -17,7 +27,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
     const jumlahTambah = parseInt(stokTambah[idVarianProduk] || 0);
 
     if (isNaN(jumlahTambah) || jumlahTambah <= 0) {
-      alert("Masukkan jumlah stok yang valid!");
+      showToast("Masukkan jumlah stok yang valid!", "warning");
       return;
     }
 
@@ -36,7 +46,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
 
       if (!res.ok) throw new Error("Gagal menambah stok");
 
-      alert("Stok berhasil ditambahkan!");
+      showToast("Stok berhasil ditambahkan!", "success");
 
       // Update stok di state
       setProdukState((prev) => ({
@@ -52,7 +62,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
       setStokInputVisible((prev) => ({ ...prev, [idVarianProduk]: false }));
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menambah stok");
+      showToast("Terjadi kesalahan saat menambah stok", "error");
     }
   };
 
@@ -184,6 +194,12 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
           </div>
         </Dialog.Panel>
       </div>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </Dialog>
   );
 };

@@ -744,7 +744,7 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={handleSubmitAlamat}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="px-4 py-2 bg-[#EDCF5D] hover:brightness-110 cursor-pointer text-white rounded"
               >
                 Simpan
               </button>
