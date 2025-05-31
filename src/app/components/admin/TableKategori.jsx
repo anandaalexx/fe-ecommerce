@@ -1,13 +1,11 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
 import { FilePenLine, Trash2, Ellipsis, ArrowUpDown } from "lucide-react";
-import ModalKonfirmasi from "./modals/Konfirmasi";
 
 const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const dropdownRef = useRef(null);
-  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
@@ -81,34 +79,6 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Delete
-  const handleDeleteClick = (category) => {
-    setCategoryToDelete(category);
-    setIsConfirmOpen(true);
-    setOpenDropdownId(null);
-  };
-
-  const handleConfirmDelete = async () => {
-    try {
-      const res = await fetch(
-        `${apiUrl}/admin/kategori/${categoryToDelete.id}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (!res.ok) throw new Error("Gagal menghapus kategori");
-
-      setCategories((prev) => prev.filter((c) => c.id !== categoryToDelete.id));
-      setIsConfirmOpen(false);
-      setCategoryToDelete(null);
-      showToast("Kategori berhasil dihapus", "success");
-    } catch (err) {
-      console.error(err);
-      showToast("Gagal menghapus kategori", "error");
-    }
-  };
-
   return (
     <>
       <div className="flex justify-between items-center p-2">
@@ -128,51 +98,53 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
       </div>
 
       <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
-        <table className="min-w-full text-sm divide-y divide-gray-200">
-          <thead className="bg-gray-100 text-gray-700">
-            <tr>
-              {[
-                { key: "id", label: "ID" },
-                { key: "nama", label: "Nama" },
-              ].map((col) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
-                  onClick={() => requestSort(col.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{col.label}</span>
-                    <ArrowUpDown
-                      size={12}
-                      className={`${
-                        sortConfig.key === col.key
-                          ? "text-[#EDCF5D]"
-                          : "text-black"
-                      }`}
-                    />
-                  </div>
-                </th>
-              ))}
-              <th className="px-6 py-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {paginatedCategories.map((cat) => (
-              <tr key={cat.id}>
-                <td className="px-6 py-4">{cat.id}</td>
-                <td className="px-6 py-4">{cat.nama}</td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    onClick={(e) => handleEllipsisClick(e, cat.id)}
-                    className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+        <div className="max-h-[400px] overflow-y-auto">
+          <table className="min-w-full text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
+              <tr>
+                {[
+                  { key: "id", label: "ID" },
+                  { key: "nama", label: "Nama" },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
+                    onClick={() => requestSort(col.key)}
                   >
-                    <Ellipsis size={20} />
-                  </button>
-                </td>
+                    <div className="flex items-center gap-2">
+                      <span>{col.label}</span>
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.key === col.key
+                            ? "text-[#EDCF5D]"
+                            : "text-black"
+                        }`}
+                      />
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-3 text-center">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {paginatedCategories.map((cat) => (
+                <tr key={cat.id}>
+                  <td className="px-6 py-4">{cat.id}</td>
+                  <td className="px-6 py-4">{cat.nama}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={(e) => handleEllipsisClick(e, cat.id)}
+                      className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+                    >
+                      <Ellipsis size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="flex justify-between items-center p-3 text-sm">
@@ -214,26 +186,8 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
           >
             <FilePenLine size={16} /> Edit
           </button>
-          <button
-            onClick={() => {
-              const cat = categories.find((c) => c.id === openDropdownId);
-              if (cat) handleDeleteClick(cat);
-            }}
-            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600"
-          >
-            <Trash2 size={16} /> Hapus
-          </button>
         </div>
       )}
-
-      <ModalKonfirmasi
-        isOpen={isConfirmOpen}
-        onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleConfirmDelete}
-        title="Konfirmasi Hapus"
-        message={`Apakah Anda yakin ingin menghapus kategori "${categoryToDelete?.nama}"?`}
-        confirmText="Hapus"
-      />
     </>
   );
 };

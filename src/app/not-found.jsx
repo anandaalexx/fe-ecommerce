@@ -1,9 +1,10 @@
-// app/not-found.jsx
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function NotFound() {
+  const router = useRouter();
+
   return (
     <div className="h-screen flex flex-col justify-center items-center text-center p-4 bg-white">
       <img
@@ -15,15 +16,16 @@ export default function NotFound() {
         404 - Halaman Tidak Ditemukan
       </h1>
       <p className="text-gray-600 mb-6">
-        Maaf, halaman yang kamu cari tidak tersedia atau telah dipindahkan.
+        Maaf, halaman atau produk yang kamu cari tidak tersedia atau telah
+        dipindahkan.
       </p>
-      <Link
-        href="/"
+      <button
+        onClick={() => router.back()}
         className="text-white px-4 py-2 rounded-lg transition"
         style={{ backgroundColor: "#EDCF5D" }}
       >
-        Kembali ke Beranda
-      </Link>
+        Kembali
+      </button>
     </div>
   );
 }

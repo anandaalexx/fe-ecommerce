@@ -2,15 +2,14 @@
 import { useState } from "react";
 import { Star } from "lucide-react";
 
-const ReviewModal = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  idUser, 
-  idProduk, 
-  idDetailTransaksi, 
-  namaProduk, 
-  transactionId 
+const ReviewModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  idUser,
+  idProduk,
+  idDetailTransaksi,
+  namaProduk,
 }) => {
   const [rating, setRating] = useState(0);
   const [komentar, setKomentar] = useState("");
@@ -23,7 +22,6 @@ const ReviewModal = ({
       alert("Mohon beri rating dan komentar");
       return;
     }
-
     if (komentar.trim().length < 10) {
       alert("Komentar minimal 10 karakter");
       return;
@@ -35,7 +33,7 @@ const ReviewModal = ({
       idProduk,
       idDetailTransaksi,
       rating,
-      komentar: komentar.trim()
+      komentar: komentar.trim(),
     };
 
     console.log("Data yang akan dikirim:", reviewData);
@@ -63,10 +61,8 @@ const ReviewModal = ({
 
       setRating(0);
       setKomentar("");
-      
-      // Pass both transactionId and idProduk to onSuccess
       if (onSuccess) {
-        onSuccess(transactionId, idProduk);
+        onSuccess(idDetailTransaksi);
       } else {
         onClose();
       }

@@ -130,59 +130,61 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
       </div>
 
       <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
-        <table className="min-w-full text-sm divide-y divide-gray-200">
-          <thead className="bg-gray-100 text-gray-700">
-            <tr>
-              {[
-                { key: "id", label: "ID" },
-                { key: "namaUser", label: "Nama Kurir" },
-                { key: "nomorTelepon", label: "Nomor Telepon" },
-                { key: "nomorPolisi", label: "Nomor Polisi" },
-                { key: "merkKendaraan", label: "Kendaraan" },
-                { key: "warnaKendaraan", label: "Warna Kendaraan" },
-              ].map((col) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
-                  onClick={() => requestSort(col.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{col.label}</span>
-                    <ArrowUpDown
-                      size={12}
-                      className={`font-bold ${
-                        sortConfig.key === col.key
-                          ? "text-yellow-500"
-                          : "text-black"
-                      }`}
-                    />
-                  </div>
-                </th>
-              ))}
-              <th className="px-6 py-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {paginatedKurirs.map((kurir) => (
-              <tr key={kurir.id}>
-                <td className="px-6 py-4">{kurir.id}</td>
-                <td className="px-6 py-4">{kurir.namaUser}</td>
-                <td className="px-6 py-4">{kurir.nomorTelepon}</td>
-                <td className="px-6 py-4">{kurir.nomorPolisi}</td>
-                <td className="px-6 py-4">{kurir.merkKendaraan}</td>
-                <td className="px-6 py-4">{kurir.warnaKendaraan}</td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    onClick={(e) => handleEllipsisClick(e, kurir.id)}
-                    className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+        <div className="max-h-[400px] overflow-y-auto">
+          <table className="min-w-full text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
+              <tr>
+                {[
+                  { key: "id", label: "ID" },
+                  { key: "namaUser", label: "Nama Kurir" },
+                  { key: "nomorTelepon", label: "Nomor Telepon" },
+                  { key: "nomorPolisi", label: "Nomor Polisi" },
+                  { key: "merkKendaraan", label: "Kendaraan" },
+                  { key: "warnaKendaraan", label: "Warna Kendaraan" },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
+                    onClick={() => requestSort(col.key)}
                   >
-                    <Ellipsis size={20} />
-                  </button>
-                </td>
+                    <div className="flex items-center gap-2">
+                      <span>{col.label}</span>
+                      <ArrowUpDown
+                        size={12}
+                        className={`font-bold ${
+                          sortConfig.key === col.key
+                            ? "text-yellow-500"
+                            : "text-black"
+                        }`}
+                      />
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-3 text-center">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {paginatedKurirs.map((kurir) => (
+                <tr key={kurir.id}>
+                  <td className="px-6 py-4">{kurir.id}</td>
+                  <td className="px-6 py-4">{kurir.namaUser}</td>
+                  <td className="px-6 py-4">{kurir.nomorTelepon}</td>
+                  <td className="px-6 py-4">{kurir.nomorPolisi}</td>
+                  <td className="px-6 py-4">{kurir.merkKendaraan}</td>
+                  <td className="px-6 py-4">{kurir.warnaKendaraan}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={(e) => handleEllipsisClick(e, kurir.id)}
+                      className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+                    >
+                      <Ellipsis size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="flex justify-between items-center p-3 text-sm">
@@ -246,6 +248,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
     </>
   );

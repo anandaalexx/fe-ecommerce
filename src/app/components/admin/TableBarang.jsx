@@ -147,55 +147,57 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
       </div>
 
       <div className="overflow-x-auto border border-gray-200 rounded shadow-sm">
-        <table className="min-w-full text-sm divide-y divide-gray-200">
-          <thead className="bg-gray-100">
-            <tr>
-              {[
-                { key: "id", label: "ID" },
-                { key: "nama", label: "Nama" },
-                { key: "kategori", label: "Kategori" },
-                { key: "harga", label: "Harga" },
-              ].map((col) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-3 text-left cursor-pointer hover:bg-gray-200"
-                  onClick={() => requestSort(col.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{col.label}</span>
-                    <ArrowUpDown
-                      size={12}
-                      className={`${
-                        sortConfig.key === col.key
-                          ? "text-yellow-500"
-                          : "text-black"
-                      }`}
-                    />
-                  </div>
-                </th>
-              ))}
-              <th className="px-6 py-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {paginatedProduk.map((produk) => (
-              <tr key={produk.id}>
-                <td className="px-6 py-4">{produk.id}</td>
-                <td className="px-6 py-4">{produk.nama}</td>
-                <td className="px-6 py-4">{produk.kategori}</td>
-                <td className="px-6 py-4">Rp {produk.harga}</td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    onClick={(e) => handleEllipsisClick(e, produk.id)}
-                    className="hover:bg-gray-100 p-2 rounded-full"
+        <div className="max-h-[400px] overflow-y-auto">
+          <table className="min-w-full text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-100 sticky top-0 z-10">
+              <tr>
+                {[
+                  { key: "id", label: "ID" },
+                  { key: "nama", label: "Nama" },
+                  { key: "kategori", label: "Kategori" },
+                  { key: "harga", label: "Harga" },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left cursor-pointer hover:bg-gray-200"
+                    onClick={() => requestSort(col.key)}
                   >
-                    <Ellipsis size={20} />
-                  </button>
-                </td>
+                    <div className="flex items-center gap-2">
+                      <span>{col.label}</span>
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.key === col.key
+                            ? "text-yellow-500"
+                            : "text-black"
+                        }`}
+                      />
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-3 text-center">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {paginatedProduk.map((produk) => (
+                <tr key={produk.id}>
+                  <td className="px-6 py-4">{produk.id}</td>
+                  <td className="px-6 py-4">{produk.nama}</td>
+                  <td className="px-6 py-4">{produk.kategori}</td>
+                  <td className="px-6 py-4">{produk.harga}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={(e) => handleEllipsisClick(e, produk.id)}
+                      className="hover:bg-gray-100 p-2 rounded-full"
+                    >
+                      <Ellipsis size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="flex justify-between items-center p-3 text-sm">
@@ -255,6 +257,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Yakin ingin menghapus produk "${produkToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
 
       {/* Add Detail Modal */}

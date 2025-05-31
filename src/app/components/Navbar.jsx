@@ -8,16 +8,19 @@ import {
   CircleUserRound,
   Wallet,
   LogOut,
-  Eye,
+  UserRound,
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo.jsx";
+import ModalKonfirmasi from "./admin/modals/Konfirmasi.jsx";
 
 export default function Navbar() {
   const [categories, setCategories] = useState([]);
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const router = useRouter();
+  const [modalLogoutOpen, setModalLogoutOpen] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -36,6 +39,27 @@ export default function Navbar() {
 
     getCategories();
   }, [apiUrl]);
+
+  useEffect(() => {
+    const fetchCartCount = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/cart/view`, {
+          method: "GET",
+          credentials: "include",
+          cache: "no-store",
+        });
+        const data = await res.json();
+
+        // Hitung total semua jumlah produk dalam keranjang
+        const totalItems = data.reduce((acc, item) => acc + item.jumlah, 0);
+        setCartCount(totalItems);
+      } catch (error) {
+        console.error("Gagal mengambil data keranjang:", error);
+      }
+    };
+
+    fetchCartCount();
+  }, []);
 
   useEffect(() => {
     const getUser = async () => {
@@ -123,10 +147,15 @@ export default function Navbar() {
 
           {/* Keranjang */}
           <div
-            className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
+            className="relative flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
             onClick={() => router.push("/keranjang")}
           >
             <ShoppingCart size={24} />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 right-3 bg-[#EDCF5D] text-black text-xs font-medium rounded-full px-1.5">
+                {cartCount}
+              </span>
+            )}
             <span className="mt-1">Keranjang</span>
           </div>
 
@@ -150,10 +179,13 @@ export default function Navbar() {
                   className="w-full flex items-center justify-between text-sm px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
                   <span>Profil</span>
-                  <Eye size={16} />
+                  <UserRound size={16} />
                 </button>
                 <button
-                  onClick={handleLogout}
+                  onClick={() => {
+                    setShowDropdown(false);
+                    setModalLogoutOpen(true);
+                  }}
                   className="w-full flex items-center justify-between text-sm px-4 py-2 hover:bg-gray-100 cursor-pointer"
                 >
                   <span>Logout</span>
@@ -191,6 +223,15 @@ export default function Navbar() {
           </span>
         </div>
       </div>
+      <ModalKonfirmasi
+        isOpen={modalLogoutOpen}
+        onClose={() => setModalLogoutOpen(false)}
+        onConfirm={handleLogout}
+        title="Konfirmasi Logout"
+        message="Apakah Anda yakin ingin keluar dari akun?"
+        confirmText="Keluar"
+        confirmColor="red"
+      />
     </nav>
   );
 }

@@ -43,57 +43,62 @@ const TabsDetail = ({ description, reviews }) => {
   const ratingSummary = calculateRatingSummary(reviews);
 
   return (
-    <div className="mt-10">
-      <div className="flex gap-8 border-b text-lg">
+    <div className="mt-10 min-w-[1220px]">
+      {/* Tabs Navigation */}
+      <div className="flex gap-8 border-b text-base w-full mb-6">
         <button
           onClick={() => setActiveTab("detail")}
-          className={`pb-2 cursor-pointer ${
+          className={`pb-2 border-b-2 transition-colors duration-300 cursor-pointer ${
             activeTab === "detail"
-              ? "border-b-2 border-black font-semibold"
-              : "text-gray-400"
+              ? "border-black text-black font-semibold"
+              : "border-transparent text-gray-400 hover:text-black"
           }`}
         >
           Detail
         </button>
         <button
           onClick={() => setActiveTab("review")}
-          className={`pb-2 cursor-pointer ${
+          className={`pb-2 border-b-2 transition-colors duration-300 cursor-pointer ${
             activeTab === "review"
-              ? "border-b-2 border-black font-semibold"
-              : "text-gray-400"
+              ? "border-black text-black font-semibold"
+              : "border-transparent text-gray-400 hover:text-black"
           }`}
         >
           Review ({reviews?.length || 0})
         </button>
       </div>
 
-      {activeTab === "detail" && (
-        <div className="mt-4">
-          <h3 className="font-medium text-lg">Deskripsi Produk</h3>
-          <p className="text-md font-normal text-gray-600 mt-2">
-            {description}
-          </p>
-        </div>
-      )}
+      {/* Grid Layout: Tabs + Rating Summary */}
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Left Column: Detail or Review Content */}
+        <div className="md:w-2/3">
+          {activeTab === "detail" && (
+            <div>
+              <h3 className="font-medium text-lg">Deskripsi Produk</h3>
+              <p className="text-md font-normal text-gray-600 mt-2">
+                {description}
+              </p>
+            </div>
+          )}
 
-      {activeTab === "review" && (
-        <div className="mt-4">
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="md:col-span-2">
+          {activeTab === "review" && (
+            <div className="flex items-start">
               {reviews && reviews.length > 0 ? (
                 <ReviewList reviews={reviews} />
               ) : (
-                <div className="text-center text-gray-500 py-8">
+                <div className="text-center text-gray-500 py-2">
                   <p>Belum ada ulasan untuk produk ini</p>
                 </div>
               )}
             </div>
-            <div className="md:col-span-1">
-              <RatingSummary summary={ratingSummary} />
-            </div>
-          </div>
+          )}
         </div>
-      )}
+
+        {/* Right Column: Always Visible Rating Summary */}
+        <div className="md:w-[25%] ml-20">
+          <RatingSummary summary={ratingSummary} />
+        </div>
+      </div>
     </div>
   );
 };
