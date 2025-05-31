@@ -2,13 +2,16 @@
 import { useState, useRef, useEffect } from "react";
 import { Eye, Trash2, Ellipsis, ArrowUpDown } from "lucide-react";
 import ModalKonfirmasi from "../admin/modals/Konfirmasi";
-import ModalDetailProduk from "@/app/components/pengguna/modals/DetailProduk";
+import ModalDetailProduk from "./modals/DetailProduk"; // Update import path
 
 const TableProduk = ({ produkList, setProdukList, showToast }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [produkToDelete, setProdukToDelete] = useState(null);
+  // Add state for detail modal
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [selectedProduk, setSelectedProduk] = useState(null);
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState({
     nama: "",
@@ -65,6 +68,30 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setDropdownPos({ top: rect.bottom + 8, left: rect.left });
     setOpenDropdownId(id);
+  };
+
+  // Add function to handle detail click
+  const handleDetailClick = async (produk) => {
+    try {
+      // Fetch detailed product data including variants
+      const response = await fetch(`${apiUrl}/product/${produk.id}`, {
+        method: "GET",
+        credentials: "include", // Include credentials for authentication
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (!response.ok) throw new Error("Gagal mengambil detail produk");
+      
+      const detailedProduk = await response.json();
+      setSelectedProduk(detailedProduk);
+      setIsDetailModalOpen(true);
+      setOpenDropdownId(null);
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+      showToast("Gagal mengambil detail produk", "error");
+    }
   };
 
   const handleDeleteClick = (produk) => {
@@ -203,8 +230,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
           <button
             onClick={() => {
               const produk = produkList.find((p) => p.id === openDropdownId);
-              if (produk) alert("Lihat detail belum diimplementasi");
-              setOpenDropdownId(null);
+              if (produk) handleDetailClick(produk); // Update this line
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm"
           >
@@ -229,6 +255,16 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
         title="Konfirmasi Hapus"
         message={`Yakin ingin menghapus produk "${produkToDelete?.nama}"?`}
         confirmText="Hapus"
+      />
+
+      {/* Add Detail Modal */}
+      <ModalDetailProduk
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedProduk(null);
+        }}
+        produk={selectedProduk}
       />
     </>
   );
