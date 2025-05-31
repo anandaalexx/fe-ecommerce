@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Star } from "lucide-react";
+import ToastNotification from "./ToastNotification";
 
 const ReviewModal = ({
   isOpen,
@@ -16,14 +17,23 @@ const ReviewModal = ({
   const [hover, setHover] = useState(0);
   const [loading, setLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const handleSubmit = async () => {
     if (!rating || !komentar.trim()) {
-      alert("Mohon beri rating dan komentar");
+      showToast("Mohon beri rating dan komentar", "warning");
       return;
     }
     if (komentar.trim().length < 10) {
-      alert("Komentar minimal 10 karakter");
+      showToast("Komentar minimal 10 karakter", "warning");
       return;
     }
 
@@ -57,7 +67,7 @@ const ReviewModal = ({
 
       const result = await res.json();
       console.log("Success response:", result);
-      alert("Ulasan berhasil dikirim!");
+      showToast("Ulasan berhasil dikirim!", "success");
 
       setRating(0);
       setKomentar("");
@@ -68,7 +78,7 @@ const ReviewModal = ({
       }
     } catch (err) {
       console.error("Submit error:", err);
-      alert(err.message);
+      showToast(err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -132,6 +142,12 @@ const ReviewModal = ({
           </button>
         </div>
       </div>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };

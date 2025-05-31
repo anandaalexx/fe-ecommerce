@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Button from "../../Button";
+import ToastNotification from "../../ToastNotification";
 
 const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
   const [form, setForm] = useState({
@@ -12,6 +13,16 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     saldo: 0,
     roleId: 1,
   });
+
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const [roles, setRoles] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -76,7 +87,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
       onClose();
     } catch (err) {
       console.error("Error saat mengupdate user:", err);
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 
@@ -174,6 +185,12 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
           </motion.div>
         </motion.div>
       )}
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </AnimatePresence>
   );
 };

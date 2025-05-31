@@ -1,12 +1,22 @@
 "use client";
 import { useEffect, useState } from "react";
 import ReviewModal from "./ReviewModal";
+import ToastNotification from "./ToastNotification";
 
 const PesananCard = () => {
   const [daftarPesanan, setDaftarPesanan] = useState([]);
   const [reviewProduk, setReviewProduk] = useState(null);
   const [reviewedProducts, setReviewedProducts] = useState(new Set());
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     const fetchPesanan = async () => {
@@ -97,8 +107,9 @@ const PesananCard = () => {
         idProduk: produk.idProduk,
         idDetailTransaksi: produk.idDetailTransaksi,
       });
-      alert(
-        "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi."
+      showToast(
+        "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi.",
+        "error"
       );
       return;
     }
@@ -244,6 +255,12 @@ const PesananCard = () => {
           namaProduk={reviewProduk.namaProduk}
         />
       )}
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };

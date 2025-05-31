@@ -10,7 +10,7 @@ const TableProdukMenunggu = () => {
       try {
         const res = await fetch(`${apiUrl}/penjual/produk-menunggu`, {
           method: "GET",
-          credentials: "include", // penting agar cookie (misal: JWT) dikirim
+          credentials: "include",
         });
 
         const json = await res.json();
@@ -47,9 +47,9 @@ const TableProdukMenunggu = () => {
                   {item.produk.map((p, idx) => (
                     <li key={idx}>
                       <span className="font-semibold">{p.namaProduk}</span> (
-                      {p.varian || "-"}) – {p.kuantitas}x – Rp
+                      {p.varian || "-"}) - {p.kuantitas}x - Rp
                       {p.hargaSatuan.toLocaleString()} ={" "}
-                      <span className="font-medium text-green-900">
+                      <span className="font-semibold">
                         Rp{p.total.toLocaleString()}
                       </span>
                     </li>

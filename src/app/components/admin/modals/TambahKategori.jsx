@@ -3,17 +3,27 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../Button";
 import Spinner from "../../Spinner";
+import ToastNotification from "../../ToastNotification";
 
 const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
   const [nama, setNama] = useState("");
   const [loading, setLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!nama) {
-      alert("Nama kategori harus diisi.");
+      showToast("Nama kategori harus diisi.", "warning");
       return;
     }
 
@@ -93,6 +103,12 @@ const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
           </motion.div>
         )}
       </AnimatePresence>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </>
   );
 };

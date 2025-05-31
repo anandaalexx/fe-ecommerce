@@ -174,6 +174,13 @@ const Kurir = () => {
           }
         }}
       />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };
