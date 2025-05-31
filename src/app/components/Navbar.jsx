@@ -105,17 +105,19 @@ export default function Navbar() {
   return (
     <nav className="fixed w-full z-50 border-b border-gray-300 bg-white">
       {/* Navbar Atas */}
-      <div className="text-center text-sm py-2 px-4 font-medium border-b border-gray-300">
-        <p>
-          Bergabung bersama kami |{" "}
-          <a
-            href="/profile"
-            className="cursor-pointer hover:underline text-[#EDCF5D] transition-all duration-300"
-          >
-            Mulai berjualan
-          </a>
-        </p>
-      </div>
+      {user?.roleId === 1 && (
+        <div className="text-center text-sm py-2 px-4 font-medium border-b border-gray-300">
+          <p>
+            Bergabung bersama kami |{" "}
+            <a
+              href="/profile"
+              className="cursor-pointer hover:underline text-[#EDCF5D] transition-all duration-300"
+            >
+              Mulai berjualan
+            </a>
+          </p>
+        </div>
+      )}
 
       {/* Navbar Tengah */}
       <div className="flex items-center justify-between py-4 px-6">
@@ -135,7 +137,7 @@ export default function Navbar() {
         {/* Ikon dan Profil */}
         <div className="flex items-center gap-6">
           {/* Toko Saya */}
-          {user?.role === 2 && (
+          {user?.roleId === 2 && (
             <div
               className="flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
               onClick={() => router.push("/pengguna")}

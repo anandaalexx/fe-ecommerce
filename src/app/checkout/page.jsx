@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
 import ModalKonfirmasi from "../components/admin/modals/Konfirmasi";
+import ToastNotification from "../components/ToastNotification";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
@@ -23,7 +24,16 @@ export default function CheckoutPage() {
   const [items, setItems] = useState([]);
   const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const router = useRouter();
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -93,8 +103,10 @@ export default function CheckoutPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("Checkout gagal:", res.status, errorText);
-        alert("Gagal melakukan checkout");
+        showToast(
+          `Gagal melakukan checkout: Saldo anda tidak mencukupi`,
+          "error"
+        );
         return;
       }
 
@@ -102,7 +114,7 @@ export default function CheckoutPage() {
       router.push("/pesanan");
     } catch (error) {
       console.error("Terjadi kesalahan saat checkout:", error);
-      alert("Terjadi kesalahan saat checkout");
+      showToast("Terjadi kesalahan saat checkout", "error");
     }
   };
 
@@ -380,8 +392,7 @@ export default function CheckoutPage() {
         ?.nama_desa || "";
 
     // Format alamat yang lebih baik
-    const alamatBaru = `${form.nama} (${form.telepon})\n${form.jalan}, ${form.detail}\n${namaDesa}, ${namaKecamatan}\n${namaKabupaten}, ${namaProvinsi}`;
-
+    const alamatBaru = `${form.nama}, ${form.telepon}, ${form.jalan}, ${form.detail}, ${namaDesa}, ${namaKecamatan}, ${namaKabupaten}, ${namaProvinsi}`;
     try {
       const res = await fetch(`${apiUrl}/user/profile`, {
         method: "PUT",
@@ -657,6 +668,12 @@ export default function CheckoutPage() {
         message={`Apakah Anda yakin ingin membayar sekarang? Saldo Anda akan terpotong sebesar Rp ${preCheckoutInfo?.totalHargaAkhir?.toLocaleString()}!`}
         confirmText="Bayar"
         confirmColor="yellow"
+      />
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </>
   );
