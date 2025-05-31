@@ -160,8 +160,13 @@ const AddProduct = () => {
       // 2. Upload gambar jika ada
       if (images.length > 0) {
         for (const image of images) {
+          if (!image.file) {
+            console.warn("Lewati gambar kosong");
+            continue;
+          }
+          
           const formData = new FormData();
-          formData.append("image", image.file); // ← dari state images
+          formData.append("image", image.file); 
           formData.append("idProduk", idProdukBaru);
 
           try {
@@ -176,6 +181,7 @@ const AddProduct = () => {
               console.error("Gagal upload gambar:", errText);
             } else {
               const uploadData = await uploadRes.json();
+              console.log("Gambar berhasil diunggah:", uploadData);
             }
           } catch (uploadErr) {
             console.error("Error saat upload gambar:", uploadErr.message);
@@ -250,7 +256,10 @@ const AddProduct = () => {
                 />
                 {!image.isVariant && (
                   <button
-                    onClick={() => handleRemoveImage(index)}
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleRemoveImage(index);
+                    }}
                     className="absolute top-1 right-1 text-gray-700 w-5 h-5 flex items-center justify-center text-xl hover:text-red-600"
                     type="button"
                   >
@@ -266,19 +275,17 @@ const AddProduct = () => {
             ) : (
               <>
                 <CloudUpload className="text-gray-500" size={24} />
-                <label className="absolute text-xs bottom-2 text-gray-500">
-                  Upload
-                </label>
+                <label className="absolute text-xs bottom-2 text-gray-500">Upload</label>
+                {!image.isVariant && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, index)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    ref={(el) => (inputRefs.current[index] = el)}
+                  />
+                )}
               </>
-            )}
-            {!image.isVariant && (
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e, index)}
-                className="absolute inset-0 opacity-0 cursor-pointer"
-                ref={(el) => (inputRefs.current[index] = el)}
-              />
             )}
           </div>
         ))}
