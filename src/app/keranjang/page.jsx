@@ -184,13 +184,19 @@ const KeranjangPage = () => {
         </div>
 
         {/* Daftar produk per toko */}
-        <KeranjangList
-          groupedProducts={groupedProducts}
-          onSelectToko={handleSelectToko}
-          onSelectProduct={handleSelectProduct}
-          onQuantityChange={handleQuantityChange}
-          onDeleteConfirm={confirmDelete}
-        />
+        {groupedProducts.length === 0 ? (
+          <div className="text-center border border-gray-200 py-4 text-sm rounded-xs -mt-4 ">
+            Tidak ada produk di keranjang
+          </div>
+        ) : (
+          <KeranjangList
+            groupedProducts={groupedProducts}
+            onSelectToko={handleSelectToko}
+            onSelectProduct={handleSelectProduct}
+            onQuantityChange={handleQuantityChange}
+            onDeleteConfirm={confirmDelete}
+          />
+        )}
 
         {/* Footer Checkout */}
         <div className="max-w-md ml-auto bg-white border border-gray-200 rounded-sm p-4 mt-6">

@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import TableKurir from "./TableKurir";
 import TambahKurir from "./modals/TambahKurir";
 import EditKurir from "./modals/EditKurir";
+import ToastNotification from "../ToastNotification";
 
 const Kurir = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,7 +12,16 @@ const Kurir = () => {
   const [selectedKurir, setSelectedKurir] = useState(null);
   const [kurirs, setKurirs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -57,9 +67,15 @@ const Kurir = () => {
     const user = users.find((u) => String(u.id) === String(kurir.idUser));
     const combinedData = {
       ...kurir,
+      id: kurir.id,
+      idUser: kurir.idUser,
       nama: user?.nama || "",
       email: user?.email || "",
       password: user?.password || "",
+      nomorTelepon: kurir.nomorTelepon || "",
+      nomorPolisi: kurir.nomorPolisi || "",
+      merkKendaraan: kurir.merkKendaraan || "",
+      warnaKendaraan: kurir.warnaKendaraan || "",
     };
 
     setSelectedKurir(combinedData);
@@ -67,21 +83,55 @@ const Kurir = () => {
   };
 
   const handleEdit = async (updatedKurir) => {
-    const { idUser, nama, email, password, ...kurirFields } = updatedKurir;
+    const { id, idUser, nama, email, password, ...kurirFields } = updatedKurir;
 
-    await fetch(`${apiUrl}/admin/users/${idUser}`, {
-      method: "PUT",
-      body: JSON.stringify({ nama, email, password }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      // Update user data
+      const userRes = await fetch(`${apiUrl}/admin/users/${idUser}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nama, email, password }),
+      });
 
-    await fetch(`${apiUrl}/admin/couriers/${updatedKurir.id}`, {
-      method: "PUT",
-      body: JSON.stringify({ ...kurirFields, idUser }),
-      headers: { "Content-Type": "application/json" },
-    });
+      if (!userRes.ok) {
+        const error = await userRes.json();
+        throw new Error(error.message || "Gagal update data user");
+      }
 
-    await fetchKurir();
+      // Update courier data
+      const courierRes = await fetch(`${apiUrl}/admin/couriers/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...kurirFields,
+          idUser,
+        }),
+      });
+
+      if (!courierRes.ok) {
+        const error = await courierRes.json();
+        throw new Error(error.message || "Gagal update data kurir");
+      }
+
+      // Optimistic update
+      setKurirs((prev) =>
+        prev.map((k) => (k.id === id ? { ...k, ...kurirFields } : k))
+      );
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === idUser ? { ...u, nama, email, password } : u))
+      );
+
+      showToast("Data kurir berhasil diperbarui", "success");
+      return true;
+    } catch (error) {
+      console.error("Error:", error);
+      showToast(error.message || "Gagal memperbarui data", "error");
+      // Rollback dengan fetch ulang
+      await fetchKurir();
+      await fetchUsers();
+      return false;
+    }
   };
 
   return (
@@ -109,6 +159,7 @@ const Kurir = () => {
         onSuccess={async () => {
           await fetchUsers();
           await fetchKurir();
+          showToast("Kurir berhasil ditambahkan", "success");
         }}
       />
 
@@ -116,7 +167,12 @@ const Kurir = () => {
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedKurir}
-        onSubmit={handleEdit}
+        onSubmit={async (updatedKurir) => {
+          const success = await handleEdit(updatedKurir);
+          if (success) {
+            setIsEditModalOpen(false);
+          }
+        }}
       />
     </div>
   );
