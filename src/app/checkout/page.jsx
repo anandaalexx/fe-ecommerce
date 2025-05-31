@@ -21,7 +21,11 @@ export default function CheckoutPage() {
   const searchParams = useSearchParams();
   const [items, setItems] = useState([]);
   const [preCheckoutInfo, setPreCheckoutInfo] = useState(null);
+  const [preCheckoutInfoKomship, setPreCheckoutInfoKomship] = useState(null);
   const router = useRouter();
+  const [groupedItems, setGroupedItems] = useState([]);
+  const [selectedKurir, setSelectedKurir] = useState({});
+  const [finalCheckoutData, setFinalCheckoutData] = useState([]);
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -33,6 +37,7 @@ export default function CheckoutPage() {
       const idList = JSON.parse(decoded); // hasilnya array of idDetailKeranjang
       fetchDetailProduk(idList);
       fetchPreCheckout(idList);
+      fetchPreCheckoutKomship(idList);
     } catch (error) {
       console.error("Gagal decode / parse items:", error);
     }
@@ -44,13 +49,32 @@ export default function CheckoutPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ idDetailKeranjang: idList }), // ✅ sesuai dengan controller-mu
+        body: JSON.stringify({ idDetailKeranjang: idList }),
       });
 
       if (!res.ok) throw new Error("Gagal ambil detail produk");
 
       const data = await res.json();
-      setItems(data); // ← simpan data produk ke state
+      setItems(data);
+
+      // Kelompokkan berdasarkan toko
+      const grouped = data.reduce((acc, item) => {
+        const existing = acc.find((g) => g.namaToko === item.namaToko);
+        if (existing) {
+          existing.items.push(item);
+        } else {
+          acc.push({
+            sellerId: item.idPenjual,
+            namaToko: item.namaToko,
+            namaPenjual: item.namaPenjual,
+            alamatPenjual: item.alamatPenjual,
+            items: [item],
+          });
+        }
+        return acc;
+      }, []);
+      console.log("Data Selected:", grouped);
+      setGroupedItems(grouped);
     } catch (err) {
       console.error("Fetch gagal:", err);
     }
@@ -68,7 +92,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error("Gagal ambil info precheckout");
 
       const data = await res.json();
-      console.log("data:", data);
+      console.log("Data Pre-checkout:", data);
       setPreCheckoutInfo(data);
       // ⬅️ simpan hasil precheckout
     } catch (err) {
@@ -76,17 +100,103 @@ export default function CheckoutPage() {
     }
   };
 
+  const fetchPreCheckoutKomship = async (idList) => {
+    try {
+      const res = await fetch(`${apiUrl}/komship/ongkir`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ idDetailKeranjang: idList }),
+      });
+
+      if (!res.ok) throw new Error("Gagal ambil info precheckout");
+
+      const data = await res.json();
+      console.log("Data Pre-checkout Info Komship:", data);
+      setPreCheckoutInfoKomship(data);
+      // ⬅️ simpan hasil precheckout
+    } catch (err) {
+      console.error("Fetch precheckout gagal:", err);
+    }
+  };
+
+  const getOpsiKurirBySeller = (sellerId) => {
+    // Kurir internal dari preCheckoutInfo (default)
+    let opsiKurirInternal = [];
+    if (preCheckoutInfo?.perToko) {
+      const toko = preCheckoutInfo.perToko.find(
+        (t) => String(t.sellerId) === String(sellerId)
+      );
+      if (toko) {
+        opsiKurirInternal = [
+          {
+            shipping_name: "Kurir Internal",
+            shipping_cost: toko.ongkir,
+            service_name: "internal",
+            jenisKurir: "TokoLoko", // <-- tambahan
+          },
+        ];
+      }
+    }
+
+    // Kurir Komship dari preCheckoutInfoKomship
+    let opsiKurirKomship = [];
+    if (preCheckoutInfoKomship && Array.isArray(preCheckoutInfoKomship)) {
+      const data = preCheckoutInfoKomship.find(
+        (d) => String(d.sellerId) === String(sellerId)
+      );
+
+      if (data && data.detail) {
+        const {
+          calculate_reguler = [],
+          calculate_instant = [],
+          calculate_cargo = [],
+        } = data.detail;
+
+        opsiKurirKomship = [
+          ...calculate_reguler.map((item) => ({
+            ...item,
+            type: "reguler",
+            jenisKurir: "komship",
+          })),
+          ...calculate_instant.map((item) => ({
+            ...item,
+            type: "instant",
+            jenisKurir: "komship",
+          })),
+          ...calculate_cargo.map((item) => ({
+            ...item,
+            type: "cargo",
+            jenisKurir: "komship",
+          })),
+        ];
+      }
+    }
+
+    // Gabungkan kurir internal dan eksternal
+    return [...opsiKurirInternal, ...opsiKurirKomship];
+  };
+
   const handleCheckout = async () => {
     try {
       console.log("ITEMS:", items);
       const idList = items.map((item) => item.idDetailKeranjang); // Pastikan field-nya benar
+
+      console.log("Body yang dikirim:", {
+        idDetailKeranjang: idList,
+        finalGroupedData: finalCheckoutData,
+      });
+
       const res = await fetch(`${apiUrl}/checkout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({ idDetailKeranjang: idList }),
+        body: JSON.stringify({
+          idDetailKeranjang: idList,
+          finalGroupedData: finalCheckoutData, // sesuaikan nama ini dengan di controller
+        }),
       });
 
       if (!res.ok) {
@@ -103,6 +213,68 @@ export default function CheckoutPage() {
       alert("Terjadi kesalahan saat checkout");
     }
   };
+
+  const calculateTotal = () => {
+    let totalOngkir = 0;
+    let totalHarga = 0;
+
+    groupedItems.forEach((group) => {
+      const sellerId = group.sellerId;
+      const selected = selectedKurir[sellerId];
+      console.log("selectedKurir[sellerId]:", selected);
+      if (selected) {
+        totalOngkir += Number(selected.shipping_cost) || 0;
+      }
+
+      const subtotal = group.items.reduce((sum, item) => {
+        const harga = Number(item.hargaSatuan) || 0;
+        const kuantitas = Number(item.kuantitas) || 0;
+        return sum + harga * kuantitas;
+      }, 0);
+
+      totalHarga += subtotal;
+    });
+
+    return {
+      totalOngkir,
+      totalHargaAkhir: totalHarga + totalOngkir,
+    };
+  };
+
+  const { totalOngkir, totalHargaAkhir } = calculateTotal();
+
+  useEffect(() => {
+    if (
+      !Array.isArray(groupedItems) ||
+      !groupedItems.length ||
+      !preCheckoutInfo ||
+      !Array.isArray(preCheckoutInfoKomship) ||
+      !preCheckoutInfoKomship.length
+    )
+      return;
+
+    const finalGroupedData = groupedItems.map((group) => {
+      const sellerIdStr = String(group.sellerId);
+
+      const tokoInfo = preCheckoutInfo.perToko.find(
+        (p) => p.sellerId === sellerIdStr
+      );
+      const komshipInfo = preCheckoutInfoKomship.find(
+        (p) => p.sellerId === sellerIdStr
+      );
+
+      return {
+        sellerId: group.sellerId, // ✅ Tambahkan ini
+        originId: komshipInfo?.originId,
+        destinationId: komshipInfo?.destinationId,
+        selectedKurir: selectedKurir[group.sellerId] || null, // <-- ini yang kamu tambahkan
+      };
+    });
+
+    console.log("FINAL GROUPED DATA", finalGroupedData);
+
+    setFinalCheckoutData(finalGroupedData);
+  }, [groupedItems, preCheckoutInfo, preCheckoutInfoKomship, selectedKurir]);
 
   const [alamat, setAlamat] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -230,10 +402,6 @@ export default function CheckoutPage() {
       longitude: lon,
     }));
   };
-
-  // const totalHarga = orders.reduce((sum, item) => sum + item.price, 0);
-  // const ongkosKirim = 120000;
-  // const totalTagihan = ongkosKirim + totalHarga;
 
   useEffect(() => {
     fetch("../api/wilayah/provinsi")
@@ -378,7 +546,7 @@ export default function CheckoutPage() {
         ?.nama_desa || "";
 
     // Format alamat yang lebih baik
-    const alamatBaru = `${form.nama} (${form.telepon})\n${form.jalan}, ${form.detail}\n${namaDesa}, ${namaKecamatan}\n${namaKabupaten}, ${namaProvinsi}`;
+    const alamatBaru = `${form.nama}, ${form.telepon}, ${form.jalan}, ${form.detail}, Desa ${namaDesa}, Kecamatan ${namaKecamatan}, Kabupaten ${namaKabupaten}, Provinsi ${namaProvinsi}`;
 
     try {
       const res = await fetch(`${apiUrl}/user/profile`, {
@@ -431,54 +599,80 @@ export default function CheckoutPage() {
               </p>
             </div>
 
-            {items.map((item) => (
-              <div
-                key={item.idDetailKeranjang}
-                className="rounded-xl p-5 shadow-md bg-white flex gap-5 items-start hover:shadow-lg transition-all duration-300"
-              >
-                <img
-                  src={item.gambar}
-                  alt={item.namaProduk}
-                  className="w-28 h-28 object-contain rounded-md border border-gray-200 bg-gray-50"
-                />
-                <div className="flex-1">
-                  <div className="flex justify-between items-start">
-                    <h4 className="font-semibold text-lg text-gray-800">
-                      {item.namaProduk}
-                    </h4>
-                    <span className="text-sm bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md font-medium">
-                      x{item.kuantitas}
-                    </span>
+            {groupedItems.map((group, tokoIdx) => (
+              <div key={tokoIdx} className="space-y-4">
+                <div className="p-4 bg-white shadow rounded-lg border border-gray-200 mb-4">
+                  <h3 className="font-semibold text-md text-blue-700">
+                    {group.namaToko}
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Penjual: {group.namaPenjual} — {group.alamatPenjual}
+                  </p>
+                  {group.items.map((item) => (
+                    <div
+                      key={item.idDetailKeranjang}
+                      className="rounded-xl p-5 my-4 bg-white flex gap-5 items-start transition-all duration-300"
+                    >
+                      <img
+                        src={item.gambar}
+                        alt={item.namaProduk}
+                        className="w-28 h-28 object-contain rounded-md border border-gray-200 bg-gray-50"
+                      />
+                      <div className="flex-1">
+                        <div className="flex justify-between items-start">
+                          <h4 className="font-semibold text-lg text-gray-800">
+                            {item.namaProduk}
+                          </h4>
+                          <span className="text-sm bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md font-medium">
+                            x{item.kuantitas}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-500 mt-1">
+                          <span className="font-medium">
+                            {item.namaVarianProduk}
+                          </span>
+                        </p>
+                        <p className="text-lg font-semibold mt-9">
+                          Rp {item.totalHarga.toLocaleString("id-ID")}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                  <div className="mt-4">
+                    <label className="text-sm font-semibold">
+                      Pilih Kurir:
+                    </label>
+                    <select
+                      className="block mt-1 w-full border rounded p-2 text-sm"
+                      onChange={(e) => {
+                        const selectedOption = JSON.parse(e.target.value);
+                        setSelectedKurir((prev) => ({
+                          ...prev,
+                          [group.sellerId]: selectedOption,
+                        }));
+                      }}
+                      defaultValue=""
+                    >
+                      <option value="" disabled>
+                        Pilih kurir
+                      </option>
+                      {getOpsiKurirBySeller(group.sellerId).map(
+                        (kurir, idx) => (
+                          <option key={idx} value={JSON.stringify(kurir)}>
+                            {kurir.shipping_name} - {kurir.service_name} (
+                            {kurir.shipping_cost.toLocaleString("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                            })}
+                            )
+                          </option>
+                        )
+                      )}
+                    </select>
                   </div>
-                  <p className="text-sm text-gray-500 mt-1">
-                    <span className="font-medium">{item.namaVarianProduk}</span>
-                  </p>
-                  <p className="text-lg font-semibold mt-9">
-                    Rp {item.totalHarga.toLocaleString("id-ID")}
-                  </p>
                 </div>
               </div>
             ))}
-
-            {/* {items.length === 0 ? (
-              <p>Loading produk...</p>
-            ) : (
-              <ul className="space-y-4">
-                {items.map((item) => (
-                  <div key={item.idDetailKeranjang}>
-                    <img src={item.gambar} alt={item.namaVarianProduk} />
-                    <div>{item.namaVarianProduk}</div>
-                    <div>{item.namaToko}</div>
-                    <div>{item.namaPenjual}</div>
-                    <div>{item.alamatPenjual}</div>
-                    <div>
-                      {item.kuantitas} x Rp{item.hargaSatuan}
-                    </div>
-                    <div>Total: Rp{item.totalHarga}</div>
-                  </div>
-                ))}
-              </ul>
-            )} */}
           </div>
 
           <div className="rounded-lg p-4 shadow-xl h-fit bg-white">
@@ -493,17 +687,13 @@ export default function CheckoutPage() {
             </div>
             <div className="flex justify-between text-sm mb-2">
               <span>Total Ongkos Kirim</span>
-              <span>
-                Rp{" "}
-                {preCheckoutInfo?.totalOngkirKeseluruhan?.toLocaleString() ||
-                  "0"}
-              </span>
+              <span>Rp {totalOngkir?.toLocaleString() || "0"}</span>
             </div>
             <hr className="my-3" />
             <div className="flex justify-between font-semibold text-base mb-4">
               <span>Total Tagihan</span>
               <span className="text-black">
-                Rp {preCheckoutInfo?.totalHargaAkhir?.toLocaleString() || "0"}
+                Rp {totalHargaAkhir?.toLocaleString() || "0"}
               </span>
             </div>
             <Button onClick={handleCheckout}>Bayar Sekarang</Button>
