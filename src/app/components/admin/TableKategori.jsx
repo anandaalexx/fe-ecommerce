@@ -98,51 +98,53 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
       </div>
 
       <div className="overflow-x-auto border border-gray-200 rounded-sm shadow-sm relative z-0">
-        <table className="min-w-full text-sm divide-y divide-gray-200">
-          <thead className="bg-gray-100 text-gray-700">
-            <tr>
-              {[
-                { key: "id", label: "ID" },
-                { key: "nama", label: "Nama" },
-              ].map((col) => (
-                <th
-                  key={col.key}
-                  className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
-                  onClick={() => requestSort(col.key)}
-                >
-                  <div className="flex items-center gap-2">
-                    <span>{col.label}</span>
-                    <ArrowUpDown
-                      size={12}
-                      className={`${
-                        sortConfig.key === col.key
-                          ? "text-[#EDCF5D]"
-                          : "text-black"
-                      }`}
-                    />
-                  </div>
-                </th>
-              ))}
-              <th className="px-6 py-3 text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-100">
-            {paginatedCategories.map((cat) => (
-              <tr key={cat.id}>
-                <td className="px-6 py-4">{cat.id}</td>
-                <td className="px-6 py-4">{cat.nama}</td>
-                <td className="px-6 py-4 text-center">
-                  <button
-                    onClick={(e) => handleEllipsisClick(e, cat.id)}
-                    className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+        <div className="max-h-[400px] overflow-y-auto">
+          <table className="min-w-full text-sm divide-y divide-gray-200">
+            <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
+              <tr>
+                {[
+                  { key: "id", label: "ID" },
+                  { key: "nama", label: "Nama" },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
+                    onClick={() => requestSort(col.key)}
                   >
-                    <Ellipsis size={20} />
-                  </button>
-                </td>
+                    <div className="flex items-center gap-2">
+                      <span>{col.label}</span>
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.key === col.key
+                            ? "text-[#EDCF5D]"
+                            : "text-black"
+                        }`}
+                      />
+                    </div>
+                  </th>
+                ))}
+                <th className="px-6 py-3 text-center">Aksi</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-100">
+              {paginatedCategories.map((cat) => (
+                <tr key={cat.id}>
+                  <td className="px-6 py-4">{cat.id}</td>
+                  <td className="px-6 py-4">{cat.nama}</td>
+                  <td className="px-6 py-4 text-center">
+                    <button
+                      onClick={(e) => handleEllipsisClick(e, cat.id)}
+                      className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
+                    >
+                      <Ellipsis size={20} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="flex justify-between items-center p-3 text-sm">

@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -53,6 +54,8 @@ export default function RegisterPage() {
       return;
     }
 
+    setIsLoading(true);
+
     try {
       const response = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
@@ -71,6 +74,8 @@ export default function RegisterPage() {
     } catch (error) {
       console.error("Error saat register:", error);
       setErrorMessage("Terjadi kesalahan pada server.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -196,7 +201,35 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <Button type="submit">Daftar</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white font-medium"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-100"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    ></circle>
+                    <path
+                      className="opacity-100"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  Memproses...
+                </div>
+              ) : (
+                "Daftar"
+              )}
+            </Button>
             <SuccessDialog
               isOpen={showDialog}
               onClose={() => (window.location.href = "/login")}
