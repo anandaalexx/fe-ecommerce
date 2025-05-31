@@ -4,7 +4,8 @@ import ReviewModal from "./ReviewModal";
 
 const PesananCard = () => {
   const [daftarPesanan, setDaftarPesanan] = useState([]);
-  const [reviewOpenRow, setReviewOpenRow] = useState(null);
+  const [reviewProduk, setReviewProduk] = useState(null);
+  const [reviewedProducts, setReviewedProducts] = useState(new Set());
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -15,7 +16,7 @@ const PesananCard = () => {
           headers: {
             "Content-Type": "application/json",
           },
-          credentials: "include", // Penting kalau pakai cookie-based auth
+          credentials: "include",
         });
 
         const data = await res.json();
@@ -33,10 +34,11 @@ const PesananCard = () => {
           status:
             trx.statusPengiriman?.replace(/_/g, " ") || "menunggu penjual",
           barangSesuai: true,
-          produk: trx.produk, // ← simpan seluruh produk
+          produk: trx.produk,
         }));
 
         setDaftarPesanan(formatted);
+        fetchExistingReviews(formatted);
       } catch (err) {
         console.error("Gagal memuat data transaksi:", err);
       }
@@ -44,6 +46,35 @@ const PesananCard = () => {
 
     fetchPesanan();
   }, []);
+
+  const fetchExistingReviews = async (orders) => {
+    try {
+      const res = await fetch(`${apiUrl}/ulasan/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (res.ok) {
+        const reviewData = await res.json();
+        const reviewedSet = new Set();
+
+        if (reviewData && Array.isArray(reviewData.ulasan)) {
+          reviewData.ulasan.forEach((review) => {
+            if (review.idDetailTransaksi) {
+              reviewedSet.add(review.idDetailTransaksi);
+            }
+          });
+        }
+
+        setReviewedProducts(reviewedSet);
+      }
+    } catch (err) {
+      console.error("Gagal memuat data ulasan:", err);
+    }
+  };
 
   const ubahStatusPesanan = (id, statusBaru) => {
     const update = daftarPesanan.map((p) =>
@@ -54,9 +85,43 @@ const PesananCard = () => {
     setDaftarPesanan(update);
   };
 
-  const handleKirimReview = ({ rating, review }) => {
-    console.log("Review dikirim:", rating, review);
-    setReviewOpenRow(null);
+  const handleOpenReview = (produk) => {
+    console.log("Data produk untuk review:", produk);
+    console.log("idUser:", produk.idUser);
+    console.log("idProduk:", produk.idProduk);
+    console.log("idDetailTransaksi:", produk.idDetailTransaksi);
+
+    if (!produk.idUser || !produk.idProduk || !produk.idDetailTransaksi) {
+      console.error("Data tidak lengkap:", {
+        idUser: produk.idUser,
+        idProduk: produk.idProduk,
+        idDetailTransaksi: produk.idDetailTransaksi,
+      });
+      alert(
+        "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi."
+      );
+      return;
+    }
+
+    setReviewProduk({
+      idUser: produk.idUser,
+      idProduk: produk.idProduk,
+      idDetailTransaksi: produk.idDetailTransaksi,
+      namaProduk: produk.namaProduk,
+    });
+  };
+
+  const handleCloseReview = () => {
+    setReviewProduk(null);
+  };
+
+  const handleReviewSuccess = (idDetailTransaksi) => {
+    setReviewedProducts((prev) => new Set([...prev, idDetailTransaksi]));
+    handleCloseReview();
+  };
+
+  const isProductReviewed = (idDetailTransaksi) => {
+    return reviewedProducts.has(idDetailTransaksi);
   };
 
   return (
@@ -134,31 +199,47 @@ const PesananCard = () => {
                     Diterima
                   </button>
                 )}
-                {order.status === "diterima pembeli" && (
-                  <button
-                    onClick={() => setReviewOpenRow(index)}
-                    disabled={!order.barangSesuai}
-                    className={`w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded font-medium transition duration-200 ${
-                      order.barangSesuai
-                        ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
-                        : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                    }`}
-                  >
-                    Beri Ulasan
-                  </button>
-                )}
-                {reviewOpenRow === index && (
-                  <ReviewModal
-                    isOpen={true}
-                    onClose={() => setReviewOpenRow(null)}
-                    onSubmit={handleKirimReview}
-                  />
-                )}
+                {order.status === "diterima pembeli" &&
+                  order.produk.map((item, i) => {
+                    const alreadyReviewed = isProductReviewed(
+                      item.idDetailTransaksi
+                    );
+
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => handleOpenReview(item)}
+                        disabled={!order.barangSesuai || alreadyReviewed}
+                        className={`w-full inline-flex items-center justify-center gap-2 py-2 rounded font-medium transition duration-200 mt-1 ${
+                          alreadyReviewed
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : order.barangSesuai
+                            ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        }`}
+                      >
+                        {alreadyReviewed
+                          ? "Sudah Diulas"
+                          : `Beri Ulasan untuk ${item.namaProduk}`}
+                      </button>
+                    );
+                  })}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+      {reviewProduk && (
+        <ReviewModal
+          isOpen={true}
+          onClose={handleCloseReview}
+          onSuccess={handleReviewSuccess}
+          idUser={reviewProduk.idUser}
+          idProduk={reviewProduk.idProduk}
+          idDetailTransaksi={reviewProduk.idDetailTransaksi}
+          namaProduk={reviewProduk.namaProduk}
+        />
+      )}
     </div>
   );
 };

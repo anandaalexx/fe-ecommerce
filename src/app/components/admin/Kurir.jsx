@@ -86,30 +86,51 @@ const Kurir = () => {
     const { id, idUser, nama, email, password, ...kurirFields } = updatedKurir;
 
     try {
-      await fetch(`${apiUrl}/admin/users/${idUser}`, {
+      // Update user data
+      const userRes = await fetch(`${apiUrl}/admin/users/${idUser}`, {
         method: "PUT",
-        body: JSON.stringify({ nama, email, password }),
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nama, email, password }),
       });
 
-      await fetch(`${apiUrl}/admin/couriers/${id}`, {
+      if (!userRes.ok) {
+        const error = await userRes.json();
+        throw new Error(error.message || "Gagal update data user");
+      }
+
+      // Update courier data
+      const courierRes = await fetch(`${apiUrl}/admin/couriers/${id}`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...kurirFields,
           idUser,
-          nomorTelepon: updatedKurir.nomorTelepon,
-          nomorPolisi: updatedKurir.nomorPolisi,
-          merkKendaraan: updatedKurir.merkKendaraan,
-          warnaKendaraan: updatedKurir.warnaKendaraan,
         }),
-        headers: { "Content-Type": "application/json" },
       });
 
-      await fetchKurir();
-      showToast("Pengguna berhasil diperbarui", "success");
+      if (!courierRes.ok) {
+        const error = await courierRes.json();
+        throw new Error(error.message || "Gagal update data kurir");
+      }
+
+      // Optimistic update
+      setKurirs((prev) =>
+        prev.map((k) => (k.id === id ? { ...k, ...kurirFields } : k))
+      );
+
+      setUsers((prev) =>
+        prev.map((u) => (u.id === idUser ? { ...u, nama, email, password } : u))
+      );
+
+      showToast("Data kurir berhasil diperbarui", "success");
+      return true;
     } catch (error) {
-      console.error("Error updating:", error);
-      showToast("Gagal memperbarui data", "error");
+      console.error("Error:", error);
+      showToast(error.message || "Gagal memperbarui data", "error");
+      // Rollback dengan fetch ulang
+      await fetchKurir();
+      await fetchUsers();
+      return false;
     }
   };
 
@@ -147,9 +168,10 @@ const Kurir = () => {
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedKurir}
         onSubmit={async (updatedKurir) => {
-          await handleEdit(updatedKurir);
-          showToast("Kurir berhasil diperbarui", "success");
-          setIsEditModalOpen(false);
+          const success = await handleEdit(updatedKurir);
+          if (success) {
+            setIsEditModalOpen(false);
+          }
         }}
       />
     </div>

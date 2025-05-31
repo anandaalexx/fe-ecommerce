@@ -57,34 +57,26 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     e.preventDefault();
     try {
       const { id, nama, email, alamat, roleId, saldo } = form;
-      console.log("Mengirim data:", { id, nama, email, alamat, roleId, saldo });
-      // Membuat permintaan PUT untuk mengupdate pengguna
+
       const res = await fetch(`${apiUrl}/admin/users/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          nama,
-          email,
-          alamat,
-          roleId,
-          saldo,
-        }),
+        body: JSON.stringify({ nama, email, alamat, roleId, saldo }),
       });
 
-      if (!res.ok) throw new Error("Gagal mengupdate pengguna");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Gagal mengupdate pengguna");
+      }
 
-      // Mendapatkan respons pengguna yang telah diperbarui
       const updatedUser = await res.json();
-      console.log(updatedUser);
-
-      // Panggil onSubmit jika perlu pembaruan di state induk
       onSubmit(updatedUser);
-
       onClose();
     } catch (err) {
       console.error("Error saat mengupdate user:", err);
+      alert(err.message);
     }
   };
 
