@@ -6,6 +6,7 @@ import {
   List,
   Package,
   Send,
+  PackageCheck,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -46,6 +47,11 @@ const menuByRole = {
       label: "List Produk",
       path: "/pengguna/list-produk",
       icon: <List size={20} />,
+    },
+    {
+      label: "Penjualan Saya",
+      path: "/pengguna/list-penjualan",
+      icon: <PackageCheck size={20} />,
     },
   ],
   courier: [

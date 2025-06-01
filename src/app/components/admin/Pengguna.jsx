@@ -4,6 +4,7 @@ import { PlusCircle } from "lucide-react";
 import TablePengguna from "./TablePengguna";
 import ModalTambahPengguna from "./modals/TambahPengguna";
 import ModalEditPengguna from "./modals/EditPengguna";
+import ToastNotification from "../ToastNotification";
 
 const Pengguna = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -11,6 +12,15 @@ const Pengguna = () => {
   const [selectedUser, setSelectedUser] = useState(null);
   const [users, setUsers] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchUsers = async () => {
     try {
@@ -32,20 +42,42 @@ const Pengguna = () => {
   };
 
   const handleEdit = async (updatedUser) => {
-    const res = await fetch(`${apiUrl}/admin/users/${updatedUser.id}`, {
-      method: "PUT",
-      body: JSON.stringify(updatedUser),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const res = await fetch(`${apiUrl}/admin/users/${updatedUser.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nama: updatedUser.nama,
+          email: updatedUser.email,
+          alamat: updatedUser.alamat,
+          roleId: updatedUser.roleId,
+          saldo: updatedUser.saldo,
+        }),
+      });
 
-    if (!res.ok) {
-      console.error("Gagal mengedit pengguna");
-      return;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Gagal mengedit pengguna");
+      }
+
+      const updatedData = await res.json();
+
+      // Update local state tanpa perlu fetch ulang
+      setUsers((prevUsers) =>
+        prevUsers.map((user) =>
+          user.id === updatedUser.id ? { ...user, ...updatedData } : user
+        )
+      );
+
+      showToast("Pengguna berhasil diperbarui", "success");
+      return true;
+    } catch (err) {
+      console.error("Error:", err);
+      showToast(err.message || "Gagal mengedit pengguna", "error");
+      return false;
     }
-
-    await fetchUsers();
   };
 
   return (
@@ -65,19 +97,35 @@ const Pengguna = () => {
         users={users}
         setUsers={setUsers}
         onEdit={handleEditUser}
+        showToast={showToast}
       />
 
       <ModalTambahPengguna
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={fetchUsers}
+        onSuccess={() => {
+          fetchUsers();
+          showToast("Pengguna berhasil ditambahkan", "success");
+        }}
       />
 
       <ModalEditPengguna
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         initialData={selectedUser}
-        onSubmit={handleEdit}
+        onSubmit={async (updatedUser) => {
+          const success = await handleEdit(updatedUser);
+          if (success) {
+            setIsEditModalOpen(false);
+          }
+        }}
+      />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );

@@ -40,10 +40,10 @@ export default function SuccessDialog({ isOpen, onClose, message }) {
                   <p className="text-sm text-gray-500">{message}</p>
                 </div>
 
-                <div className="mt-4">
+                <div className="flex justify-end mt-4">
                   <button
                     type="button"
-                    className="inline-flex justify-center rounded-md bg-[#EDCF5D] px-4 py-2 text-sm font-medium text-white hover:bg-yellow-400 focus:outline-none cursor-pointer"
+                    className="inline-flex justify-center rounded-md bg-[#EDCF5D] px-4 py-2 text-sm font-medium text-white hover:brightness-110 focus:outline-none cursor-pointer"
                     onClick={onClose}
                   >
                     Lanjut ke Login

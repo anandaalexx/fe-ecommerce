@@ -43,6 +43,7 @@ const DashboardLayout = ({ role, username, children }) => {
         title="Konfirmasi Logout"
         message="Apakah Anda yakin ingin keluar dari akun?"
         confirmText="Keluar"
+        confirmColor="red"
       />
     </div>
   );

@@ -1,62 +1,115 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Button from "./Button";
 
-const ProductInfo = ({ product }) => {
-  const [quantity, setQuantity] = useState(1);
+const ProductInfo = ({ product, onAddToCart, quantity, setQuantity, setMainImage }) => {
+  const [selectedVariants, setSelectedVariants] = useState({});
+  const [displayedPrice, setDisplayedPrice] = useState(null);
+
+  // Mengelompokkan nilai varian
+  const variantMap = {};
+  product.varianProduk.forEach((vp) => {
+    vp.nilaiVarian.forEach(({ varian, nilai }) => {
+      if (!variantMap[varian]) {
+        variantMap[varian] = new Set();
+      }
+      variantMap[varian].add(nilai);
+    });
+  });
+
+  // SET HARGA LANGSUNG jika tidak ada varian
+  useEffect(() => {
+    if (
+      product.varianProduk.length === 1 &&
+      product.varianProduk[0].nilaiVarian.length === 0
+    ) {
+      setDisplayedPrice(parseInt(product.varianProduk[0].harga));
+    }
+  }, [product]);
+
+  const handleVariantClick = (varianName, nilai) => {
+    const currentSelected = selectedVariants[varianName];
+
+    // Toggle: jika diklik lagi, maka hapus pilihan
+    const updatedVariants = { ...selectedVariants };
+    if (currentSelected === nilai) {
+      delete updatedVariants[varianName];
+    } else {
+      updatedVariants[varianName] = nilai;
+    }
+
+    setSelectedVariants(updatedVariants);
+
+    const totalVariantTypes = Object.keys(variantMap).length;
+    const isAllVariantsSelected =
+      Object.keys(updatedVariants).length === totalVariantTypes;
+
+    if (isAllVariantsSelected) {
+      const matched = product.varianProduk.find((vp) =>
+        vp.nilaiVarian.every(
+          ({ varian, nilai }) => updatedVariants[varian] === nilai
+        )
+      );
+
+      if (matched) {
+        setDisplayedPrice(parseInt(matched.harga));
+
+        // ✅ Tambahan: Set gambar utama dari varian yang cocok
+        if (matched.gambarVarian && matched.gambarVarian.length > 0) {
+          const sorted = [...matched.gambarVarian].sort((a, b) => a.urutan - b.urutan);
+          setMainImage(sorted[0].url); // gunakan gambar urutan pertama
+        } else {
+          setMainImage(null); // jika tidak ada gambar varian
+        }
+
+      } else {
+        setDisplayedPrice("Varian tidak tersedia");
+        setMainImage(null);
+      }
+    } else {
+      setDisplayedPrice(null); // Reset harga jika tidak semua varian dipilih
+      setMainImage(null);      // Reset gambar juga
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-lg font-bold">{product.brand}</p>
-      <h2 className="text-4xl font-bold">{product.name}</h2>
-
-      {/* Rating dan Jumlah Review (Dummy) */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 text-[#EDCF5D] text-2xl">
-          {/* Bintang Dummy */}
-          <span>★</span>
-          <span>★</span>
-          <span>★</span>
-          <span>★</span>
-          <span className="text-[#A4A4A4]">★</span>
-        </div>
-        {/* Jumlah review dummy */}
-        <span className="text-xl text-[#A4A4A4]">|</span>
-        <span className="text-xl mt-1 text-[#A4A4A4]"> 120 review</span>
-      </div>
+      <p className="text-lg font-bold">{product.penjual}</p>
+      <h2 className="text-4xl font-bold">{product.nama}</h2>
 
       {/* Harga */}
       <p className="text-4xl font-bold text-gray-800">
-        Rp {product.price.toLocaleString("id-ID")}
+        {displayedPrice === null
+          ? "Pilih varian"
+          : typeof displayedPrice === "string"
+          ? displayedPrice
+          : `Rp ${displayedPrice.toLocaleString("id-ID")}`}
       </p>
 
-      {/* Pilihan Warna */}
-      <div>
-        <h4 className="text-lg font-semibold mb-1">Warna</h4>
-        <div className="flex gap-2">
-          {product.colors.map((color, index) => (
-            <div
-              key={index}
-              className="w-8 h-10 rounded bg-gray-200 cursor-pointer"
-            ></div>
-          ))}
-        </div>
-      </div>
-
-      {/* Pilihan Penyimpanan */}
-      <div>
-        <h4 className="text-lg font-semibold mb-1">Penyimpanan</h4>
-        <div className="flex gap-2 flex-wrap">
-          {product.storages.map((storage, index) => (
-            <button
-              key={index}
-              className="px-3 py-1 bg-gray-200 rounded-md text-md font-medium"
-            >
-              {storage}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Pilihan Varian */}
+      {Object.keys(variantMap).length > 0 &&
+        Object.entries(variantMap).map(([varianName, nilaiSet]) => (
+          <div key={varianName}>
+            <h4 className="text-lg font-semibold mb-1 capitalize">
+              {varianName}
+            </h4>
+            <div className="flex gap-2 flex-wrap">
+              {[...nilaiSet].map((nilai) => (
+                <button
+                  key={nilai}
+                  onClick={() => handleVariantClick(varianName, nilai)}
+                  className={`px-3 py-1 rounded-md text-md font-medium border cursor-pointer ${
+                    selectedVariants[varianName] === nilai
+                      ? "bg-[#EDCF5D] text-white border-gray-300"
+                      : "bg-gray-100 text-gray-700 border-gray-300"
+                  }`}
+                >
+                  {nilai}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
       {/* Kuantitas */}
       <div>
@@ -79,7 +132,35 @@ const ProductInfo = ({ product }) => {
       </div>
 
       {/* Tombol Tambah ke Keranjang */}
-      <Button>Tambah ke keranjang</Button>
+      <Button
+        disabled={typeof displayedPrice !== "number"}
+        onClick={() => {
+          const totalVariantTypes = Object.keys(variantMap).length;
+          const isAllVariantsSelected =
+            Object.keys(selectedVariants).length === totalVariantTypes;
+
+          let matchedVariant = null;
+
+          if (isAllVariantsSelected) {
+            matchedVariant = product.varianProduk.find((vp) =>
+              vp.nilaiVarian.every(
+                ({ varian, nilai }) => selectedVariants[varian] === nilai
+              )
+            );
+          } else if (
+            product.varianProduk.length === 1 &&
+            product.varianProduk[0].nilaiVarian.length === 0
+          ) {
+            matchedVariant = product.varianProduk[0];
+          }
+
+          if (matchedVariant) {
+            onAddToCart(matchedVariant.id, quantity);
+          }
+        }}
+      >
+        Tambah ke keranjang
+      </Button>
     </div>
   );
 };

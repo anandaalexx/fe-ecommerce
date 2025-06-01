@@ -13,6 +13,8 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showDialog, setShowDialog] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -40,33 +42,40 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
 
-    if (password !== confirmPassword) {
-      alert("Password dan konfirmasi password tidak sama");
+    if (!nama || !email || !password || !confirmPassword) {
+      setErrorMessage("Semua field harus diisi.");
       return;
     }
+
+    if (password !== confirmPassword) {
+      setErrorMessage("Password dan konfirmasi password tidak sama.");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch(`${apiUrl}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          nama,
-          email,
-          password,
-        }),
+        body: JSON.stringify({ nama, email, password }),
       });
 
+      const data = await response.json();
+      console.log("RESPONSE DATA:", data);
+
       if (response.ok) {
-        const data = await response.json();
         setShowDialog(true);
       } else {
-        const error = await response.json();
-        alert(error.message || "Registrasi gagal!");
+        setErrorMessage("Email sudah terdaftar. Gunakan Email lain!");
       }
     } catch (error) {
       console.error("Error saat register:", error);
-      alert("Terjadi kesalahan pada server.");
+      setErrorMessage("Terjadi kesalahan pada server.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -100,6 +109,11 @@ export default function RegisterPage() {
           </p>
 
           <form className="mt-6" onSubmit={handleSubmit}>
+            {errorMessage && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 -mt-5 rounded-md text-sm">
+                {errorMessage}
+              </div>
+            )}
             <div>
               <label className="block text-sm font-medium">Nama</label>
               <div className="relative">
@@ -187,7 +201,35 @@ export default function RegisterPage() {
               )}
             </div>
 
-            <Button type="submit">Daftar</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white font-medium"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-100"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    ></circle>
+                    <path
+                      className="opacity-100"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  Memproses...
+                </div>
+              ) : (
+                "Daftar"
+              )}
+            </Button>
             <SuccessDialog
               isOpen={showDialog}
               onClose={() => (window.location.href = "/login")}

@@ -4,6 +4,7 @@ import { CloudUpload } from "lucide-react";
 import Button from "../Button";
 import { useRouter } from "next/navigation";
 import VariantModal from "./modals/TambahVarian";
+import ToastNotification from "../ToastNotification";
 
 const AddProduct = () => {
   const [images, setImages] = useState([{ preview: null, file: null }]);
@@ -16,11 +17,22 @@ const AddProduct = () => {
   const [parsedVariants, setParsedVariants] = useState([]);
   const [variantCombinations, setVariantCombinations] = useState([]);
   const [pendingUploads, setPendingUploads] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showVariantModal, setShowVariantModal] = useState(false);
 
   const inputRefs = useRef([]);
   const router = useRouter();
+
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -36,6 +48,7 @@ const AddProduct = () => {
         });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
+        console.log("Kategori", data);
         setKategoriList(data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -83,17 +96,22 @@ const AddProduct = () => {
 
   const handleSubmit = async () => {
 
+    if (isSubmitting) return; 
+    
     if (!namaProduk || !deskripsi || !kategori) {
-      alert("Nama produk, deskripsi, dan kategori wajib diisi!");
+      showToast("Nama produk, deskripsi, dan kategori wajib diisi!", "warning");
       return;
     }
-
+    
     // Validasi untuk produk tanpa varian
     if (parsedVariants.length === 0 && (!harga || !stok)) {
-      alert("Harga dan stok wajib diisi untuk produk tanpa varian!");
+      showToast(
+        "Harga dan stok wajib diisi untuk produk tanpa varian!",
+        "warning"
+      );
       return;
     }
-
+    
     // Validasi untuk produk dengan varian
     if (parsedVariants.length > 0) {
       const incompleteCombinations = variantCombinations.some(
@@ -101,18 +119,22 @@ const AddProduct = () => {
       );
 
       if (incompleteCombinations) {
-        alert("Semua kombinasi varian harus memiliki harga dan stok!");
+        showToast(
+          "Semua kombinasi varian harus memiliki harga dan stok!",
+          "warning"
+        );
         return;
       }
     }
-
+    
     // Siapkan payload dasar
     const payload = {
       namaProduk,
       deskripsi,
       idKategori: parseInt(kategori),
     };
-
+    
+    
     // Jika tidak ada varian, tambahkan harga dan stok langsung
     if (parsedVariants.length === 0) {
       payload.harga = parseInt(harga);
@@ -126,7 +148,7 @@ const AddProduct = () => {
 
       variantCombinations.forEach((combo, index) => {
       });
-
+      
       payload.produkVarian = variantCombinations.map((combo) => ({
         harga: parseInt(combo.harga),
         stok: parseInt(combo.stok),
@@ -136,6 +158,8 @@ const AddProduct = () => {
         }))
       }));
     }
+    
+    setIsSubmitting(true);
 
     try {
       // 1. Tambahkan produk terlebih dahulu
@@ -240,7 +264,7 @@ const AddProduct = () => {
         {[...images, ...pendingUploads.map((item) => ({
           preview: URL.createObjectURL(item.file),
           file: item.file,
-          label: `${item.variantNama}: ${item.optionNama}`,
+          label: `${item.name}`,
           isVariant: true,
         }))].map((image, index) => (
           <div
@@ -436,8 +460,8 @@ const AddProduct = () => {
 
       {/* Tombol Tambah Produk */}
       <div className="flex justify-center">
-        <Button onClick={handleSubmit} className="font-medium">
-          Tambah Produk
+        <Button onClick={handleSubmit} disabled={isSubmitting} className="font-medium">
+          {isSubmitting ? "Menyimpan..." : "Tambah Produk"}
         </Button>
       </div>
 
@@ -446,6 +470,13 @@ const AddProduct = () => {
         onClose={() => setShowVariantModal(false)}
         onSave={handleSaveVariants}
         initialVariants={parsedVariants}
+      />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );

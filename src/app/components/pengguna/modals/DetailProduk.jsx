@@ -1,6 +1,7 @@
 "use client";
 import { Dialog } from "@headlessui/react";
 import { Fragment, useEffect, useState } from "react";
+import ToastNotification from "../../ToastNotification";
 
 const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   const [produkState, setProdukState] = useState(null);
@@ -9,6 +10,15 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   const [newImages, setNewImages] = useState([]);
   const [newVariantImages, setNewVariantImages] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     setProdukState(produk);
@@ -22,7 +32,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
     const jumlahTambah = parseInt(stokTambah[idVarianProduk] || 0);
 
     if (isNaN(jumlahTambah) || jumlahTambah <= 0) {
-      alert("Masukkan jumlah stok yang valid!");
+      showToast("Masukkan jumlah stok yang valid!", "warning");
       return;
     }
 
@@ -41,7 +51,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
 
       if (!res.ok) throw new Error("Gagal menambah stok");
 
-      alert("Stok berhasil ditambahkan!");
+      showToast("Stok berhasil ditambahkan!", "success");
 
       // Update stok di state
       setProdukState((prev) => ({
@@ -218,7 +228,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   };
 
   return (
-    <Dialog as={Fragment} open={isOpen} onClose={onClose}>
+    <Dialog as="div" open={isOpen} onClose={onClose}>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <Dialog.Panel className="bg-white max-w-2xl w-full rounded-lg shadow-xl">
         <div className="p-6 max-h-[90vh] overflow-y-auto">
@@ -292,66 +302,68 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
               <div key={vp.id} className="border rounded p-3 space-y-2">
                 
                 {/* Gambar lama dan baru varian + upload */}
-                <div className="flex gap-2 overflow-x-auto">
-                  {/* Gambar lama */}
-                  {vp.gambarVarian?.length > 0 &&
-                    vp.gambarVarian.map((gambar, idx) => (
-                      <div key={`lama-${gambar.id || idx}`} className="relative w-20 h-20 flex-shrink-0">
-                        <img src={gambar.url} alt={`Varian ${vp.sku} - ${idx + 1}`} className="w-full h-full object-cover rounded border" />
-                        <button
-                          onClick={() => handleHapusGambarVarian(vp.id, idx)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
-                  {/* Gambar baru */}
-                  {(newVariantImages[vp.id] || []).map((image, index) => (
-                    <div key={index} className="w-20 h-20 relative border-2 border-dashed rounded bg-gray-100 flex-shrink-0">
-                      {image.preview ? (
-                        <>
-                          <img src={image.preview} alt="" className="w-full h-full object-cover rounded" />
+                {vp.nilaiVarian?.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto">
+                    {/* Gambar lama */}
+                    {vp.gambarVarian?.length > 0 &&
+                      vp.gambarVarian.map((gambar, idx) => (
+                        <div key={`lama-${gambar.id || idx}`} className="relative w-20 h-20 flex-shrink-0">
+                          <img src={gambar.url} alt={`Varian ${vp.sku} - ${idx + 1}`} className="w-full h-full object-cover rounded border" />
                           <button
-                            onClick={() => handleHapusGambarBaruVarian(vp.id, index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
+                            onClick={() => handleHapusGambarVarian(vp.id, idx)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600"
                           >
                             ×
                           </button>
-                        </>
-                      ) : (
-                        <label className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">
-                          Upload
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleTambahGambarVarian(e, vp.id, index)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                        </label>
-                      )}
-                    </div>
-                  ))}
+                        </div>
+                      ))}
 
-                  {/* Tombol tambah hanya jika belum ada gambar lama maupun baru */}
-                  {vp.gambarVarian.length === 0 &&
-                    !(newVariantImages[vp.id]?.some(img => img && img.file)) &&
-                    (newVariantImages[vp.id]?.length || 0) < 1 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNewVariantImages((prev) => ({
-                            ...prev,
-                            [vp.id]: [{ preview: null, file: null }],
-                          }))
-                        }
-                        className="w-20 h-20 border-2 border-dashed text-xl text-gray-400 rounded flex items-center justify-center cursor-pointer"
-                      >
-                        +
-                      </button>
-                    )}
-                </div>
+                    {/* Gambar baru */}
+                    {(newVariantImages[vp.id] || []).map((image, index) => (
+                      <div key={index} className="w-20 h-20 relative border-2 border-dashed rounded bg-gray-100 flex-shrink-0">
+                        {image.preview ? (
+                          <>
+                            <img src={image.preview} alt="" className="w-full h-full object-cover rounded" />
+                            <button
+                              onClick={() => handleHapusGambarBaruVarian(vp.id, index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          </>
+                        ) : (
+                          <label className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">
+                            Upload
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleTambahGambarVarian(e, vp.id, index)}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Tombol tambah hanya jika belum ada gambar lama maupun baru */}
+                    {vp.gambarVarian.length === 0 &&
+                      !(newVariantImages[vp.id]?.some(img => img && img.file)) &&
+                      (newVariantImages[vp.id]?.length || 0) < 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNewVariantImages((prev) => ({
+                              ...prev,
+                              [vp.id]: [{ preview: null, file: null }],
+                            }))
+                          }
+                          className="w-20 h-20 border-2 border-dashed text-xl text-gray-400 rounded flex items-center justify-center cursor-pointer"
+                        >
+                          +
+                        </button>
+                      )}
+                  </div>
+                )}
 
                 {/* Informasi SKU, harga, stok, dll */}
                 <p><span className="font-medium">SKU:</span> {vp.sku}</p>
@@ -430,6 +442,12 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
         </div>
       </Dialog.Panel>
     </div>
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
   </Dialog>
   );
 };

@@ -10,6 +10,15 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
   const [roleId, setRoleId] = useState(1);
   const [saldo, setSaldo] = useState(0);
   const [roles, setRoles] = useState([]);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -32,7 +41,7 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
     e.preventDefault();
 
     if (!nama || !password) {
-      alert("Nama dan password harus diisi.");
+      showToast("Nama dan password harus diisi.", "warning");
       return;
     }
 
@@ -165,6 +174,12 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
           </motion.div>
         </motion.div>
       )}
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </AnimatePresence>
   );
 };

@@ -171,6 +171,7 @@ const TableProduk = () => {
         title="Konfirmasi Hapus"
         message={`Apakah Anda yakin ingin menghapus pengguna "${productToDelete?.nama}"?`}
         confirmText="Hapus"
+        confirmColor="red"
       />
       <ModalDetailProduk
         isOpen={isDetailOpen}

@@ -10,6 +10,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [type, setType] = useState("password");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   const handleToggle = () => {
@@ -21,6 +23,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+
+    if (!email || !password) {
+      setErrorMessage("Email dan password tidak boleh kosong!");
+      return;
+    }
+
+    setIsLoading(true);
 
     try {
       const response = await fetch(`${apiUrl}/auth/login`, {
@@ -38,7 +48,6 @@ export default function LoginPage() {
       if (response.ok) {
         const { user } = data;
 
-        // Arahkan berdasarkan role
         switch (user.roleId) {
           case 4:
             router.push("/admin");
@@ -47,17 +56,20 @@ export default function LoginPage() {
             router.push("/kurir");
             break;
           case 2:
-            router.push("/pengguna");
+            router.push("/home");
             break;
-          case 1:
           default:
             router.push("/home");
             break;
         }
+      } else {
+        setErrorMessage("Email atau password salah!");
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert("Terjadi kesalahan saat login.");
+      setErrorMessage("Terjadi kesalahan saat login!");
+    } finally {
+      setIsLoading(false); // selesai loading (tetap false walau gagal atau sukses)
     }
   };
 
@@ -81,6 +93,13 @@ export default function LoginPage() {
           </p>
 
           <form className="mt-6" onSubmit={handleSubmit}>
+            {/* Error message */}
+            {errorMessage && (
+              <div className="bg-red-100 text-red-700 px-4 py-2 rounded-md mb-4 text-sm">
+                {errorMessage}
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium">Email</label>
               <div className="relative">
@@ -131,7 +150,35 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <Button type="submit">Masuk</Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin h-5 w-5 text-white font-medium"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-100"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    ></circle>
+                    <path
+                      className="opacity-100"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8H4z"
+                    ></path>
+                  </svg>
+                  Memproses...
+                </div>
+              ) : (
+                "Masuk"
+              )}
+            </Button>
           </form>
         </div>
 
