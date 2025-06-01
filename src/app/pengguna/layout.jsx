@@ -29,7 +29,7 @@ const PenggunaLayout = ({ children }) => {
         if (data.roleId === 2) {
           setIsAuthorized(true);
         } else {
-          router.push("/");
+          router.back();
         }
       })
       .catch((err) => {
