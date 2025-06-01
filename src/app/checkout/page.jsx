@@ -1,6 +1,6 @@
 // File: app/checkout/page.jsx
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Footer from "../components/Footer";
@@ -28,6 +28,22 @@ export default function CheckoutPage() {
   const [groupedItems, setGroupedItems] = useState([]);
   const [selectedKurir, setSelectedKurir] = useState({});
   const [finalCheckoutData, setFinalCheckoutData] = useState([]);
+  const [alamatPembeli, setAlamatPembeli] = useState([]);
+
+  function isSameKota(alamatPenjual, alamatBuyer, targetKota = "balikpapan") {
+    console.log(
+      "alamatPenjual:",
+      alamatPenjual,
+      "alamatPembeli:",
+      alamatBuyer
+    );
+    if (!alamatPenjual || !alamatPembeli) return false;
+    const lowerPenjual = alamatPenjual.toLowerCase();
+    const lowerPembeli = alamatPembeli.toLowerCase();
+    return (
+      lowerPenjual.includes(targetKota) && lowerPembeli.includes(targetKota)
+    );
+  }
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -57,10 +73,11 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error("Gagal ambil detail produk");
 
       const data = await res.json();
-      setItems(data);
+      setItems(data.transformed); // kalau ini yang kamu gunakan untuk tampilan daftar produk
+      setAlamatPembeli(data.alamatPembeli);
 
       // Kelompokkan berdasarkan toko
-      const grouped = data.reduce((acc, item) => {
+      const grouped = data.transformed.reduce((acc, item) => {
         const existing = acc.find((g) => g.namaToko === item.namaToko);
         if (existing) {
           existing.items.push(item);
@@ -122,10 +139,23 @@ export default function CheckoutPage() {
     }
   };
 
-  const getOpsiKurirBySeller = (sellerId) => {
-    // Kurir internal dari preCheckoutInfo (default)
+  const getOpsiKurirBySeller = (sellerId, alamatPembeli) => {
+    // Cari group seller berdasarkan sellerId
+    const groupSeller = groupedItems.find(
+      (g) => String(g.sellerId) === String(sellerId)
+    );
+    if (!groupSeller) return [];
+
+    // Cek apakah alamat seller dan pembeli sama-sama balikpapan
+    const bisaKurirInternal = isSameKota(
+      groupSeller.alamatPenjual,
+      alamatPembeli,
+      "balikpapan"
+    );
+
+    // Kurir internal dari preCheckoutInfo (default) jika bisaKurirInternal true
     let opsiKurirInternal = [];
-    if (preCheckoutInfo?.perToko) {
+    if (bisaKurirInternal && preCheckoutInfo?.perToko) {
       const toko = preCheckoutInfo.perToko.find(
         (t) => String(t.sellerId) === String(sellerId)
       );
@@ -135,19 +165,18 @@ export default function CheckoutPage() {
             shipping_name: "Kurir Internal",
             shipping_cost: toko.ongkir,
             service_name: "internal",
-            jenisKurir: "TokoLoko", // <-- tambahan
+            jenisKurir: "TokoLoko",
           },
         ];
       }
     }
 
-    // Kurir Komship dari preCheckoutInfoKomship
+    // Kurir Komship dari preCheckoutInfoKomship (sama seperti sebelumnya)
     let opsiKurirKomship = [];
     if (preCheckoutInfoKomship && Array.isArray(preCheckoutInfoKomship)) {
       const data = preCheckoutInfoKomship.find(
         (d) => String(d.sellerId) === String(sellerId)
       );
-
       if (data && data.detail) {
         const {
           calculate_reguler = [],
@@ -155,27 +184,27 @@ export default function CheckoutPage() {
           calculate_cargo = [],
         } = data.detail;
 
+        const filterNinja = (item) =>
+          item.shipping_name?.toLowerCase().includes("ninja");
+
         opsiKurirKomship = [
-          ...calculate_reguler.map((item) => ({
+          ...calculate_reguler.filter(filterNinja).map((item) => ({
             ...item,
             type: "reguler",
             jenisKurir: "komship",
           })),
-          ...calculate_instant.map((item) => ({
+          ...calculate_instant.filter(filterNinja).map((item) => ({
             ...item,
             type: "instant",
             jenisKurir: "komship",
           })),
-          ...calculate_cargo.map((item) => ({
-            ...item,
-            type: "cargo",
-            jenisKurir: "komship",
-          })),
+          ...calculate_cargo
+            .filter(filterNinja)
+            .map((item) => ({ ...item, type: "cargo", jenisKurir: "komship" })),
         ];
       }
     }
 
-    // Gabungkan kurir internal dan eksternal
     return [...opsiKurirInternal, ...opsiKurirKomship];
   };
 

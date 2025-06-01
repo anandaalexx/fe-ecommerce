@@ -50,7 +50,7 @@ const ModalRequestPickup = ({ isOpen, onClose, onSubmit, orderNo }) => {
             <label className="block text-sm font-medium">Tanggal Pickup</label>
             <input
               type="date"
-              className="w-full border p-2 rounded"
+              className="w-full border border-gray-300 p-2 rounded"
               value={pickupDate}
               min={minDate}
               onChange={(e) => setPickupDate(e.target.value)}
@@ -60,7 +60,7 @@ const ModalRequestPickup = ({ isOpen, onClose, onSubmit, orderNo }) => {
             <label className="block text-sm font-medium">Waktu Pickup</label>
             <input
               type="time"
-              className="w-full border p-2 rounded"
+              className="w-full border border-gray-300 p-2 rounded"
               value={pickupTime}
               onChange={(e) => setPickupTime(e.target.value)}
             />
@@ -68,7 +68,7 @@ const ModalRequestPickup = ({ isOpen, onClose, onSubmit, orderNo }) => {
           <div>
             <label className="block text-sm font-medium">Kendaraan</label>
             <select
-              className="w-full border p-2 rounded"
+              className="w-full border border-gray-200 p-2 rounded"
               value={pickupVehicle}
               onChange={(e) => setPickupVehicle(e.target.value)}
             >
