@@ -151,6 +151,7 @@ const Kurir = () => {
         kurirs={enrichKurirs}
         setKurirs={setKurirs}
         onEdit={handleEditKurir}
+        showToast={showToast}
       />
 
       <TambahKurir
