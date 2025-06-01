@@ -5,45 +5,50 @@ import { Fragment, useEffect, useState } from "react";
 const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
   const [editData, setEditData] = useState({});
   const [categories, setCategories] = useState([]);
+  const [variants, setVariants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(false);
+  const [loadingVariants, setLoadingVariants] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  // Load categories saat modal dibuka
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && produk) {
       loadCategories();
+      loadVariants();
     }
-  }, [isOpen]);
+  }, [isOpen, produk]);
 
-  // Set data produk saat modal dibuka
   useEffect(() => {
     if (produk) {
       console.log("Produk data:", produk);
-      
-      // Deteksi apakah produk memiliki varian atau tidak
-      const hasVariants = produk.varianProduk && produk.varianProduk.length > 0 && 
-        produk.varianProduk.some(vp => vp.nilaiVarianProduk && vp.nilaiVarianProduk.length > 0);
 
-      if (hasVariants) {
-        // Produk dengan varian - format nilaiVarian untuk frontend
+      const hasVariants = produk.varianProduk && produk.varianProduk.length > 0;
+      const hasComplexVariants = hasVariants && (
+        produk.varianProduk.length > 1 || 
+        produk.varianProduk.some(vp => vp.nilaiVarianProduk && vp.nilaiVarianProduk.length > 0)
+      );
+
+      console.log("Has variants:", hasVariants);
+      console.log("Has complex variants:", hasComplexVariants);
+
+      if (hasComplexVariants) {
         setEditData({
           namaProduk: produk.nama,
           deskripsi: produk.deskripsi,
           idKategori: produk.idKategori || null,
           berat: produk.berat || 0,
+          isVariantProduct: true, 
           varian: [],
           produkVarian: produk.varianProduk.map(vp => ({
             id: vp.id,
             harga: vp.harga,
             stok: vp.stok,
             status: vp.status,
-            // Format nilaiVarian dari database structure
             nilaiVarian: vp.nilaiVarianProduk ? vp.nilaiVarianProduk.map(nvp => ({
               idVarian: nvp.varian?.id,
               idNilaiVarian: nvp.nilaiVarian?.id,
               namaVarian: nvp.varian?.nama,
-              nilai: nvp.nilaiVarian?.nilai
+              nilai: nvp.nilaiVarian?.value || nvp.nilaiVarian?.nilai
             })) : [],
           })),
         });
@@ -55,6 +60,7 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
           deskripsi: produk.deskripsi,
           idKategori: produk.idKategori || null,
           berat: produk.berat || 0,
+          isVariantProduct: false, 
           harga: firstVariant?.harga || 0,
           stok: firstVariant?.stok || 0,
           status: firstVariant?.status || 'stok_tersedia',
@@ -95,70 +101,183 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
       setLoadingCategories(false);
     }
   };
+
+  const loadVariants = async () => {
+    if (!produk?.id) {
+      console.log("No product ID available");
+      return;
+    }
+
+    setLoadingVariants(true);
+    try {
+      console.log("Loading variants for product ID:", produk.id);
+      const res = await fetch(`${apiUrl}/admin/products/variant/${produk.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      
+      console.log("Variants API response status:", res.status);
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log("Loaded variants data:", data);
+        setVariants(data || []);
+      } else {
+        const errorText = await res.text();
+        console.error("Gagal load variants", res.status, errorText);
+        
+        if (produk.varianProduk && produk.varianProduk.length > 0) {
+          const existingVariants = extractVariantsFromProduct(produk);
+          console.log("Using existing variants as fallback:", existingVariants);
+          setVariants(existingVariants);
+        } else {
+          setVariants([]);
+        }
+      }
+    } catch (err) {
+      console.error("Error loading variants:", err);
+      
+      if (produk.varianProduk && produk.varianProduk.length > 0) {
+        const existingVariants = extractVariantsFromProduct(produk);
+        console.log("Using existing variants as fallback after error:", existingVariants);
+        setVariants(existingVariants);
+      } else {
+        setVariants([]);
+      }
+    } finally {
+      setLoadingVariants(false);
+    }
+  };
+
+  const extractVariantsFromProduct = (productData) => {
+    const varianMap = new Map();
+    
+    if (productData.varianProduk) {
+      productData.varianProduk.forEach(vp => {
+        if (vp.nilaiVarianProduk) {
+          vp.nilaiVarianProduk.forEach(nvp => {
+            if (nvp.varian) {
+              const varianId = nvp.varian.id;
+              const varianNama = nvp.varian.nama;
+              
+              if (!varianMap.has(varianId)) {
+                varianMap.set(varianId, {
+                  id: varianId,
+                  nama: varianNama,
+                  nilaiVarian: []
+                });
+              }
+              
+              if (nvp.nilaiVarian) {
+                const existingNilai = varianMap.get(varianId).nilaiVarian.find(
+                  n => n.id === nvp.nilaiVarian.id
+                );
+                
+                if (!existingNilai) {
+                  varianMap.get(varianId).nilaiVarian.push({
+                    id: nvp.nilaiVarian.id,
+                    nilai: nvp.nilaiVarian.value || nvp.nilaiVarian.nilai
+                  });
+                }
+              }
+            }
+          });
+        }
+      });
+    }
+    
+    return Array.from(varianMap.values());
+  };
   
   if (!produk) return null;
   
   const handleUpdateProduk = async () => {
-    setLoading(true);
+  setLoading(true);
     try {
       console.log("Data yang akan dikirim:", editData);
 
-      // Deteksi apakah produk memiliki varian yang benar-benar kompleks
-      const isRealVariantProduct = editData.produkVarian && 
-        editData.produkVarian.length > 0 && 
-        editData.produkVarian.some(vp => vp.nilaiVarian && vp.nilaiVarian.length > 0);
+      // PERBAIKAN: Logika penentuan variant product yang lebih tepat
+      // Jika ada lebih dari 1 varian, atau ada varian dengan nilaiVarian
+      const isRealVariantProduct = editData.produkVarian && editData.produkVarian.length > 0 && (
+        editData.produkVarian.length > 1 || 
+        editData.produkVarian.some(vp => vp.nilaiVarian && vp.nilaiVarian.length > 0)
+      );
+
+      console.log("Is real variant product:", isRealVariantProduct);
+      console.log("ProdukVarian length:", editData.produkVarian?.length || 0);
+      console.log("Has variants with values:", editData.produkVarian?.some(vp => vp.nilaiVarian && vp.nilaiVarian.length > 0));
 
       let dataToSend;
 
       if (isRealVariantProduct) {
-        // Produk dengan varian kompleks
+        // PERBAIKAN: Validasi setiap varian sebelum dikirim
+        const validProdukVarian = editData.produkVarian.filter(vp => {
+          const hasValidPrice = vp.harga !== undefined && vp.harga !== null && !isNaN(vp.harga);
+          const hasValidStock = vp.stok !== undefined && vp.stok !== null && !isNaN(vp.stok);
+          const hasValidId = vp.id !== undefined && vp.id !== null && !isNaN(vp.id);
+          
+          if (!hasValidPrice || !hasValidStock || !hasValidId) {
+            console.warn("Invalid variant found:", vp);
+            return false;
+          }
+          
+          return true;
+        }).map(vp => ({
+          id: parseInt(vp.id), 
+          harga: parseInt(vp.harga) || 0,
+          stok: parseInt(vp.stok) || 0,
+          status: vp.status || 'stok_tersedia',
+          nilaiVarian: (vp.nilaiVarian || []).filter(nv => {
+            return nv.idVarian && nv.idNilaiVarian;
+          }).map(nv => ({
+            idVarian: parseInt(nv.idVarian),
+            idNilaiVarian: parseInt(nv.idNilaiVarian)
+          }))
+        }));
+
+        console.log("Valid produk varian:", validProdukVarian);
+
+        // PERBAIKAN: Jangan kirim jika tidak ada varian yang valid
+        if (validProdukVarian.length === 0) {
+          throw new Error("Tidak ada varian yang valid untuk dikirim. Pastikan setiap varian memiliki ID, harga, dan stok yang valid.");
+        }
+
         dataToSend = {
           namaProduk: editData.namaProduk,
           deskripsi: editData.deskripsi,
           idKategori: editData.idKategori,
           berat: parseInt(editData.berat) || 0,
           varian: editData.varian || [],
-          produkVarian: editData.produkVarian.map(vp => ({
-            id: vp.id, // Pastikan ID tetap ada untuk update
-            harga: parseInt(vp.harga) || 0,
-            stok: parseInt(vp.stok) || 0,
-            status: vp.status || 'stok_tersedia',
-            nilaiVarian: vp.nilaiVarian.map(nv => ({
-              idVarian: nv.idVarian,
-              idNilaiVarian: nv.idNilaiVarian
-            }))
-          }))
+          produkVarian: validProdukVarian
         };
       } else {
-        // Produk tanpa varian atau varian sederhana
+        // Produk tanpa varian
         dataToSend = {
           namaProduk: editData.namaProduk,
           deskripsi: editData.deskripsi,
           idKategori: editData.idKategori,
           berat: parseInt(editData.berat) || 0,
-          varian: [], // Kosong untuk produk tanpa varian
-          produkVarian: [], // Kosong untuk produk tanpa varian
+          varian: [],
+          produkVarian: [],
           harga: parseInt(editData.harga) || 0,
           stok: parseInt(editData.stok) || 0,
           status: editData.status || 'stok_tersedia'
         };
       }
 
-      console.log("Formatted data to send:", dataToSend);
-      console.log("Is real variant product:", isRealVariantProduct);
+      console.log("Final data to send:", JSON.stringify(dataToSend, null, 2));
 
       const res = await fetch(`${apiUrl}/admin/products/${produk.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify(dataToSend),
-        }
-      );
-
-      console.log("Response status:", res.status);
-      console.log("Response headers:", Object.fromEntries(res.headers.entries()));
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(dataToSend),
+      });
 
       if (!res.ok) {
         const responseText = await res.text();
@@ -182,7 +301,7 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
       alert("Produk berhasil diupdate!");
       
       if (onUpdate) {
-        onUpdate(responseData);
+        await onUpdate();
       }
       
       onClose();
@@ -210,39 +329,106 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
     }));
   };
 
-  // Fungsi untuk menghapus varian
+  const handleNilaiVarianChange = (varianIndex, nilaiIndex, field, value) => {
+    setEditData((prev) => ({
+      ...prev,
+      produkVarian: prev.produkVarian.map((vp, vpIndex) =>
+        vpIndex === varianIndex 
+          ? {
+              ...vp,
+              nilaiVarian: vp.nilaiVarian.map((nv, nvIndex) =>
+                nvIndex === nilaiIndex ? { ...nv, [field]: value } : nv
+              )
+            }
+          : vp
+      ),
+    }));
+  };
+
+  const handleAddNilaiVarian = (varianIndex) => {
+    setEditData((prev) => ({
+      ...prev,
+      produkVarian: prev.produkVarian.map((vp, vpIndex) =>
+        vpIndex === varianIndex 
+          ? {
+              ...vp,
+              nilaiVarian: [
+                ...vp.nilaiVarian,
+                { idVarian: null, idNilaiVarian: null, namaVarian: "", nilai: "" }
+              ]
+            }
+          : vp
+      ),
+    }));
+  };
+
+  const handleRemoveNilaiVarian = (varianIndex, nilaiIndex) => {
+    setEditData((prev) => ({
+      ...prev,
+      produkVarian: prev.produkVarian.map((vp, vpIndex) =>
+        vpIndex === varianIndex 
+          ? {
+              ...vp,
+              nilaiVarian: vp.nilaiVarian.filter((_, nvIndex) => nvIndex !== nilaiIndex)
+            }
+          : vp
+      ),
+    }));
+  };
+
   const handleDeleteVariant = (index) => {
     if (confirm("Apakah Anda yakin ingin menghapus varian ini?")) {
-      setEditData((prev) => ({
-        ...prev,
-        produkVarian: prev.produkVarian.filter((_, i) => i !== index),
-      }));
+      setEditData((prev) => {
+        const newProdukVarian = prev.produkVarian.filter((_, i) => i !== index);
+        
+        // PERBAIKAN: Jika tidak ada varian tersisa, ubah ke produk non-varian
+        const shouldBecomeNonVariant = newProdukVarian.length === 0;
+        
+        if (shouldBecomeNonVariant) {
+          return {
+            ...prev,
+            isVariantProduct: false,
+            produkVarian: [],
+            harga: 0,
+            stok: 0,
+            status: 'stok_tersedia'
+          };
+        }
+        
+        return {
+          ...prev,
+          produkVarian: newProdukVarian
+        };
+      });
     }
   };
 
-  // Fungsi untuk menambah varian baru (opsional)
   const handleAddNewVariant = () => {
     const newVariant = {
-      id: null, // ID null untuk varian baru
+      id: null,
       harga: 0,
       stok: 0,
       status: 'stok_tersedia',
-      nilaiVarian: [
-        { idVarian: null, idNilaiVarian: null, namaVarian: "", nilai: "" }
-      ]
+      nilaiVarian: []
     };
     
     setEditData((prev) => ({
       ...prev,
+      isVariantProduct: true, // PERBAIKAN: Set flag saat menambah varian
       produkVarian: [...prev.produkVarian, newVariant]
     }));
   };
 
-  // Deteksi apakah produk memiliki varian
-  const hasVariants = editData.produkVarian && editData.produkVarian.length > 0;
-  const isProductWithVariants = hasVariants && editData.produkVarian.some(vp => 
-    vp.nilaiVarian && vp.nilaiVarian.length > 0
-  );
+  const isProductWithVariants = editData.isVariantProduct && 
+    editData.produkVarian && 
+    editData.produkVarian.length > 0;
+
+  console.log("Render state:", {
+    isVariantProduct: editData.isVariantProduct,
+    isProductWithVariants,
+    variantsCount: editData.produkVarian?.length || 0,
+    loadedVariants: variants.length
+  });
 
   return (
     <Dialog as={Fragment} open={isOpen} onClose={onClose}>
@@ -268,6 +454,17 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                 </button>
               </div>
             </Dialog.Title>
+
+            {/* Debug info */}
+            {process.env.NODE_ENV === 'development' && (
+              <div className="mb-4 p-2 bg-gray-100 rounded text-xs">
+                <div>Debug Info:</div>
+                <div>Is Variant Product: {editData.isVariantProduct ? 'Yes' : 'No'}</div>
+                <div>Is Product With Variants: {isProductWithVariants ? 'Yes' : 'No'}</div>
+                <div>Loaded Available Variants: {variants.length}</div>
+                <div>ProdukVarian Count: {editData.produkVarian?.length || 0}</div>
+              </div>
+            )}
 
             <div className="flex gap-4">
               <img
@@ -337,7 +534,7 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                     </div>
                   </div>
 
-                  {/* Tampilkan input harga dan stok hanya untuk produk tanpa varian */}
+                  {/* Input untuk produk tanpa varian */}
                   {!isProductWithVariants && (
                     <div className="grid grid-cols-3 gap-3">
                       <div>
@@ -397,10 +594,16 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                           + Tambah Varian
                         </button>
                       </div>
+                      
+                      {loadingVariants && (
+                        <div className="text-center py-4">
+                          <div className="text-sm text-gray-500">Loading variants...</div>
+                        </div>
+                      )}
+                      
                       <div className="space-y-4">
                         {editData.produkVarian.map((vp, index) => (
-                          <div key={vp.id || `new-${index}`} className="border rounded p-4 space-y-2 relative">
-                            {/* Tombol hapus varian */}
+                          <div key={vp.id || `new-${index}`} className="border rounded p-4 space-y-3 relative">
                             <button
                               type="button"
                               onClick={() => handleDeleteVariant(index)}
@@ -445,25 +648,77 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                               </select>
                             </div>
 
-                            {vp.nilaiVarian && vp.nilaiVarian.length > 0 && (
-                              <div>
-                                <span className="font-medium">Varian:</span>
-                                <div className="flex flex-wrap gap-2 mt-1">
-                                  {vp.nilaiVarian.map((nv, nvIndex) => (
-                                    <span
-                                      key={nvIndex}
-                                      className="bg-gray-100 px-2 py-1 rounded text-sm"
-                                    >
-                                      {typeof nv === "object"
-                                        ? `${nv.varian}: ${nv.nilai}`
-                                        : nv}
-                                    </span>
-                                  ))}
-                                </div>
+                            <div>
+                              <div className="flex justify-between items-center mb-2">
+                                <label className="block text-sm font-medium">Nilai Varian:</label>
+                                <button
+                                  type="button"
+                                  onClick={() => handleAddNilaiVarian(index)}
+                                  className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"
+                                >
+                                  + Nilai
+                                </button>
                               </div>
-                            )}
+                              
+                              {vp.nilaiVarian && vp.nilaiVarian.length > 0 ? (
+                                vp.nilaiVarian.map((nv, nvIndex) => (
+                                  <div key={nvIndex} className="grid grid-cols-3 gap-2 mb-2 items-end">
+                                    <div>
+                                      <label className="block text-xs text-gray-600">Varian:</label>
+                                      <select
+                                        value={nv.idVarian || ""}
+                                        onChange={(e) => {
+                                          const selectedVariant = variants.find(v => v.id === parseInt(e.target.value));
+                                          handleNilaiVarianChange(index, nvIndex, "idVarian", parseInt(e.target.value));
+                                          handleNilaiVarianChange(index, nvIndex, "namaVarian", selectedVariant?.nama || "");
+                                        }}
+                                        className="w-full border rounded px-2 py-1 text-sm"
+                                      >
+                                        <option value="">Pilih Varian</option>
+                                        {variants.map(variant => (
+                                          <option key={variant.id} value={variant.id}>
+                                            {variant.nama}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs text-gray-600">Nilai:</label>
+                                      <select
+                                        value={nv.idNilaiVarian || ""}
+                                        onChange={(e) => {
+                                          const selectedVariant = variants.find(v => v.id === nv.idVarian);
+                                          const selectedNilai = selectedVariant?.nilaiVarian?.find(n => n.id === parseInt(e.target.value));
+                                          handleNilaiVarianChange(index, nvIndex, "idNilaiVarian", parseInt(e.target.value));
+                                          handleNilaiVarianChange(index, nvIndex, "nilai", selectedNilai?.nilai || "");
+                                        }}
+                                        className="w-full border rounded px-2 py-1 text-sm"
+                                        disabled={!nv.idVarian}
+                                      >
+                                        <option value="">Pilih Nilai</option>
+                                        {variants.find(v => v.id === nv.idVarian)?.nilaiVarian?.map(nilai => (
+                                          <option key={nilai.id} value={nilai.id}>
+                                            {nilai.nilai}
+                                          </option>
+                                        ))}
+                                      </select>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleRemoveNilaiVarian(index, nvIndex)}
+                                      className="bg-red-500 text-white rounded px-2 py-1 text-xs hover:bg-red-600"
+                                    >
+                                      Hapus
+                                    </button>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="text-sm text-gray-500 italic">
+                                  Belum ada nilai varian. Klik "+ Nilai" untuk menambah.
+                                </div>
+                              )}
+                            </div>
 
-                            {/* Indikator varian baru */}
                             {!vp.id && (
                               <div className="text-sm text-blue-600 font-medium">
                                 Varian Baru
