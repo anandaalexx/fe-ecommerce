@@ -250,7 +250,7 @@ const PesananCard = () => {
                       >
                         {alreadyReviewed
                           ? "Sudah Diulas"
-                          : `Beri Ulasan untuk ${item.namaProduk}`}
+                          : `Beri Ulasan untuk ${item.namaProduk} : ${item.varian.map(v => `${v.namaVarian}: ${v.nilai}`).join(", ")}`}
                       </button>
                     );
                   })}

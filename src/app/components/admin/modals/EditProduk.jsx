@@ -23,26 +23,32 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
       
       // Deteksi apakah produk memiliki varian atau tidak
       const hasVariants = produk.varianProduk && produk.varianProduk.length > 0 && 
-                         produk.varianProduk.some(vp => vp.nilaiVarian && vp.nilaiVarian.length > 0);
+        produk.varianProduk.some(vp => vp.nilaiVarianProduk && vp.nilaiVarianProduk.length > 0);
 
       if (hasVariants) {
-        // Produk dengan varian
+        // Produk dengan varian - format nilaiVarian untuk frontend
         setEditData({
           namaProduk: produk.nama,
           deskripsi: produk.deskripsi,
           idKategori: produk.idKategori || null,
           berat: produk.berat || 0,
           varian: [],
-          // Pastikan semua varian dimuat dengan benar
           produkVarian: produk.varianProduk.map(vp => ({
             id: vp.id,
             harga: vp.harga,
             stok: vp.stok,
             status: vp.status,
-            nilaiVarian: vp.nilaiVarianProduk || vp.nilaiVarian || [],
+            // Format nilaiVarian dari database structure
+            nilaiVarian: vp.nilaiVarianProduk ? vp.nilaiVarianProduk.map(nvp => ({
+              idVarian: nvp.varian?.id,
+              idNilaiVarian: nvp.nilaiVarian?.id,
+              namaVarian: nvp.varian?.nama,
+              nilai: nvp.nilaiVarian?.nilai
+            })) : [],
           })),
         });
       } else {
+        // Produk tanpa varian
         const firstVariant = produk.varianProduk?.[0];
         setEditData({
           namaProduk: produk.nama,
@@ -110,14 +116,17 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
           namaProduk: editData.namaProduk,
           deskripsi: editData.deskripsi,
           idKategori: editData.idKategori,
-          berat: editData.berat,
+          berat: parseInt(editData.berat) || 0,
           varian: editData.varian || [],
           produkVarian: editData.produkVarian.map(vp => ({
-            id: vp.id,
+            id: vp.id, // Pastikan ID tetap ada untuk update
             harga: parseInt(vp.harga) || 0,
             stok: parseInt(vp.stok) || 0,
             status: vp.status || 'stok_tersedia',
-            nilaiVarian: vp.nilaiVarian || []
+            nilaiVarian: vp.nilaiVarian.map(nv => ({
+              idVarian: nv.idVarian,
+              idNilaiVarian: nv.idNilaiVarian
+            }))
           }))
         };
       } else {
@@ -126,7 +135,7 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
           namaProduk: editData.namaProduk,
           deskripsi: editData.deskripsi,
           idKategori: editData.idKategori,
-          berat: editData.berat,
+          berat: parseInt(editData.berat) || 0,
           varian: [], // Kosong untuk produk tanpa varian
           produkVarian: [], // Kosong untuk produk tanpa varian
           harga: parseInt(editData.harga) || 0,
@@ -148,8 +157,21 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
         }
       );
 
+      console.log("Response status:", res.status);
+      console.log("Response headers:", Object.fromEntries(res.headers.entries()));
+
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
+        const responseText = await res.text();
+        console.error("Raw response:", responseText);
+        
+        let errorData = {};
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("Failed to parse error response as JSON:", parseError);
+          errorData = { message: responseText || `HTTP ${res.status}: ${res.statusText}` };
+        }
+        
         console.error("Response error dari backend:", errorData);
         throw new Error(errorData.message || `HTTP error! status: ${res.status}`);
       }
@@ -185,6 +207,34 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
       produkVarian: prev.produkVarian.map((vp, i) =>
         i === index ? { ...vp, [field]: value } : vp
       ),
+    }));
+  };
+
+  // Fungsi untuk menghapus varian
+  const handleDeleteVariant = (index) => {
+    if (confirm("Apakah Anda yakin ingin menghapus varian ini?")) {
+      setEditData((prev) => ({
+        ...prev,
+        produkVarian: prev.produkVarian.filter((_, i) => i !== index),
+      }));
+    }
+  };
+
+  // Fungsi untuk menambah varian baru (opsional)
+  const handleAddNewVariant = () => {
+    const newVariant = {
+      id: null, // ID null untuk varian baru
+      harga: 0,
+      stok: 0,
+      status: 'stok_tersedia',
+      nilaiVarian: [
+        { idVarian: null, idNilaiVarian: null, namaVarian: "", nilai: "" }
+      ]
+    };
+    
+    setEditData((prev) => ({
+      ...prev,
+      produkVarian: [...prev.produkVarian, newVariant]
     }));
   };
 
@@ -333,86 +383,90 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                       </div>
                     </div>
                   )}
+
+                  {/* Section untuk produk dengan varian */}
                   {isProductWithVariants && (
-                    <div>
-                      <label className="block text-md font-semibold mt-4 mb-2">
-                        Varian Produk:
-                      </label>
+                    <div className="mt-6">
+                      <div className="flex justify-between items-center mb-3">
+                        <h4 className="font-semibold">Varian Produk</h4>
+                        <button
+                          type="button"
+                          onClick={handleAddNewVariant}
+                          className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600"
+                        >
+                          + Tambah Varian
+                        </button>
+                      </div>
                       <div className="space-y-4">
                         {editData.produkVarian.map((vp, index) => (
-                          <div
-                            key={vp.id || index}
-                            className="border p-4 rounded-md shadow-sm bg-gray-50"
-                          >
-                            <div className="grid grid-cols-3 gap-4">
+                          <div key={vp.id || `new-${index}`} className="border rounded p-4 space-y-2 relative">
+                            {/* Tombol hapus varian */}
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteVariant(index)}
+                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                              title="Hapus varian"
+                            >
+                              ×
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Harga
-                                </label>
+                                <label className="block text-sm font-medium mb-1">Harga:</label>
                                 <input
                                   type="number"
-                                  value={vp.harga || ""}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "harga",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
+                                  value={vp.harga || 0}
+                                  onChange={(e) => handleVarianProdukChange(index, "harga", parseInt(e.target.value) || 0)}
+                                  className="w-full border rounded px-3 py-2"
                                 />
                               </div>
+                              
                               <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Stok
-                                </label>
+                                <label className="block text-sm font-medium mb-1">Stok:</label>
                                 <input
                                   type="number"
-                                  value={vp.stok || ""}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "stok",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
+                                  value={vp.stok || 0}
+                                  onChange={(e) => handleVarianProdukChange(index, "stok", parseInt(e.target.value) || 0)}
+                                  className="w-full border rounded px-3 py-2"
                                 />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Status
-                                </label>
-                                <select
-                                  value={vp.status || "stok_tersedia"}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "status",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
-                                >
-                                  <option value="stok_tersedia">
-                                    Stok Tersedia
-                                  </option>
-                                  <option value="stok_habis">Stok Habis</option>
-                                </select>
                               </div>
                             </div>
 
-                            {/* Tampilkan nilaiVarian */}
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Status:</label>
+                              <select
+                                value={vp.status || 'stok_tersedia'}
+                                onChange={(e) => handleVarianProdukChange(index, "status", e.target.value)}
+                                className="w-full border rounded px-3 py-2"
+                              >
+                                <option value="stok_tersedia">Stok Tersedia</option>
+                                <option value="stok_kosong">Stok Kosong</option>
+                                <option value="discontinued">Discontinued</option>
+                              </select>
+                            </div>
+
                             {vp.nilaiVarian && vp.nilaiVarian.length > 0 && (
-                              <div className="mt-3">
-                                <label className="block text-sm font-medium mb-1">
-                                  Nilai Varian:
-                                </label>
-                                <ul className="list-disc list-inside text-sm text-gray-700">
-                                  {vp.nilaiVarian.map((nv, i) => (
-                                    <li key={i}>{nv}</li>
+                              <div>
+                                <span className="font-medium">Varian:</span>
+                                <div className="flex flex-wrap gap-2 mt-1">
+                                  {vp.nilaiVarian.map((nv, nvIndex) => (
+                                    <span
+                                      key={nvIndex}
+                                      className="bg-gray-100 px-2 py-1 rounded text-sm"
+                                    >
+                                      {typeof nv === "object"
+                                        ? `${nv.varian}: ${nv.nilai}`
+                                        : nv}
+                                    </span>
                                   ))}
-                                </ul>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Indikator varian baru */}
+                            {!vp.id && (
+                              <div className="text-sm text-blue-600 font-medium">
+                                Varian Baru
                               </div>
                             )}
                           </div>
@@ -421,95 +475,6 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                     </div>
                   )}
                 </div>
-              </div>
-            </div>
-
-            {/* Section Varian Produk */}
-            <div className="mt-6">
-              <h4 className="font-semibold mb-3">
-                {isProductWithVariants ? "Varian Produk" : "Detail Produk"}
-              </h4>
-              
-              <div className="space-y-4">
-                {isProductWithVariants ? (
-                  // Tampilkan SEMUA varian untuk produk dengan varian
-                  editData.produkVarian && editData.produkVarian.map((vp, index) => (
-                    <div key={vp.id || index} className="border rounded p-4 space-y-2">
-                      <div className="grid grid-cols-2 gap-4">
-                        <p>
-                          <span className="font-medium">SKU:</span> {produk.varianProduk[index]?.sku || 'N/A'}
-                        </p>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Status:</label>
-                          <select
-                            value={vp.status || 'stok_tersedia'}
-                            onChange={(e) => handleVarianProdukChange(index, "status", e.target.value)}
-                            className="w-full border rounded px-3 py-2"
-                          >
-                            <option value="stok_tersedia">Stok Tersedia</option>
-                            <option value="stok_kosong">Stok Kosong</option>
-                            <option value="discontinued">Discontinued</option>
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Harga:</label>
-                          <input
-                            type="number"
-                            value={vp.harga || 0}
-                            onChange={(e) => handleVarianProdukChange(index, "harga", parseInt(e.target.value) || 0)}
-                            className="w-full border rounded px-3 py-2"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium mb-1">Stok:</label>
-                          <input
-                            type="number"
-                            value={vp.stok || 0}
-                            onChange={(e) => handleVarianProdukChange(index, "stok", parseInt(e.target.value) || 0)}
-                            className="w-full border rounded px-3 py-2"
-                          />
-                        </div>
-                      </div>
-
-                      {vp.nilaiVarian && vp.nilaiVarian.length > 0 && (
-                        <div>
-                          <span className="font-medium">Varian:</span>
-                          <div className="flex flex-wrap gap-2 mt-1">
-                            {vp.nilaiVarian.map((nv, nvIndex) => (
-                              <span
-                                key={nvIndex}
-                                className="bg-gray-100 px-2 py-1 rounded text-sm"
-                              >
-                                {typeof nv === "object"
-                                  ? `${nv.varian}: ${nv.nilai}`
-                                  : nv}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))
-                ) : (
-                  // Tampilkan info untuk produk tanpa varian
-                  produk.varianProduk && produk.varianProduk.length > 0 && (
-                    <div className="border rounded p-4 space-y-2 bg-gray-50">
-                      <p className="text-sm text-gray-600">
-                        <span className="font-medium">SKU:</span> {produk.varianProduk[0].sku}
-                      </p>
-                    </div>
-                  )
-                )}
-                
-                {(!produk.varianProduk || produk.varianProduk.length === 0) && (
-                  <p className="text-gray-500 text-center py-4">
-                    Tidak ada data varian produk
-                  </p>
-                )}
               </div>
             </div>
           </div>
