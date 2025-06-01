@@ -38,9 +38,11 @@ const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
         body: JSON.stringify({
           nama,
         }),
+        credentials: "include",
       });
 
-      console.log(response);
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
 
       if (!response.ok) {
         const errorMessage = await response.text();

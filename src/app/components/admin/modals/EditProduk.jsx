@@ -39,11 +39,10 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
             harga: vp.harga,
             stok: vp.stok,
             status: vp.status,
-            nilaiVarian: vp.nilaiVarian || []
-          }))
+            nilaiVarian: vp.nilaiVarianProduk || vp.nilaiVarian || [],
+          })),
         });
       } else {
-        // Produk tanpa varian - ambil harga dan stok dari varian pertama
         const firstVariant = produk.varianProduk?.[0];
         setEditData({
           namaProduk: produk.nama,
@@ -66,7 +65,6 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
       const res = await fetch(`${apiUrl}/category/view`, {
         credentials: "include",
       });
-      
       if (res.ok) {
         const data = await res.json();
         setCategories(data);
@@ -175,18 +173,18 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
   };
 
   const handleEditDataChange = (field, value) => {
-    setEditData(prev => ({
+    setEditData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
   const handleVarianProdukChange = (index, field, value) => {
-    setEditData(prev => ({
+    setEditData((prev) => ({
       ...prev,
-      produkVarian: prev.produkVarian.map((vp, i) => 
+      produkVarian: prev.produkVarian.map((vp, i) =>
         i === index ? { ...vp, [field]: value } : vp
-      )
+      ),
     }));
   };
 
@@ -206,14 +204,14 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
               <div className="flex gap-2">
                 <button
                   onClick={handleUpdateProduk}
-                  className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors text-sm"
+                  className="bg-[#EDCF5D] text-white px-4 py-2 rounded hover:brightness-110 transition-colors text-sm cursor-pointer font-medium"
                   disabled={loading}
                 >
                   {loading ? "Menyimpan..." : "Simpan"}
                 </button>
                 <button
                   onClick={onClose}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors text-sm"
+                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors text-sm cursor-pointer font-medium"
                   disabled={loading}
                 >
                   Batal
@@ -230,28 +228,43 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
               <div className="flex-1">
                 <div className="space-y-3">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nama Produk:</label>
+                    <label className="block text-md font-medium mb-1">
+                      Nama Produk:
+                    </label>
                     <input
                       type="text"
                       value={editData.namaProduk || ""}
-                      onChange={(e) => handleEditDataChange("namaProduk", e.target.value)}
+                      onChange={(e) =>
+                        handleEditDataChange("namaProduk", e.target.value)
+                      }
                       className="w-full border rounded px-3 py-2"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Deskripsi:</label>
+                    <label className="block text-md font-medium mb-1">
+                      Deskripsi:
+                    </label>
                     <textarea
                       value={editData.deskripsi || ""}
-                      onChange={(e) => handleEditDataChange("deskripsi", e.target.value)}
+                      onChange={(e) =>
+                        handleEditDataChange("deskripsi", e.target.value)
+                      }
                       className="w-full border rounded px-3 py-2 h-20"
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-sm font-medium mb-1">Kategori:</label>
+                      <label className="block text-md font-medium mb-1">
+                        Kategori:
+                      </label>
                       <select
                         value={editData.idKategori || ""}
-                        onChange={(e) => handleEditDataChange("idKategori", parseInt(e.target.value) || null)}
+                        onChange={(e) =>
+                          handleEditDataChange(
+                            "idKategori",
+                            parseInt(e.target.value) || null
+                          )
+                        }
                         className="w-full border rounded px-3 py-2"
                         disabled={loadingCategories}
                       >
@@ -287,25 +300,123 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Stok:</label>
+                        <label className="block text-sm font-medium mb-1">
+                          Stok:
+                        </label>
                         <input
                           type="number"
                           value={editData.stok || ""}
-                          onChange={(e) => handleEditDataChange("stok", parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            handleEditDataChange(
+                              "stok",
+                              parseInt(e.target.value) || 0
+                            )
+                          }
                           className="w-full border rounded px-3 py-2"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Status:</label>
+                        <label className="block text-sm font-medium mb-1">
+                          Status:
+                        </label>
                         <select
                           value={editData.status || "stok_tersedia"}
-                          onChange={(e) => handleEditDataChange("status", e.target.value)}
+                          onChange={(e) =>
+                            handleEditDataChange("status", e.target.value)
+                          }
                           className="w-full border rounded px-3 py-2"
                         >
                           <option value="stok_tersedia">Stok Tersedia</option>
                           <option value="stok_kosong">Stok Kosong</option>
                           <option value="discontinued">Discontinued</option>
                         </select>
+                      </div>
+                    </div>
+                  )}
+                  {isProductWithVariants && (
+                    <div>
+                      <label className="block text-md font-semibold mt-4 mb-2">
+                        Varian Produk:
+                      </label>
+                      <div className="space-y-4">
+                        {editData.produkVarian.map((vp, index) => (
+                          <div
+                            key={vp.id || index}
+                            className="border p-4 rounded-md shadow-sm bg-gray-50"
+                          >
+                            <div className="grid grid-cols-3 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium mb-1">
+                                  Harga
+                                </label>
+                                <input
+                                  type="number"
+                                  value={vp.harga || ""}
+                                  onChange={(e) =>
+                                    handleVarianProdukChange(
+                                      index,
+                                      "harga",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full border rounded px-2 py-1"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-1">
+                                  Stok
+                                </label>
+                                <input
+                                  type="number"
+                                  value={vp.stok || ""}
+                                  onChange={(e) =>
+                                    handleVarianProdukChange(
+                                      index,
+                                      "stok",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full border rounded px-2 py-1"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium mb-1">
+                                  Status
+                                </label>
+                                <select
+                                  value={vp.status || "stok_tersedia"}
+                                  onChange={(e) =>
+                                    handleVarianProdukChange(
+                                      index,
+                                      "status",
+                                      e.target.value
+                                    )
+                                  }
+                                  className="w-full border rounded px-2 py-1"
+                                >
+                                  <option value="stok_tersedia">
+                                    Stok Tersedia
+                                  </option>
+                                  <option value="stok_habis">Stok Habis</option>
+                                </select>
+                              </div>
+                            </div>
+
+                            {/* Tampilkan nilaiVarian */}
+                            {vp.nilaiVarian && vp.nilaiVarian.length > 0 && (
+                              <div className="mt-3">
+                                <label className="block text-sm font-medium mb-1">
+                                  Nilai Varian:
+                                </label>
+                                <ul className="list-disc list-inside text-sm text-gray-700">
+                                  {vp.nilaiVarian.map((nv, i) => (
+                                    <li key={i}>{nv}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     </div>
                   )}
@@ -373,7 +484,9 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
                                 key={nvIndex}
                                 className="bg-gray-100 px-2 py-1 rounded text-sm"
                               >
-                                {nv.varian}: {nv.nilai}
+                                {typeof nv === "object"
+                                  ? `${nv.varian}: ${nv.nilai}`
+                                  : nv}
                               </span>
                             ))}
                           </div>

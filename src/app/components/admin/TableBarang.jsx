@@ -10,7 +10,6 @@ const TableProduk = ({ produkList, setProdukList }) => {
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [produkToDelete, setProdukToDelete] = useState(null);
-  // Add state for detail modal
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedProduk, setSelectedProduk] = useState(null);
   const [search, setSearch] = useState("");
@@ -80,22 +79,22 @@ const TableProduk = ({ produkList, setProdukList }) => {
     setOpenDropdownId(id);
   };
 
-  // Add function to handle detail click
   const handleDetailClick = async (produk) => {
+    console.log("Fetching detail for produk:", produk.id);
     try {
       // Fetch detailed product data including variants
       const response = await fetch(`${apiUrl}/product/${produk.id}`, {
         method: "GET",
-        credentials: "include", // Include credentials for authentication
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
       });
-      
+
       if (!response.ok) throw new Error("Gagal mengambil detail produk");
-      
+
       const detailedProduk = await response.json();
-      console.log("Detailed Produk:", detailedProduk);
+      console.log(detailedProduk);
       setSelectedProduk(detailedProduk);
       setIsDetailModalOpen(true);
       setOpenDropdownId(null);
@@ -194,7 +193,11 @@ const TableProduk = ({ produkList, setProdukList }) => {
                 <tr key={produk.id}>
                   <td className="px-6 py-4">{produk.id}</td>
                   <td className="px-6 py-4">{produk.nama}</td>
-                  <td className="px-6 py-4">{produk.kategori}</td>
+                  <td className="px-6 py-4">
+                    {typeof produk.kategori === "object"
+                      ? produk.kategori.nama
+                      : produk.kategori}
+                  </td>
                   <td className="px-6 py-4">{produk.harga}</td>
                   <td className="px-6 py-4 text-center">
                     <button
@@ -260,6 +263,17 @@ const TableProduk = ({ produkList, setProdukList }) => {
           </button>
         </div>
       )}
+
+      <ModalDetailProduk
+        commentMore
+        actions
+        isOpen={isDetailModalOpen}
+        onClose={() => {
+          setIsDetailModalOpen(false);
+          setSelectedProduk(null);
+        }}
+        produk={selectedProduk}
+      />
 
       <ModalKonfirmasi
         isOpen={isConfirmOpen}

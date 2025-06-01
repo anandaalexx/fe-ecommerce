@@ -69,7 +69,7 @@ export default function Home() {
   return (
     <div>
       <Navbar />
-      <div className="pt-38"></div>
+      <div className="pt-48"></div>
       <div className="max-w-7xl mx-auto px-6 py-6">
         <h2 className="text-2xl font-semibold mb-6">{categoryName}</h2>
         {loading ? (

@@ -25,17 +25,14 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
     }
 
     try {
-      const res = await fetch(
-        `${apiUrl}/product/add-stock/${idVarianProduk}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ jumlahTambah }),
-        }
-      );
+      const res = await fetch(`${apiUrl}/product/add-stock/${idVarianProduk}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ jumlahTambah }),
+      });
 
       if (!res.ok) throw new Error("Gagal menambah stok");
 
@@ -74,7 +71,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
                 Detail Produk
                 <button
                   onClick={() => setIsEditModalOpen(true)}
-                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors text-sm"
+                  className="bg-[#EDCF5D] text-white px-4 py-2 rounded hover:brightness-110 cursor-pointer transition-colors text-sm"
                 >
                   Edit Produk
                 </button>
@@ -83,12 +80,13 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
               <div className="flex gap-4">
                 <img
                   src="/iphone1.png"
-                  alt={produkState.nama}
+                  alt={produkState.namaProduk}
                   className="w-32 h-32 object-cover rounded"
                 />
                 <div className="flex-1">
                   <p>
-                    <span className="font-medium">Nama:</span> {produkState.nama}
+                    <span className="font-medium">Nama:</span>{" "}
+                    {produkState.namaProduk}
                   </p>
                   <p>
                     <span className="font-medium">Deskripsi:</span>{" "}
@@ -96,15 +94,15 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
                   </p>
                   <p>
                     <span className="font-medium">Kategori:</span>{" "}
-                    {produkState.kategori}
+                    {produkState.kategori.nama}
                   </p>
                   <p>
                     <span className="font-medium">Penjual:</span>{" "}
-                    {produkState.penjual}
+                    {produkState.penjual.storeName}
                   </p>
                   <p>
                     <span className="font-medium">Harga:</span>{" "}
-                    {produkState.harga}
+                    {produkState.varianProduk.harga}
                   </p>
                 </div>
               </div>
@@ -112,7 +110,8 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
               <div className="mt-6">
                 <h4 className="font-semibold mb-3">Varian Produk</h4>
                 <div className="space-y-4">
-                  {produkState.varianProduk && produkState.varianProduk.length > 0 ? (
+                  {produkState.varianProduk &&
+                  produkState.varianProduk.length > 0 ? (
                     produkState.varianProduk.map((vp) => (
                       <div key={vp.id} className="border rounded p-4 space-y-2">
                         <div className="grid grid-cols-2 gap-4">
@@ -120,10 +119,11 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
                             <span className="font-medium">SKU:</span> {vp.sku}
                           </p>
                           <p>
-                            <span className="font-medium">Status:</span> {vp.status}
+                            <span className="font-medium">Status:</span>{" "}
+                            {vp.status}
                           </p>
                         </div>
-                        
+
                         <p>
                           <span className="font-medium">Harga:</span> Rp{" "}
                           {vp.harga?.toLocaleString()}
@@ -224,7 +224,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
           isOpen={isEditModalOpen}
           onClose={() => setIsEditModalOpen(false)}
           produk={produkState}
-          onUpdate={handleUpdateProduk} // ⬅️ kembalikan ke modal detail
+          onUpdate={handleUpdateProduk}
         />
       )}
     </>
