@@ -135,6 +135,21 @@ const PesananCard = () => {
     return reviewedProducts.has(idDetailTransaksi);
   };
 
+  const groupProductsByIdProduk = (products) => {
+    const grouped = {};
+    products.forEach(product => {
+      if (!grouped[product.idProduk]) {
+        grouped[product.idProduk] = {
+          ...product,
+          totalQuantity: product.jumlah
+        };
+      } else {
+        grouped[product.idProduk].totalQuantity += product.jumlah;
+      }
+    });
+    return Object.values(grouped);
+  };
+
   return (
     <div className="max-w-7xl mx-auto border border-gray-200 rounded shadow-sm">
       <table className="min-w-full text-sm divide-y divide-gray-200">

@@ -3,8 +3,9 @@ import { useState, useRef, useEffect } from "react";
 import { Eye, Trash2, Ellipsis, ArrowUpDown } from "lucide-react";
 import ModalKonfirmasi from "../admin/modals/Konfirmasi";
 import ModalDetailProduk from "./modals/DetailProduk"; // Update import path
+import ToastNotification from "../ToastNotification";
 
-const TableProduk = ({ produkList, setProdukList, showToast }) => {
+const TableProduk = ({ produkList, setProdukList }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -94,6 +95,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
       if (!response.ok) throw new Error("Gagal mengambil detail produk");
       
       const detailedProduk = await response.json();
+      console.log("Detailed Produk:", detailedProduk);
       setSelectedProduk(detailedProduk);
       setIsDetailModalOpen(true);
       setOpenDropdownId(null);
@@ -241,9 +243,7 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
           <button
             onClick={() => {
               const produk = produkList.find((p) => p.id === openDropdownId);
-              if (produk)
-                showToast("Lihat detail belum diimplementasi", "warning");
-              setOpenDropdownId(null);
+              if (produk) handleDetailClick(produk);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm"
           >
@@ -279,6 +279,12 @@ const TableProduk = ({ produkList, setProdukList, showToast }) => {
           setSelectedProduk(null);
         }}
         produk={selectedProduk}
+      />
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </>
   );

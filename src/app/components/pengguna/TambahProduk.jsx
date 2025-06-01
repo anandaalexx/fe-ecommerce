@@ -7,7 +7,7 @@ import VariantModal from "./modals/TambahVarian";
 import ToastNotification from "../ToastNotification";
 
 const AddProduct = () => {
-  const [images, setImages] = useState(Array(6).fill(null));
+  const [images, setImages] = useState([{ preview: null, file: null }]);
   const [namaProduk, setNamaProduk] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [kategori, setKategori] = useState("");
@@ -16,6 +16,7 @@ const AddProduct = () => {
   const [stok, setStok] = useState("");
   const [parsedVariants, setParsedVariants] = useState([]);
   const [variantCombinations, setVariantCombinations] = useState([]);
+  const [pendingUploads, setPendingUploads] = useState([]);
 
   const [showVariantModal, setShowVariantModal] = useState(false);
 
@@ -58,32 +59,42 @@ const AddProduct = () => {
   const handleImageChange = (e, index) => {
     const files = e.target.files;
     if (files && files[0]) {
+      const file = files[0];
+      const preview = URL.createObjectURL(file);
       const updatedImages = [...images];
-      updatedImages[index] = URL.createObjectURL(files[0]);
+      updatedImages[index] = { preview, file };
       setImages(updatedImages);
     }
   };
 
   const handleRemoveImage = (index) => {
     const updatedImages = [...images];
-    updatedImages[index] = null;
+    updatedImages[index] = { preview: null, file: null };
     setImages(updatedImages);
     if (inputRefs.current[index]) {
       inputRefs.current[index].value = "";
     }
   };
 
+  const getAllPreviewImages = () => {
+    const mainImages = images.filter((img) => img.preview !== null);
+    const variantImages = pendingUploads.map((item) => ({
+      preview: URL.createObjectURL(item.file),
+      label: `${item.variantNama}: ${item.optionNama}`,
+    }));
+    return [...mainImages, ...variantImages];
+  };
+
   // Simpan data varian dari modal
-  const handleSaveVariants = ({ variants, combinations }) => {
+  const handleSaveVariants = ({ variants, combinations, pendingUploads }) => {
     setParsedVariants(variants);
     setVariantCombinations(combinations);
+    setPendingUploads(pendingUploads);
     setShowVariantModal(false);
   };
 
-  console.log("varian:", parsedVariants);
-  console.log("variantCombinations:", variantCombinations);
-
   const handleSubmit = async () => {
+
     if (!namaProduk || !deskripsi || !kategori) {
       showToast("Nama produk, deskripsi, dan kategori wajib diisi!", "warning");
       return;
@@ -112,6 +123,7 @@ const AddProduct = () => {
         return;
       }
     }
+
     // Siapkan payload dasar
     const payload = {
       namaProduk,
@@ -127,31 +139,27 @@ const AddProduct = () => {
       // Jika ada varian, siapkan struktur varian
       payload.varian = parsedVariants.map((variant) => ({
         nama: variant.nama,
-        nilai: variant.options,
+        nilai: variant.options.map(option => option.nama), // ← Ambil hanya .nama saja
       }));
 
       variantCombinations.forEach((combo, index) => {
-        console.log(`Combo ${index}:`, combo.nama.split(" / "));
       });
 
       payload.produkVarian = variantCombinations.map((combo) => ({
         harga: parseInt(combo.harga),
         stok: parseInt(combo.stok),
-        nilaiVarian: combo.nama.split(" / ").map((nilai, idx) => ({
+        nilaiVarian: combo.nilai.map((nilaiObj, idx) => ({
           varian: parsedVariants[idx].nama,
-          nilai: nilai,
-        })),
+          nilai: nilaiObj.nama, // ← karena kamu sudah simpan object {nama, gambar}
+        }))
       }));
     }
 
-    console.log("Payload yang dikirim:", payload);
-
     try {
+      // 1. Tambahkan produk terlebih dahulu
       const res = await fetch(`${apiUrl}/product/add`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify(payload),
       });
@@ -163,8 +171,80 @@ const AddProduct = () => {
       }
 
       const data = await res.json();
-      console.log("Produk berhasil ditambahkan:", data);
+
+      const idProdukBaru = data.data.produk.id;
+      const varianProduk = data.data.produk.varianProduk; 
+
+      // 2. Upload gambar jika ada
+      if (images.length > 0) {
+        for (const image of images) {
+          if (!image.file) {
+            console.warn("Lewati gambar kosong");
+            continue;
+          }
+          
+          const formData = new FormData();
+          formData.append("image", image.file); 
+          formData.append("idProduk", idProdukBaru);
+
+          try {
+            const uploadRes = await fetch(`${apiUrl}/foto-produk`, {
+              method: "POST",
+              body: formData,
+              credentials: "include", // opsional kalau butuh cookie login
+            });
+
+            if (!uploadRes.ok) {
+              const errText = await uploadRes.text();
+              console.error("Gagal upload gambar:", errText);
+            } else {
+              const uploadData = await uploadRes.json();
+              console.log("Gambar berhasil diunggah:", uploadData);
+            }
+          } catch (uploadErr) {
+            console.error("Error saat upload gambar:", uploadErr.message);
+          }
+        }
+      }
+
+      // 3. Upload gambar varian produk jika ada
+      if (pendingUploads && pendingUploads.length > 0) {
+        for (let i = 0; i < pendingUploads.length; i++) {
+          const item = pendingUploads[i];
+          const formData = new FormData();
+
+          const idVarianProduk = varianProduk[i]?.id; // Ambil ID varian dari respons
+
+          if (!idVarianProduk) {
+            console.warn(`ID varian tidak ditemukan untuk upload index ke-${i}`);
+            continue;
+          }
+
+          formData.append("image", item.file);
+          formData.append("idVarianProduk", idVarianProduk);
+
+          try {
+            const resVarianUpload = await fetch(`${apiUrl}/foto-varian-produk`, {
+              method: "POST",
+              body: formData,
+              credentials: "include",
+            });
+
+            if (!resVarianUpload.ok) {
+              const errText = await resVarianUpload.text();
+              console.error("Gagal upload foto varian:", errText);
+            } else {
+              const varianData = await resVarianUpload.json();
+            }
+          } catch (err) {
+            console.error("Error upload gambar varian:", err.message);
+          }
+        }
+      }
+
+      // 3. Redirect setelah selesai semua
       router.push("/pengguna/list-produk");
+
     } catch (err) {
       console.error("Error saat submit:", err.message);
     }
@@ -173,47 +253,69 @@ const AddProduct = () => {
   return (
     <div className="max-w-3xl p-6 items-start">
       {/* Upload Gambar */}
-      <div className="grid grid-cols-6 gap-4 mb-6">
-        {images.map((image, index) => (
+      {/* Upload Gambar & Preview Semua (Produk + Varian) */}
+      <div className="flex gap-4 flex-wrap mb-6">
+        {[...images, ...pendingUploads.map((item) => ({
+          preview: URL.createObjectURL(item.file),
+          file: item.file,
+          label: `${item.variantNama}: ${item.optionNama}`,
+          isVariant: true,
+        }))].map((image, index) => (
           <div
             key={index}
-            className="w-full h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center relative bg-gray-100"
+            className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center relative bg-gray-100"
           >
-            {image ? (
+            {image.preview ? (
               <>
                 <img
-                  src={image}
-                  alt={`Product Image ${index + 1}`}
+                  src={image.preview}
+                  alt={`Preview ${index + 1}`}
                   className="w-full h-full object-cover rounded-md"
                 />
-                <button
-                  onClick={() => handleRemoveImage(index)}
-                  className="absolute top-1 right-1 text-gray-700 w-5 h-5 flex items-center justify-center text-xl hover:text-red-600"
-                  type="button"
-                >
-                  ×
-                </button>
+                {!image.isVariant && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleRemoveImage(index);
+                    }}
+                    className="absolute top-1 right-1 text-gray-700 w-5 h-5 flex items-center justify-center text-xl hover:text-red-600"
+                    type="button"
+                  >
+                    ×
+                  </button>
+                )}
+                {image.label && (
+                  <div className="absolute bottom-0 w-full text-[10px] text-center bg-black bg-opacity-50 text-white px-1 py-[1px] truncate">
+                    {image.label}
+                  </div>
+                )}
               </>
             ) : (
               <>
-                <CloudUpload
-                  className="absolute bottom-11 text-gray-500"
-                  size={24}
-                />
-                <label className="text-gray-500 absolute text-xs top-13">
-                  Upload Gambar
-                </label>
+                <CloudUpload className="text-gray-500" size={24} />
+                <label className="absolute text-xs bottom-2 text-gray-500">Upload</label>
+                {!image.isVariant && (
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleImageChange(e, index)}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                    ref={(el) => (inputRefs.current[index] = el)}
+                  />
+                )}
               </>
             )}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => handleImageChange(e, index)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-              ref={(el) => (inputRefs.current[index] = el)}
-            />
           </div>
         ))}
+
+        {/* Tombol Tambah Gambar */}
+        <button
+          type="button"
+          onClick={() => setImages([...images, { preview: null, file: null }])}
+          className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center text-gray-500 text-3xl font-bold hover:bg-gray-200 transition"
+        >
+          +
+        </button>
       </div>
 
       {/* Nama Produk */}
@@ -267,11 +369,8 @@ const AddProduct = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mt-1">
                   {variant.options.map((opt, j) => (
-                    <span
-                      key={j}
-                      className="bg-gray-200 text-sm px-2 py-1 rounded"
-                    >
-                      {opt}
+                    <span key={j} className="bg-gray-200 text-sm px-2 py-1 rounded">
+                      {opt.nama}   {/* Render properti nama dari objek */}
                     </span>
                   ))}
                 </div>
@@ -279,6 +378,26 @@ const AddProduct = () => {
             ))}
           </div>
         )}
+
+        {pendingUploads.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm font-semibold mb-2">Gambar untuk Varian:</p>
+          <div className="grid grid-cols-3 gap-4">
+            {pendingUploads.map((item, index) => (
+              <div key={index} className="border p-2 rounded-md shadow-sm">
+                <img
+                  src={URL.createObjectURL(item.file)}
+                  alt={`${item.optionNama}-${index}`}
+                  className="w-full h-32 object-cover rounded-md mb-2"
+                />
+                <p className="text-sm text-gray-700">
+                  <strong>{item.variantNama}:</strong> {item.optionNama}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       </div>
 
       {/* Kategori, Harga, dan Stok */}

@@ -18,6 +18,7 @@ const TableProduk = () => {
 
   const handleViewProduct = (product) => {
     setSelectedProduct(product);
+    console.log("Selected product:", product);
     setIsDetailOpen(true);
   };
 
@@ -36,8 +37,9 @@ const TableProduk = () => {
         });
         const json = await res.json();
 
+        console.log("Data produk:", json);
+
         if (Array.isArray(json)) {
-          console.log(json);
           setProdukList(json);
         } else {
           console.error("Format data tidak valid:", json);
@@ -111,8 +113,7 @@ const TableProduk = () => {
               <tr key={produk.id}>
                 <td className="px-6 py-4 flex items-center gap-4">
                   <img
-                    src={produk.gambarUrl}
-                    alt={produk.nama}
+                    src={produk.gambarUrls?.[0]?.url || "/no-pictures.png"}
                     className="w-12 h-12 object-cover rounded"
                   />
                   <span>{produk.nama}</span>

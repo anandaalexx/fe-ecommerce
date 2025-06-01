@@ -1,12 +1,23 @@
 "use client";
 import { useState, useEffect } from "react";
 import TableProduk from "./TableBarang";
+import ToastNotification from "../ToastNotification";
 
 const Barang = () => {
   const [produkList, setProdukList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
+  
 
   useEffect(() => {
     async function fetchProduk() {
