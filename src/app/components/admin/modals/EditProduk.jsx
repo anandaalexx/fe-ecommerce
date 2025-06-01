@@ -1,509 +1,402 @@
-"use client";
 import { Dialog } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
-const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
-  const [editData, setEditData] = useState({});
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [loadingCategories, setLoadingCategories] = useState(false);
+const ModalEditProduk = ({ isOpen, onClose, produk }) => {
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [formData, setFormData] = useState({
+    nama: "",
+    deskripsi: "",
+    kategori: "",
+    penjual: "",
+    harga: 0,
+    berat: 0,
+    varianProduk: [],
+  });
+  const [kategoriList, setKategoriList] = useState([]);
 
-  // Load categories saat modal dibuka
   useEffect(() => {
-    if (isOpen) {
-      loadCategories();
-    }
-  }, [isOpen]);
+    const fetchKategori = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/category/view`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error("Gagal ambil kategori");
+        setKategoriList(data);
+      } catch (error) {
+        console.error("Error fetch kategori:", error);
+      }
+    };
 
-  // Set data produk saat modal dibuka
-  // Ganti di bagian useEffect inisialisasi data
+    fetchKategori();
+  }, []);
+
   useEffect(() => {
     if (produk) {
-      console.log("Detail produk:", produk); // Debugging
+      console.log("Produk diterima di modal:", produk);
+      console.log("Varian produk awal:", produk.varianProduk);
+      produk.varianProduk?.forEach((vp, i) => {
+        console.log(`nilaiVarian varian ke-${i}:`, vp.nilaiVarian);
+      });
 
-      const hasVariants = produk.varianProduk?.length > 0;
-      const isVariantProduct =
-        hasVariants &&
-        produk.varianProduk.some(
-          (vp) => vp.nilaiVarianProduk?.length > 0 || vp.nilaiVarian?.length > 0
-        );
+      const hargaNumber = Number(produk.harga.replace(/[^0-9]/g, ""));
 
-      if (isVariantProduct) {
-        setEditData({
-          namaProduk: produk.nama,
-          deskripsi: produk.deskripsi,
-          idKategori: produk.idKategori,
-          berat: produk.berat,
-          produkVarian: produk.varianProduk.map((vp) => ({
-            id: vp.id,
-            harga: vp.harga,
-            stok: vp.stok,
-            status: vp.status,
-            nilaiVarian: vp.nilaiVarianProduk || vp.nilaiVarian || [],
-          })),
-        });
-      } else {
-        const firstVariant = produk.varianProduk?.[0];
-        setEditData({
-          namaProduk: produk.nama,
-          deskripsi: produk.deskripsi,
-          idKategori: produk.idKategori,
-          berat: produk.berat,
-          harga: firstVariant?.harga,
-          stok: firstVariant?.stok,
-          status: firstVariant?.status,
-          produkVarian: [],
-        });
-      }
+      setFormData({
+        nama: produk.nama || "",
+        deskripsi: produk.deskripsi || "",
+        kategori: Number(produk.kategori) || "",
+        penjual: produk.penjual || "",
+        harga: hargaNumber || 0,
+        berat: produk.berat || 0,
+        varianProduk: produk.varianProduk
+          ? produk.varianProduk.map((vp) => ({
+              ...vp,
+              harga: Number(vp.harga),
+              stok: Number(vp.stok),
+              nilaiVarian: Array.isArray(vp.nilaiVarian) ? vp.nilaiVarian : [],
+            }))
+          : [],
+      });
     }
   }, [produk]);
 
-  const loadCategories = async () => {
-    setLoadingCategories(true);
-    try {
-      const res = await fetch(`${apiUrl}/category/view`, {
-        credentials: "include",
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        setCategories(data);
-      } else {
-        console.error("Gagal load categories");
-        setCategories([
-          { id: 1, nama: "Elektronik" },
-          { id: 2, nama: "Fashion" },
-          { id: 3, nama: "Makanan" },
-          { id: 4, nama: "Kesehatan" },
-        ]);
-      }
-    } catch (err) {
-      console.error("Error loading categories:", err);
-      setCategories([
-        { id: 1, nama: "Elektronik" },
-        { id: 2, nama: "Fashion" },
-        { id: 3, nama: "Makanan" },
-        { id: 4, nama: "Kesehatan" },
-      ]);
-    } finally {
-      setLoadingCategories(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "harga" || name === "berat") {
+      setFormData({ ...formData, [name]: Number(value) });
+    } else {
+      setFormData({ ...formData, [name]: value });
     }
   };
 
-  if (!produk) return null;
-
-  const handleUpdateProduk = async () => {
-    setLoading(true);
-    try {
-      const dataToSend = {
-        namaProduk: editData.namaProduk,
-        deskripsi: editData.deskripsi,
-        idKategori: editData.idKategori,
-        berat: editData.berat,
-      };
-
-      if (isProductWithVariants) {
-        dataToSend.produkVarian = editData.produkVarian.map((vp) => ({
-          id: vp.id,
-          harga: parseInt(vp.harga),
-          stok: parseInt(vp.stok),
-          status: vp.status,
-        }));
-      } else {
-        dataToSend.harga = parseInt(editData.harga);
-        dataToSend.stok = parseInt(editData.stok);
-        dataToSend.status = editData.status;
-      }
-
-      const res = await fetch(`${apiUrl}/admin/products/${produk.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify(dataToSend),
-      });
-
-      if (!res.ok) throw new Error(await res.text());
-
-      const updatedProduct = await res.json();
-      onUpdate(updatedProduct);
-      onClose();
-    } catch (error) {
-      console.error("Update error:", error);
-      alert("Gagal mengupdate produk: " + error.message);
-    } finally {
-      setLoading(false);
+  const handleVarianChange = (index, field, value) => {
+    const updatedVarian = [...formData.varianProduk];
+    if (field === "harga" || field === "stok") {
+      updatedVarian[index][field] = Number(value);
+    } else {
+      updatedVarian[index][field] = value;
     }
+    setFormData({ ...formData, varianProduk: updatedVarian });
   };
 
-  const handleEditDataChange = (field, value) => {
-    setEditData((prev) => ({
-      ...prev,
+  const handleNilaiVarianChange = (varianIndex, nilaiIndex, field, value) => {
+    console.log("handleNilaiVarianChange dipanggil:", {
+      varianIndex,
+      nilaiIndex,
+      field,
+      value,
+    });
+
+    const updatedVarian = [...formData.varianProduk];
+    if (!Array.isArray(updatedVarian[varianIndex].nilaiVarian)) {
+      updatedVarian[varianIndex].nilaiVarian = [];
+    }
+    const updatedNilaiVarian = [...updatedVarian[varianIndex].nilaiVarian];
+    updatedNilaiVarian[nilaiIndex] = {
+      ...updatedNilaiVarian[nilaiIndex],
       [field]: value,
-    }));
+    };
+    updatedVarian[varianIndex].nilaiVarian = updatedNilaiVarian;
+    setFormData({ ...formData, varianProduk: updatedVarian });
   };
 
-  const handleVarianProdukChange = (index, field, value) => {
-    setEditData((prev) => ({
-      ...prev,
-      produkVarian: prev.produkVarian.map((vp, i) =>
-        i === index ? { ...vp, [field]: value } : vp
-      ),
-    }));
-  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-  // Deteksi apakah produk memiliki varian
-  const hasVariants = editData.produkVarian && editData.produkVarian.length > 0;
-  const isProductWithVariants =
-    hasVariants &&
-    editData.produkVarian.some(
-      (vp) => vp.nilaiVarian && vp.nilaiVarian.length > 0
-    );
+    console.log("formData.varianProduk sebelum submit:", formData.varianProduk);
+
+    // Mapping data ke format backend
+    const payload = {
+      namaProduk: formData.nama,
+      deskripsi: formData.deskripsi,
+      idKategori: Number(formData.kategori),
+      berat: formData.berat,
+      harga: formData.harga,
+      stok: formData.varianProduk.reduce((acc, vp) => acc + vp.stok, 0),
+      produkVarian: formData.varianProduk.map((vp) => ({
+        id: vp.id,
+        sku: vp.sku,
+        harga: vp.harga,
+        stok: vp.stok,
+        status: vp.status,
+        nilaiVarian: vp.nilaiVarian.map((nv) => ({
+          varian: nv.varian,
+          nilai: nv.nilai,
+        })),
+      })),
+    };
+
+    console.log("Payload yang akan dikirim:", payload);
+
+    try {
+      const response = await fetch(`${apiUrl}/admin/products/${produk.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error("Gagal menyimpan data");
+      }
+
+      const data = await response.json();
+      console.log("Update sukses:", data);
+      onClose(); // tutup modal kalau berhasil
+    } catch (error) {
+      console.error("Error saat update produk:", error);
+      alert("Gagal menyimpan produk, coba lagi.");
+    }
+  };
 
   return (
-    <Dialog as={Fragment} open={isOpen} onClose={onClose}>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-        <Dialog.Panel className="bg-white max-w-4xl w-full rounded-lg shadow-xl">
-          <div className="p-6 max-h-[90vh] overflow-y-auto">
-            <Dialog.Title className="text-xl font-semibold mb-4 flex items-center justify-between">
-              Edit Produk
-              <div className="flex gap-2">
-                <button
-                  onClick={handleUpdateProduk}
-                  className="bg-[#EDCF5D] text-white px-4 py-2 rounded hover:brightness-110 transition-colors text-sm cursor-pointer font-medium"
-                  disabled={loading}
-                >
-                  {loading ? "Menyimpan..." : "Simpan"}
-                </button>
-                <button
-                  onClick={onClose}
-                  className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-colors text-sm cursor-pointer font-medium"
-                  disabled={loading}
-                >
-                  Batal
-                </button>
-              </div>
-            </Dialog.Title>
+    <Dialog as="div" open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/20" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <Dialog.Title className="text-xl font-bold mb-6 text-center text-gray-800">
+            Edit Detail Produk
+          </Dialog.Title>
 
-            <div className="flex gap-4">
-              <img
-                src="/iphone1.png"
-                alt={produk.nama}
-                className="w-32 h-32 object-cover rounded"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ... semua input tetap sama seperti sebelumnya ... */}
+
+            {/* Nama */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Nama Produk
+              </label>
+              <input
+                type="text"
+                name="nama"
+                value={formData.nama}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                required
               />
-              <div className="flex-1">
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-md font-medium mb-1">
-                      Nama Produk:
-                    </label>
-                    <input
-                      type="text"
-                      value={editData.namaProduk || ""}
-                      onChange={(e) =>
-                        handleEditDataChange("namaProduk", e.target.value)
-                      }
-                      className="w-full border rounded px-3 py-2"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-md font-medium mb-1">
-                      Deskripsi:
-                    </label>
-                    <textarea
-                      value={editData.deskripsi || ""}
-                      onChange={(e) =>
-                        handleEditDataChange("deskripsi", e.target.value)
-                      }
-                      className="w-full border rounded px-3 py-2 h-20"
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
+            </div>
+
+            {/* Deskripsi */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Deskripsi
+              </label>
+              <textarea
+                name="deskripsi"
+                value={formData.deskripsi}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                rows={3}
+              />
+            </div>
+
+            {/* Kategori */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Kategori
+              </label>
+              <select
+                name="kategori"
+                value={formData.kategori}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                required
+              >
+                <option value="">-- Pilih Kategori --</option>
+                {kategoriList.map((kategori) => (
+                  <option key={kategori.id} value={kategori.id}>
+                    {kategori.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Penjual */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Penjual
+              </label>
+              <input
+                type="text"
+                name="penjual"
+                value={formData.penjual}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+              />
+            </div>
+
+            {/* Harga */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Harga (Rp)
+              </label>
+              <input
+                type="number"
+                name="harga"
+                value={formData.harga}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                min={0}
+              />
+            </div>
+
+            {/* Berat */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Berat (gram)
+              </label>
+              <input
+                type="number"
+                name="berat"
+                value={formData.berat}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                min={0}
+              />
+            </div>
+
+            {/* Varian Produk */}
+            <div>
+              <h4 className="text-base font-semibold mb-2 text-gray-800">
+                Varian Produk
+              </h4>
+              {formData.varianProduk.map((vp, index) => (
+                <div
+                  key={vp.id || index}
+                  className="border border-gray-200 rounded-lg p-4 bg-gray-50 mb-4"
+                >
+                  <div className="grid grid-cols-2 gap-4 text-sm mb-4">
                     <div>
-                      <label className="block text-md font-medium mb-1">
-                        Kategori:
+                      <label className="block text-sm font-medium text-gray-700">
+                        SKU
                       </label>
-                      <select
-                        value={editData.idKategori || ""}
+                      <input
+                        type="text"
+                        value={vp.sku}
                         onChange={(e) =>
-                          handleEditDataChange(
-                            "idKategori",
-                            parseInt(e.target.value) || null
-                          )
+                          handleVarianChange(index, "sku", e.target.value)
                         }
-                        className="w-full border rounded px-3 py-2"
-                        disabled={loadingCategories}
-                      >
-                        <option value="">Pilih Kategori</option>
-                        {categories.map((cat) => (
-                          <option key={cat.id} value={cat.id}>
-                            {cat.nama}
-                          </option>
-                        ))}
-                      </select>
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      />
                     </div>
                     <div>
-                      <label className="block text-md font-medium mb-1">
-                        Berat (gram):
+                      <label className="block text-sm font-medium text-gray-700">
+                        Harga
                       </label>
                       <input
                         type="number"
-                        value={editData.berat || ""}
+                        value={vp.harga}
                         onChange={(e) =>
-                          handleEditDataChange(
-                            "berat",
-                            parseInt(e.target.value) || 0
-                          )
+                          handleVarianChange(index, "harga", e.target.value)
                         }
-                        className="w-full border rounded px-3 py-2"
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                        min={0}
                       />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Stok
+                      </label>
+                      <input
+                        type="number"
+                        value={vp.stok}
+                        onChange={(e) =>
+                          handleVarianChange(index, "stok", e.target.value)
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                        min={0}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Status
+                      </label>
+                      <select
+                        value={vp.status}
+                        onChange={(e) =>
+                          handleVarianChange(index, "status", e.target.value)
+                        }
+                        className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                      >
+                        <option value="stok_tersedia">Stok Tersedia</option>
+                        <option value="stok_habis">Stok Habis</option>
+                        <option value="nonaktif">Nonaktif</option>
+                      </select>
                     </div>
                   </div>
 
-                  {/* Tampilkan input harga dan stok hanya untuk produk tanpa varian */}
-                  {!isProductWithVariants && (
-                    <div className="grid grid-cols-3 gap-3">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Harga:
-                        </label>
-                        <input
-                          type="number"
-                          value={editData.harga || ""}
-                          onChange={(e) =>
-                            handleEditDataChange(
-                              "harga",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="w-full border rounded px-3 py-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Stok:
-                        </label>
-                        <input
-                          type="number"
-                          value={editData.stok || ""}
-                          onChange={(e) =>
-                            handleEditDataChange(
-                              "stok",
-                              parseInt(e.target.value) || 0
-                            )
-                          }
-                          className="w-full border rounded px-3 py-2"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">
-                          Status:
-                        </label>
-                        <select
-                          value={editData.status || "stok_tersedia"}
-                          onChange={(e) =>
-                            handleEditDataChange("status", e.target.value)
-                          }
-                          className="w-full border rounded px-3 py-2"
-                        >
-                          <option value="stok_tersedia">Stok Tersedia</option>
-                          <option value="stok_kosong">Stok Kosong</option>
-                          <option value="discontinued">Discontinued</option>
-                        </select>
-                      </div>
-                    </div>
-                  )}
-                  {isProductWithVariants && (
-                    <div>
-                      <label className="block text-md font-semibold mt-4 mb-2">
-                        Varian Produk:
-                      </label>
-                      <div className="space-y-4">
-                        {editData.produkVarian.map((vp, index) => (
-                          <div
-                            key={vp.id || index}
-                            className="border p-4 rounded-md shadow-sm bg-gray-50"
-                          >
-                            <div className="grid grid-cols-3 gap-4">
-                              <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Harga
-                                </label>
-                                <input
-                                  type="number"
-                                  value={vp.harga || ""}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "harga",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Stok
-                                </label>
-                                <input
-                                  type="number"
-                                  value={vp.stok || ""}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "stok",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium mb-1">
-                                  Status
-                                </label>
-                                <select
-                                  value={vp.status || "stok_tersedia"}
-                                  onChange={(e) =>
-                                    handleVarianProdukChange(
-                                      index,
-                                      "status",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="w-full border rounded px-2 py-1"
-                                >
-                                  <option value="stok_tersedia">
-                                    Stok Tersedia
-                                  </option>
-                                  <option value="stok_habis">Stok Habis</option>
-                                </select>
-                              </div>
-                            </div>
-
-                            {/* Tampilkan nilaiVarian */}
-                            {vp.nilaiVarian && vp.nilaiVarian.length > 0 && (
-                              <div className="mt-3">
-                                <label className="block text-sm font-medium mb-1">
-                                  Nilai Varian:
-                                </label>
-                                <ul className="list-disc list-inside text-sm text-gray-700">
-                                  {vp.nilaiVarian.map((nv, i) => (
-                                    <li key={i}>{nv}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Section Varian Produk */}
-            {/* Section Varian Produk */}
-            <div className="mt-6">
-              <h4 className="font-semibold mb-3">Varian Produk</h4>
-              // Ganti bagian render varian dengan ini:
-              {isProductWithVariants ? (
-                <div className="space-y-4">
-                  {editData.produkVarian?.map((vp, index) => (
-                    <div
-                      key={vp.id || index}
-                      className="border rounded p-4 space-y-2"
-                    >
-                      <div className="grid grid-cols-3 gap-4">
+                  {/* Nilai Varian */}
+                  <div>
+                    <h5 className="font-semibold mb-2 text-gray-700 text-sm">
+                      Nilai Varian
+                    </h5>
+                    {vp.nilaiVarian.map((nv, idx) => (
+                      <div
+                        key={idx}
+                        className="grid grid-cols-2 gap-4 mb-3 text-sm"
+                      >
                         <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Harga
-                          </label>
-                          <input
-                            type="number"
-                            value={vp.harga || 0}
-                            onChange={(e) =>
-                              handleVarianProdukChange(
-                                index,
-                                "harga",
-                                e.target.value
-                              )
-                            }
-                            className="w-full border rounded px-3 py-2"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Stok
-                          </label>
-                          <input
-                            type="number"
-                            value={vp.stok || 0}
-                            onChange={(e) =>
-                              handleVarianProdukChange(
-                                index,
-                                "stok",
-                                e.target.value
-                              )
-                            }
-                            className="w-full border rounded px-3 py-2"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium mb-1">
-                            Status
-                          </label>
-                          <select
-                            value={vp.status || "stok_tersedia"}
-                            onChange={(e) =>
-                              handleVarianProdukChange(
-                                index,
-                                "status",
-                                e.target.value
-                              )
-                            }
-                            className="w-full border rounded px-3 py-2"
-                          >
-                            <option value="stok_tersedia">Stok Tersedia</option>
-                            <option value="stok_kosong">Stok Kosong</option>
-                            <option value="discontinued">Discontinued</option>
-                          </select>
-                        </div>
-                      </div>
-
-                      {vp.nilaiVarian?.length > 0 && (
-                        <div className="mt-2">
-                          <label className="block text-sm font-medium mb-1">
+                          <label className="block font-medium text-gray-600">
                             Varian
                           </label>
-                          <div className="flex flex-wrap gap-2">
-                            {vp.nilaiVarian.map((nv, nvIndex) => (
-                              <span
-                                key={nvIndex}
-                                className="bg-gray-100 px-2 py-1 rounded text-sm"
-                              >
-                                {typeof nv === "object"
-                                  ? `${nv.varian}: ${nv.nilai}`
-                                  : nv}
-                              </span>
-                            ))}
-                          </div>
+                          <input
+                            type="text"
+                            value={nv.varian}
+                            onChange={(e) =>
+                              handleNilaiVarianChange(
+                                index,
+                                idx,
+                                "varian",
+                                e.target.value
+                              )
+                            }
+                            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                          />
                         </div>
-                      )}
-                    </div>
-                  ))}
+                        <div>
+                          <label className="block font-medium text-gray-600">
+                            Nilai
+                          </label>
+                          <input
+                            type="text"
+                            value={nv.nilai}
+                            onChange={(e) =>
+                              handleNilaiVarianChange(
+                                index,
+                                idx,
+                                "nilai",
+                                e.target.value
+                              )
+                            }
+                            className="mt-1 block w-full border border-gray-300 rounded-md p-2"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="border rounded p-4 bg-gray-50">
-                  <p className="text-gray-600">
-                    Produk ini tidak memiliki varian
-                  </p>
-                </div>
-              )}
+              ))}
             </div>
-          </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2 text-sm font-medium text-gray-700 border border-gray-200 rounded hover:bg-gray-100 cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="px-5 py-2 text-sm font-medium text-white bg-[#EDCF5D] rounded hover:brightness-110 cursor-pointer"
+              >
+                Simpan
+              </button>
+            </div>
+          </form>
         </Dialog.Panel>
       </div>
     </Dialog>

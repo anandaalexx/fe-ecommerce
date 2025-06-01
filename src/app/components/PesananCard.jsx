@@ -19,6 +19,13 @@ const PesananCard = () => {
   };
 
   useEffect(() => {
+    const stored = localStorage.getItem("reviewedProducts");
+    if (stored) {
+      setReviewedProducts(new Set(JSON.parse(stored)));
+    }
+  }, []);
+
+  useEffect(() => {
     const fetchPesanan = async () => {
       try {
         const res = await fetch(`${apiUrl}/transaksi/user`, {
@@ -79,6 +86,10 @@ const PesananCard = () => {
           });
         }
 
+        localStorage.setItem(
+          "reviewedProducts",
+          JSON.stringify([...reviewedSet])
+        );
         setReviewedProducts(reviewedSet);
       }
     } catch (err) {
@@ -127,7 +138,12 @@ const PesananCard = () => {
   };
 
   const handleReviewSuccess = (idDetailTransaksi) => {
-    setReviewedProducts((prev) => new Set([...prev, idDetailTransaksi]));
+    setReviewedProducts((prev) => {
+      const updated = new Set([...prev, idDetailTransaksi]);
+      localStorage.setItem("reviewedProducts", JSON.stringify([...updated]));
+      return updated;
+    });
+
     handleCloseReview();
   };
 
