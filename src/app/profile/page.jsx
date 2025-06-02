@@ -332,6 +332,13 @@ export default function ProfilePage() {
     fetchProfile();
   }, [apiUrl]);
 
+  const getInitials = (nama) => {
+    if (!nama) return "";
+    const words = nama.trim().split(" ");
+    if (words.length === 1) return words[0][0].toUpperCase();
+    return (words[0][0] + words[1][0]).toUpperCase();
+  };
+
   const handleChange = async (e) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
@@ -470,27 +477,8 @@ export default function ProfilePage() {
           <div className="grid md:grid-cols-3 gap-6">
             {/* Card Kiri: Profil */}
             <div className="bg-white rounded-2xl p-6 shadow-md col-span-1 flex flex-col items-center text-center">
-              <div className="relative group">
-                <img
-                  src="banner1.jpg"
-                  alt="Profile"
-                  className="w-28 h-28 rounded-full object-cover shadow mb-4 transition duration-300"
-                />
-                <div className="w-28 h-28 absolute inset-0 bg-black opacity-0 group-hover:opacity-50 flex justify-center items-center text-white rounded-full transition-opacity duration-300">
-                  <label
-                    htmlFor="image-upload"
-                    className="cursor-pointer flex items-center"
-                  >
-                    <Camera className="ml-3" size={24} />
-                    <span>Ubah Gambar</span>
-                  </label>
-                </div>
-                <input
-                  id="image-upload"
-                  type="file"
-                  onChange={handleImageChange}
-                  className="hidden"
-                />
+              <div className="w-28 h-28 rounded-full flex bg-[#EDCF5D]/30 items-center justify-center text-3xl font-bold border border-[#EDCF5D]/120 mb-4 relative group transition duration-300">
+                {getInitials(nama)}
               </div>
 
               {isEditing.nama ? (
@@ -747,7 +735,7 @@ export default function ProfilePage() {
               </button>
               <button
                 onClick={handleSubmitAlamat}
-                className="px-4 py-2 bg-blue-600 text-white rounded"
+                className="px-4 py-2 bg-[#EDCF5D] hover:brightness-110 cursor-pointer text-white rounded"
               >
                 Simpan
               </button>

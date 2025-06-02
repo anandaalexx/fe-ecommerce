@@ -56,7 +56,7 @@ export default function LoginPage() {
             router.push("/kurir");
             break;
           case 2:
-            router.push("/pengguna");
+            router.push("/home");
             break;
           default:
             router.push("/home");

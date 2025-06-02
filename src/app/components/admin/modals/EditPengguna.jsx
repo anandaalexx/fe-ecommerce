@@ -9,10 +9,9 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     nama: "",
     email: "",
     alamat: "",
-    saldo: 0,
+    saldo: "",
     roleId: 1,
   });
-
   const [roles, setRoles] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -24,7 +23,8 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
         nama: initialData.nama || "",
         email: initialData.email || "",
         alamat: initialData.alamat || "",
-        saldo: initialData.saldo || 0,
+        saldo:
+          initialData.saldo !== undefined ? initialData.saldo.toString() : "",
         roleId: initialData.roleId || 1,
       });
     }
@@ -48,7 +48,14 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
-      [name]: name === "saldo" || name === "roleId" ? Number(value) : value,
+      [name]:
+        name === "roleId"
+          ? Number(value)
+          : name === "saldo"
+          ? value === ""
+            ? ""
+            : value // Biarkan empty string
+          : value,
     }));
   };
 
@@ -58,12 +65,20 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     try {
       const { id, nama, email, alamat, roleId, saldo } = form;
 
+      const saldoNumber = saldo === "" ? 0 : parseFloat(saldo);
+
       const res = await fetch(`${apiUrl}/admin/users/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ nama, email, alamat, roleId, saldo }),
+        body: JSON.stringify({
+          nama,
+          email,
+          alamat,
+          roleId,
+          saldo: saldoNumber,
+        }),
       });
 
       if (!res.ok) {
@@ -76,7 +91,7 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
       onClose();
     } catch (err) {
       console.error("Error saat mengupdate user:", err);
-      alert(err.message);
+      showToast(err.message, "error");
     }
   };
 

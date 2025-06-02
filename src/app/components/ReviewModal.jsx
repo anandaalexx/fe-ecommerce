@@ -59,14 +59,23 @@ const ReviewModal = ({
       onKomplain({ id: data.idTransaksi });
     }
   };
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const handleSubmit = async () => {
     if (!rating || !komentar.trim()) {
-      alert("Mohon beri rating dan komentar");
+      showToast("Mohon beri rating dan komentar", "warning");
       return;
     }
     if (komentar.trim().length < 10) {
-      alert("Komentar minimal 10 karakter");
+      showToast("Komentar minimal 10 karakter", "warning");
       return;
     }
 
@@ -94,7 +103,10 @@ const ReviewModal = ({
         throw new Error(error.message || "Gagal mengirim ulasan");
       }
 
-      alert("Ulasan berhasil dikirim!");
+      const result = await res.json();
+      console.log("Success response:", result);
+      showToast("Ulasan berhasil dikirim!", "success");
+
       setRating(0);
       setKomentar("");
 
@@ -105,7 +117,7 @@ const ReviewModal = ({
       }
     } catch (err) {
       console.error("Submit error:", err);
-      alert(err.message);
+      showToast(err.message, "error");
     } finally {
       setLoading(false);
     }
@@ -188,7 +200,13 @@ const ReviewModal = ({
               </button>
             </div>
           </div>
-        </div>
+          <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
+    </div>
       </div>
 
       {/* Modal Komplain */}

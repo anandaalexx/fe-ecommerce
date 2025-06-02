@@ -4,6 +4,7 @@ import { CloudUpload } from "lucide-react";
 import Button from "../Button";
 import { useRouter } from "next/navigation";
 import VariantModal from "./modals/TambahVarian";
+import ToastNotification from "../ToastNotification";
 
 const AddProduct = () => {
   const [images, setImages] = useState(Array(6).fill(null));
@@ -21,6 +22,16 @@ const AddProduct = () => {
   const inputRefs = useRef([]);
   const router = useRouter();
 
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
+
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -29,9 +40,13 @@ const AddProduct = () => {
         const res = await fetch(`${apiUrl}/category/view`, {
           method: "GET",
           credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
         if (!res.ok) throw new Error("Failed to fetch categories");
         const data = await res.json();
+        console.log("Kategori", data);
         setKategoriList(data);
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -70,13 +85,16 @@ const AddProduct = () => {
 
   const handleSubmit = async () => {
     if (!namaProduk || !deskripsi || !kategori) {
-      alert("Nama produk, deskripsi, dan kategori wajib diisi!");
+      showToast("Nama produk, deskripsi, dan kategori wajib diisi!", "warning");
       return;
     }
 
     // Validasi untuk produk tanpa varian
     if (parsedVariants.length === 0 && (!harga || !stok)) {
-      alert("Harga dan stok wajib diisi untuk produk tanpa varian!");
+      showToast(
+        "Harga dan stok wajib diisi untuk produk tanpa varian!",
+        "warning"
+      );
       return;
     }
 
@@ -87,7 +105,10 @@ const AddProduct = () => {
       );
 
       if (incompleteCombinations) {
-        alert("Semua kombinasi varian harus memiliki harga dan stok!");
+        showToast(
+          "Semua kombinasi varian harus memiliki harga dan stok!",
+          "warning"
+        );
         return;
       }
     }
@@ -324,6 +345,13 @@ const AddProduct = () => {
         onClose={() => setShowVariantModal(false)}
         onSave={handleSaveVariants}
         initialVariants={parsedVariants}
+      />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );

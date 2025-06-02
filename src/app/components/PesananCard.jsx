@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import ReviewModal from "./ReviewModal";
+import ToastNotification from "./ToastNotification";
 
 const PesananCard = () => {
   const [daftarPesanan, setDaftarPesanan] = useState([]);
@@ -10,6 +11,22 @@ const PesananCard = () => {
   // modalReviewData = { order, item }
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
+
+  useEffect(() => {
+    const stored = localStorage.getItem("reviewedProducts");
+    if (stored) {
+      setReviewedProducts(new Set(JSON.parse(stored)));
+    }
+  }, []);
 
   const handleKomplain = async (item) => {
     try {
@@ -172,6 +189,10 @@ const PesananCard = () => {
           });
         }
 
+        localStorage.setItem(
+          "reviewedProducts",
+          JSON.stringify([...reviewedSet])
+        );
         setReviewedProducts(reviewedSet);
       }
     } catch (err) {
@@ -192,8 +213,9 @@ const PesananCard = () => {
         idProduk: item.idProduk,
         idDetailTransaksi: item.idDetailTransaksi,
       });
-      alert(
-        "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi."
+      showToast(
+        "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi.",
+        "error"
       );
       return;
     }
@@ -211,7 +233,12 @@ const PesananCard = () => {
   };
 
   const handleReviewSuccess = (idDetailTransaksi) => {
-    setReviewedProducts((prev) => new Set([...prev, idDetailTransaksi]));
+    setReviewedProducts((prev) => {
+      const updated = new Set([...prev, idDetailTransaksi]);
+      localStorage.setItem("reviewedProducts", JSON.stringify([...updated]));
+      return updated;
+    });
+
     handleCloseReview();
   };
 
@@ -221,48 +248,49 @@ const PesananCard = () => {
 
   return (
     <div className="max-w-7xl mx-auto border border-gray-200 rounded shadow-sm">
-      <table className="min-w-full text-sm divide-y divide-gray-200">
-        <thead className="bg-gray-100 text-gray-700">
-          <tr>
-            <th className="px-6 py-3 text-left">No Pesanan</th>
-            <th className="px-6 py-3 text-left">Produk Pesanan</th>
-            <th className="px-6 py-3 text-left">Jumlah Produk</th>
-            <th className="px-6 py-3 text-left">Total</th>
-            <th className="px-6 py-3 text-left">Status</th>
-            <th className="px-6 py-3 text-center">Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {daftarPesanan.map((order) => (
-            <tr key={order.id} className="border-b border-gray-200">
-              <td className="px-6 py-4">{order.id}</td>
-              <td className="px-6 py-4">
-                <div className="space-y-2">
-                  {order.produk.map((item, i) => (
-                    <div key={i} className="border-b border-gray-200 pb-1">
-                      <div className="font-medium">{item.namaProduk}</div>
+      <div className="max-h-[400px] overflow-y-auto">
+        <table className="min-w-full text-sm divide-y divide-gray-200">
+          <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
+            <tr>
+              <th className="px-6 py-3 text-left">No Pesanan</th>
+              <th className="px-6 py-3 text-left">Produk Pesanan</th>
+              <th className="px-6 py-3 text-left">Jumlah Produk</th>
+              <th className="px-6 py-3 text-left">Total</th>
+              <th className="px-6 py-3 text-left">Status</th>
+              <th className="px-6 py-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            {daftarPesanan.map((order) => (
+              <tr key={order.id} className="border-b border-gray-200">
+                <td className="px-6 py-4">{order.id}</td>
+                <td className="px-6 py-4">
+                  <div className="space-y-2">
+                    {order.produk.map((item, i) => (
+                      <div key={i} className="border-b border-gray-200 pb-1">
+                        <div className="font-medium">{item.namaProduk}</div>
 
-                      {item.varian && item.varian.length > 0 && (
-                        <ul className="ml-4 text-sm text-gray-600 list-disc">
-                          {item.varian.map((v, j) => (
-                            <li key={j}>
-                              {v.namaVarian}: {v.nilai}
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                        {item.varian && item.varian.length > 0 && (
+                          <ul className="ml-4 text-sm text-gray-600 list-disc">
+                            {item.varian.map((v, j) => (
+                              <li key={j}>
+                                {v.namaVarian}: {v.nilai}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
 
-                      <div className="text-sm text-gray-700">
-                        Jumlah: {item.jumlah}
+                        <div className="text-sm text-gray-700">
+                          Jumlah: {item.jumlah}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          Harga Satuan: Rp{" "}
+                          {parseInt(item.hargaSatuan).toLocaleString("id-ID")}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">
-                        Harga Satuan: Rp{" "}
-                        {parseInt(item.hargaSatuan).toLocaleString("id-ID")}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </td>
+                    ))}
+                  </div>
+                </td>
 
               <td className="px-6 py-4">{order.jumlah}</td>
               <td className="px-6 py-4">
@@ -340,6 +368,12 @@ const PesananCard = () => {
           namaProduk={reviewProduk.namaProduk}
         />
       )}
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };

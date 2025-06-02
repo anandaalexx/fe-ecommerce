@@ -11,6 +11,7 @@ import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
 import ModalKonfirmasi from "../components/admin/modals/Konfirmasi";
 import ToastNotification from "../components/ToastNotification";
+import ToastNotification from "../components/ToastNotification";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
@@ -49,6 +50,15 @@ export default function CheckoutPage() {
       lowerPenjual.includes(targetKota) && lowerPembeli.includes(targetKota)
     );
   }
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   useEffect(() => {
     const itemsParam = searchParams.get("items");
@@ -237,6 +247,10 @@ export default function CheckoutPage() {
 
       if (!res.ok) {
         const errorText = await res.text();
+        showToast(
+          `Gagal melakukan checkout: Saldo anda tidak mencukupi`,
+          "error"
+        );
         console.error("Checkout gagal:", res.status, errorText);
         showToast("Gagal melakukan checkout", "error");
         return;

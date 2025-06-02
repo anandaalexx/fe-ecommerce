@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../Button";
 import Spinner from "../../Spinner";
 
-const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
+const TambahKategori = ({ isOpen, onClose, onSuccess, showToast }) => {
   const [nama, setNama] = useState("");
   const [loading, setLoading] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -13,7 +13,7 @@ const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
     e.preventDefault();
 
     if (!nama) {
-      alert("Nama kategori harus diisi.");
+      showToast("Nama kategori harus diisi.", "warning");
       return;
     }
 
@@ -28,14 +28,16 @@ const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
         body: JSON.stringify({
           nama,
         }),
+        credentials: "include",
       });
 
-      console.log(response);
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
 
       if (!response.ok) {
         const errorMessage = await response.text();
         console.log(errorMessage);
-        throw new Error("Gagal menambahkan kategori");
+        showToast("Gagal menambahkan kategori", "error");
       }
 
       setNama("");

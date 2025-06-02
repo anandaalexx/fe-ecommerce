@@ -105,8 +105,8 @@ const Pengguna = () => {
         onClose={() => setIsModalOpen(false)}
         onSuccess={() => {
           fetchUsers();
-          showToast("Pengguna berhasil ditambahkan", "success");
         }}
+        showToast={showToast}
       />
 
       <ModalEditPengguna
@@ -119,6 +119,7 @@ const Pengguna = () => {
             setIsEditModalOpen(false);
           }
         }}
+        showToast={showToast}
       />
 
       <ToastNotification
