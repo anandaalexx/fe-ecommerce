@@ -309,12 +309,12 @@ const AddProduct = () => {
             Harga
           </label>
           <input
-            type="number"
+            type="text"
             value={harga}
             onChange={(e) => setHarga(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-sm disabled:cursor-not-allowed"
             placeholder="Masukkan harga"
-            disabled={parsedVariants.length > 0}
+            disabled={Array.isArray(parsedVariants) && parsedVariants.length > 0}
           />
         </div>
 
@@ -323,12 +323,12 @@ const AddProduct = () => {
             Stok
           </label>
           <input
-            type="number"
+            type="text"
             value={stok}
             onChange={(e) => setStok(e.target.value)}
             className="w-full p-3 border border-gray-300 rounded-sm disabled:cursor-not-allowed"
             placeholder="Masukkan stok"
-            disabled={parsedVariants.length > 0}
+            disabled={Array.isArray(parsedVariants) && parsedVariants.length > 0}
           />
         </div>
       </div>

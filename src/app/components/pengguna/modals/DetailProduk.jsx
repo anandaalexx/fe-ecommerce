@@ -67,7 +67,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   };
 
   return (
-    <Dialog as={Fragment} open={isOpen} onClose={onClose}>
+    <Dialog as="div" open={isOpen} onClose={onClose}>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
         <Dialog.Panel className="bg-white max-w-2xl w-full rounded-lg shadow-xl">
           <div className="p-6 max-h-[90vh] overflow-y-auto">

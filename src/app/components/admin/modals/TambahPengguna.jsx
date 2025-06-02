@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../Button";
+import ToastNotification from "../../ToastNotification";
 
 const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
   const [nama, setNama] = useState("");

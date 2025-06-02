@@ -42,10 +42,10 @@ const Dashboard = () => {
     },
     {
       title: "Jumlah Pesanan",
-      value: 20,
+      value: jumlahPesanan,
       icon: <ChartBarStacked className="w-6 h-6 text-white" />,
       bg: "from-red-400 to-red-600",
-      targetPath: "/pengguna/pesanan",
+      targetPath: "/pengguna/list-penjualan",
     },
   ];
 

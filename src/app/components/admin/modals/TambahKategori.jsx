@@ -50,6 +50,7 @@ const TambahKategori = ({ isOpen, onClose, onSuccess }) => {
         throw new Error("Gagal menambahkan kategori");
       }
 
+
       setNama("");
       onClose();
       onSuccess();
