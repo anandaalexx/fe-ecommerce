@@ -15,22 +15,30 @@ const Dashboard = () => {
   const [jumlahPesanan, setJumlahPesanan] = useState(0);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const resProducts = await fetch(`${apiUrl}/product/`, {
-          credentials: "include",
-        });
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Fetch produk
+      const resProducts = await fetch(`${apiUrl}/product/`, {
+        credentials: "include",
+      });
+      const products = await resProducts.json();
+      setJumlahBarang(products.length);
 
-        const products = await resProducts.json();
-        setJumlahBarang(products.length);
-      } catch (err) {
-        console.error("Gagal memuat data:", err);
-      }
-    };
+      // Fetch pesanan
+      const resPesanan = await fetch(`${apiUrl}/pesanan/`, {
+        credentials: "include",
+      });
+      const pesanan = await resPesanan.json();
+      setJumlahPesanan(pesanan.length);
 
-    fetchData();
-  }, []);
+    } catch (err) {
+      console.error("Gagal memuat data:", err);
+    }
+  };
+
+  fetchData();
+}, []);
 
   const stats = [
     {
