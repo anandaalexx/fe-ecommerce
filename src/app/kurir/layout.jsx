@@ -10,6 +10,7 @@ const KurirLayout = ({ children }) => {
   const [checked, setChecked] = useState(false);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   
+
   useEffect(() => {
     fetch(`${apiUrl}/me`, {
       method: "GET",
