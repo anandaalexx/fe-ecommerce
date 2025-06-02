@@ -20,6 +20,7 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [saldo, setSaldo] = useState(0);
   const router = useRouter();
   const [modalLogoutOpen, setModalLogoutOpen] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
@@ -79,6 +80,39 @@ export default function Navbar() {
     };
 
     getUser();
+  }, []);
+
+  const fetchSaldo = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/user/saldo`, {
+        method: "GET",
+        credentials: "include",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSaldo(data.saldo);
+      }
+    } catch (error) {
+      console.error("Gagal mengambil kategori:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchSaldo();
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const handleSaldoUpdate = () => {
+      fetchSaldo();
+    };
+
+    window.addEventListener('saldoUpdated', handleSaldoUpdate);
+
+    return () => {
+      window.removeEventListener('saldoUpdated', handleSaldoUpdate);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -255,7 +289,7 @@ export default function Navbar() {
         <div className="px-6 font-semibold flex items-center gap-2 text-lg cursor-pointer">
           <Wallet size={20} />
           <span>
-            {user ? `Rp ${Number(user.saldo).toLocaleString("id-ID")}` : "Rp 0"}
+            Rp {Number(saldo).toLocaleString("id-ID")}
           </span>
         </div>
       </div>

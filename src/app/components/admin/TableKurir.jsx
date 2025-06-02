@@ -38,12 +38,18 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
     return value.toString().toLowerCase();
   };
 
-  const sortedKurirs = [...kurirs].sort((a, b) => {
+  // Pastikan kurirs adalah array dan memiliki ID unik
+  const validKurirs = Array.isArray(kurirs) ? kurirs.filter(kurir => kurir && kurir.id) : [];
+
+  const sortedKurirs = [...validKurirs].sort((a, b) => {
     if (sortConfig.key) {
-      if (a[sortConfig.key] < b[sortConfig.key]) {
+      const aValue = a[sortConfig.key];
+      const bValue = b[sortConfig.key];
+      
+      if (aValue < bValue) {
         return sortConfig.direction === "asc" ? -1 : 1;
       }
-      if (a[sortConfig.key] > b[sortConfig.key]) {
+      if (aValue > bValue) {
         return sortConfig.direction === "asc" ? 1 : -1;
       }
     }
@@ -52,9 +58,10 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
 
   const filteredKurirs = sortedKurirs.filter((kurir) => {
     const searchMatch =
-      safeToString(kurir.nama).includes(search) ||
-      safeToString(kurir.kendaraan).includes(search) ||
-      safeToString(kurir.status).includes(search);
+      safeToString(kurir.nama || kurir.namaUser).includes(search) ||
+      safeToString(kurir.merkKendaraan).includes(search) ||
+      safeToString(kurir.nomorTelepon).includes(search) ||
+      safeToString(kurir.nomorPolisi).includes(search);
 
     const filterMatch = Object.entries(filters).every(([key, val]) => {
       if (!val) return true;
@@ -96,7 +103,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      const res = await fetch(`${apiUrl}/admin/kurirs/${kurirToDelete.id}`, {
+      const res = await fetch(`${apiUrl}/admin/couriers/${kurirToDelete.id}`, {
         method: "DELETE",
       });
       if (!res.ok) throw new Error("Gagal menghapus kurir");
@@ -110,6 +117,16 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
       showToast("Gagal menghapus kurir", "error");
     }
   };
+
+  // Definisi kolom dengan key unik
+  const columns = [
+    { key: "id", label: "ID" },
+    { key: "namaUser", label: "Nama Kurir" },
+    { key: "nomorTelepon", label: "Nomor Telepon" },
+    { key: "nomorPolisi", label: "Nomor Polisi" },
+    { key: "merkKendaraan", label: "Kendaraan" },
+    { key: "warnaKendaraan", label: "Warna Kendaraan" },
+  ];
 
   return (
     <>
@@ -134,16 +151,9 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
           <table className="min-w-full text-sm divide-y divide-gray-200">
             <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
               <tr>
-                {[
-                  { key: "id", label: "ID" },
-                  { key: "namaUser", label: "Nama Kurir" },
-                  { key: "nomorTelepon", label: "Nomor Telepon" },
-                  { key: "nomorPolisi", label: "Nomor Polisi" },
-                  { key: "merkKendaraan", label: "Kendaraan" },
-                  { key: "warnaKendaraan", label: "Warna Kendaraan" },
-                ].map((col) => (
+                {columns.map((col) => (
                   <th
-                    key={col.key}
+                    key={`header-${col.key}`}
                     className="px-6 py-3 text-left hover:bg-gray-200 cursor-pointer"
                     onClick={() => requestSort(col.key)}
                   >
@@ -165,13 +175,13 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
               {paginatedKurirs.map((kurir) => (
-                <tr key={kurir.id}>
+                <tr key={`row-${kurir.id}`}>
                   <td className="px-6 py-4">{kurir.id}</td>
-                  <td className="px-6 py-4">{kurir.namaUser}</td>
-                  <td className="px-6 py-4">{kurir.nomorTelepon}</td>
-                  <td className="px-6 py-4">{kurir.nomorPolisi}</td>
-                  <td className="px-6 py-4">{kurir.merkKendaraan}</td>
-                  <td className="px-6 py-4">{kurir.warnaKendaraan}</td>
+                  <td className="px-6 py-4">{kurir.namaUser || kurir.nama || '-'}</td>
+                  <td className="px-6 py-4">{kurir.nomorTelepon || '-'}</td>
+                  <td className="px-6 py-4">{kurir.nomorPolisi || '-'}</td>
+                  <td className="px-6 py-4">{kurir.merkKendaraan || '-'}</td>
+                  <td className="px-6 py-4">{kurir.warnaKendaraan || '-'}</td>
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={(e) => handleEllipsisClick(e, kurir.id)}
@@ -182,6 +192,13 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
                   </td>
                 </tr>
               ))}
+              {paginatedKurirs.length === 0 && (
+                <tr>
+                  <td colSpan={columns.length + 1} className="px-6 py-8 text-center text-gray-500">
+                    Tidak ada data kurir
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -189,8 +206,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
 
       <div className="flex justify-between items-center p-3 text-sm">
         <div>
-          Menampilkan {paginatedKurirs.length} dari {filteredKurirs.length}{" "}
-          kurir
+          Menampilkan {paginatedKurirs.length} dari {filteredKurirs.length} kurir
         </div>
         <div className="space-x-2">
           <button
@@ -221,7 +237,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
         >
           <button
             onClick={() => {
-              const kurir = kurirs.find((k) => k.id === openDropdownId);
+              const kurir = validKurirs.find((k) => k.id === openDropdownId);
               if (kurir) onEdit(kurir);
               setOpenDropdownId(null);
             }}
@@ -231,7 +247,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
           </button>
           <button
             onClick={() => {
-              const kurir = kurirs.find((k) => k.id === openDropdownId);
+              const kurir = validKurirs.find((k) => k.id === openDropdownId);
               if (kurir) handleDeleteClick(kurir);
             }}
             className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
@@ -246,7 +262,7 @@ const TableKurir = ({ kurirs, setKurirs, onEdit, showToast }) => {
         onClose={() => setIsConfirmOpen(false)}
         onConfirm={handleConfirmDelete}
         title="Konfirmasi Hapus"
-        message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.nama}"?`}
+        message={`Apakah Anda yakin ingin menghapus kurir "${kurirToDelete?.namaUser || kurirToDelete?.nama}"?`}
         confirmText="Hapus"
         confirmColor="red"
       />

@@ -112,16 +112,23 @@ const TableProduk = ({ produkList, setProdukList }) => {
 
   const handleConfirmDelete = async () => {
     try {
-      const res = await fetch(`${apiUrl}/produk/${produkToDelete.id}`, {
+      const response = await fetch(`${apiUrl}/product/delete/${produkToDelete.id}`, {
         method: "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
-      if (!res.ok) throw new Error("Gagal menghapus produk");
+      
+      if (!response.ok) throw new Error("Gagal menghapus produk");
+
+      const result = await response.json();
 
       setProdukList((prev) => prev.filter((p) => p.id !== produkToDelete.id));
-      showToast("Produk berhasil dihapus", "success");
+      showToast(result.message || "Produk berhasil dihapus", "success");
     } catch (err) {
       console.error(err);
-      showToast("Gagal menghapus produk", "error");
+      showToast(err.message || "Gagal menghapus produk", "error");
     } finally {
       setIsConfirmOpen(false);
       setProdukToDelete(null);

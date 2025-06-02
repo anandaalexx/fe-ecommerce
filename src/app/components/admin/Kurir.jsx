@@ -12,6 +12,7 @@ const Kurir = () => {
   const [selectedKurir, setSelectedKurir] = useState(null);
   const [kurirs, setKurirs] = useState([]);
   const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -26,39 +27,53 @@ const Kurir = () => {
   const fetchUsers = async () => {
     try {
       const res = await fetch(`${apiUrl}/admin/users`);
+      if (!res.ok) {
+        throw new Error("Gagal mengambil data user");
+      }
       const data = await res.json();
-      setUsers(data);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Gagal mengambil data user:", err);
+      showToast("Gagal mengambil data user", "error");
+      setUsers([]);
     }
   };
 
   const fetchKurir = async () => {
     try {
       const res = await fetch(`${apiUrl}/admin/couriers`);
+      if (!res.ok) {
+        throw new Error("Gagal mengambil data kurir");
+      }
       const data = await res.json();
-      setKurirs(data);
+      setKurirs(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Gagal mengambil data kurir:", err);
+      showToast("Gagal mengambil data kurir", "error");
+      setKurirs([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchUsers();
-    fetchKurir();
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([fetchUsers(), fetchKurir()]);
+    };
+    
+    loadData();
   }, []);
 
-  useEffect(() => {
-    console.log("Data kurir setelah enrich:", enrichKurirs);
-  }, [kurirs, users]);
-
   const enrichKurirs = useMemo(() => {
+    if (!Array.isArray(kurirs) || !Array.isArray(users)) return [];
+    
     return kurirs.map((kurir) => {
       const user = users.find((u) => String(u.id) === String(kurir.idUser));
       return {
         ...kurir,
-        idUser: user?.id || "-",
-        namaUser: user?.nama || "-",
+        idUser: user?.id || kurir.idUser || "-",
+        namaUser: user?.nama || kurir.nama || "-",
       };
     });
   }, [kurirs, users]);
@@ -134,6 +149,21 @@ const Kurir = () => {
     }
   };
 
+  const handleSuccessAdd = async () => {
+    await Promise.all([fetchUsers(), fetchKurir()]);
+    showToast("Kurir berhasil ditambahkan", "success");
+  };
+
+  if (loading) {
+    return (
+      <div className="p-6">
+        <div className="flex justify-center items-center h-64">
+          <div className="text-gray-500">Memuat data...</div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-end">
@@ -157,11 +187,8 @@ const Kurir = () => {
       <TambahKurir
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onSuccess={async () => {
-          await fetchUsers();
-          await fetchKurir();
-          showToast("Kurir berhasil ditambahkan", "success");
-        }}
+        onSuccess={handleSuccessAdd}
+        showToast={showToast}
       />
 
       <EditKurir
@@ -174,6 +201,7 @@ const Kurir = () => {
             setIsEditModalOpen(false);
           }
         }}
+        showToast={showToast}
       />
 
       <ToastNotification
