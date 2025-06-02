@@ -873,7 +873,7 @@ export default function CheckoutPage() {
         onClose={() => setModalOpen(false)}
         onConfirm={handleCheckout}
         title="Konfirmasi Pembayaran"
-        message={`Apakah Anda yakin ingin membayar sekarang? Saldo Anda akan terpotong sebesar Rp ${preCheckoutInfo?.totalHargaAkhir?.toLocaleString()}!`}
+        message={`Apakah Anda yakin ingin membayar sekarang? Saldo Anda akan terpotong sebesar Rp ${totalHargaAkhir?.toLocaleString()}!`}
         confirmText="Bayar"
         confirmColor="yellow"
       />

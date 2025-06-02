@@ -62,7 +62,7 @@ const menuByRole = {
     },
     {
       label: "Pengiriman",
-      path: "/courier/pengiriman",
+      path: "/kurir/list-barang",
       icon: <Send size={20} />,
     },
     {
