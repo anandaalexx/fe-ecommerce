@@ -25,13 +25,6 @@ const Dashboard = () => {
       const products = await resProducts.json();
       setJumlahBarang(products.length);
 
-      // Fetch pesanan
-      const resPesanan = await fetch(`${apiUrl}/pesanan/`, {
-        credentials: "include",
-      });
-      const pesanan = await resPesanan.json();
-      setJumlahPesanan(pesanan.length);
-
     } catch (err) {
       console.error("Gagal memuat data:", err);
     }

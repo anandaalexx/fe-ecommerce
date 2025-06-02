@@ -3,11 +3,21 @@ import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import TableKategori from "./TableKategori";
 import TambahKategori from "./modals/TambahKategori";
+import EditKategori from "./modals/EditKategori";
 
 const Kategori = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState([]);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const handleEdit = (kategori) => {
+    if (!kategori) return; 
+    setSelectedCategory(kategori);
+    setEditModalOpen(true);
+  };
 
   const fetchCategories = async () => {
     try {
@@ -38,7 +48,18 @@ const Kategori = () => {
         </button>
       </div>
 
-      <TableKategori categories={categories} setCategories={setCategories} />
+      <EditKategori
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setSelectedCategory(null); // reset selectedCategory saat modal ditutup
+        }}
+        kategori={selectedCategory}
+        onSuccess={fetchCategories} 
+      />
+
+
+      <TableKategori categories={categories} setCategories={setCategories} onEdit={handleEdit} />
 
       <TambahKategori
         isOpen={isModalOpen}
