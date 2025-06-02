@@ -19,9 +19,19 @@ const Barang = () => {
         if (!res.ok) throw new Error("Gagal mengambil data produk");
 
         const data = await res.json();
+        console.log("Data produk dari API:", data);
 
         if (Array.isArray(data)) {
-          setProdukList(data);
+          // Normalisasi data kategori
+          const normalizedData = data.map((produk) => ({
+            ...produk,
+            kategori:
+              typeof produk.kategori === "object"
+                ? produk.kategori?.nama || "Tidak ada kategori"
+                : produk.kategori || "Tidak ada kategori",
+          }));
+
+          setProdukList(normalizedData);
         } else {
           throw new Error("Format data tidak valid");
         }

@@ -151,6 +151,7 @@ const Kurir = () => {
         kurirs={enrichKurirs}
         setKurirs={setKurirs}
         onEdit={handleEditKurir}
+        showToast={showToast}
       />
 
       <TambahKurir
@@ -159,8 +160,8 @@ const Kurir = () => {
         onSuccess={async () => {
           await fetchUsers();
           await fetchKurir();
-          showToast("Kurir berhasil ditambahkan", "success");
         }}
+        showToast={showToast}
       />
 
       <EditKurir
@@ -173,6 +174,7 @@ const Kurir = () => {
             setIsEditModalOpen(false);
           }
         }}
+        showToast={showToast}
       />
 
       <ToastNotification

@@ -182,7 +182,7 @@ const TableKategori = ({ categories, setCategories, onEdit, showToast }) => {
               if (cat) onEdit(cat);
               setOpenDropdownId(null);
             }}
-            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm"
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer"
           >
             <FilePenLine size={16} /> Edit
           </button>
