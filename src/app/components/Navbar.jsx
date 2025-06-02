@@ -20,6 +20,10 @@ export default function Navbar() {
   const [user, setUser] = useState(null);
   const [showDropdown, setShowDropdown] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const router = useRouter();
   const [modalLogoutOpen, setModalLogoutOpen] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
@@ -81,7 +85,60 @@ export default function Navbar() {
     getUser();
   }, []);
 
-  const handleLogout = async () => {
+  // Fungsi untuk fetch dan filter produk berdasarkan searchQuery
+  const handleSearch = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`${apiUrl}/product`, {
+        method: "GET",
+        credentials: "include",
+      });
+      const data = await res.json();
+      const filtered = data.filter((p) =>
+        p.nama.toLowerCase().includes(query.toLowerCase())
+      );
+      setSearchResults(filtered);
+    } catch (error) {
+      console.error("Gagal fetch produk:", error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onChangeSearch = (e) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.length >= 2) {
+      handleSearch(value);
+      setShowResults(true);
+    } else {
+      setShowResults(false);
+      setSearchResults([]);
+    }
+  };
+
+  const onSelectProduct = (keyword) => {
+  setShowResults(false);
+  // setSearchQuery("");
+  router.push(`/home/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+};
+
+const onKeyDownSearch = (e) => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    setShowResults(false);
+    if (searchQuery.trim().length >= 2) {
+      router.push(`/home/search?keyword=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  }
+};
+
+const handleLogout = async () => {
     try {
       await fetch(`${apiUrl}/logout`, {
         method: "POST",
@@ -119,10 +176,36 @@ export default function Navbar() {
         <div className="relative flex-1 mx-8 max-w-lg group transition-all duration-300">
           <input
             type="text"
+            value={searchQuery}
+            onChange={onChangeSearch}
+            onFocus={() => searchResults.length > 0 && setShowResults(true)}
+            onBlur={() => setTimeout(() => setShowResults(false), 150)} // kasih delay supaya klik hasil bisa kebaca dulu
             placeholder="Cari produk..."
             className="w-full pl-10 pr-4 py-2 outline-none ring-1 ring-gray-300 focus:ring-[#EDCF5D] focus:ring-opacity-50 rounded-md bg-gray-100 text-gray-700"
+            onKeyDown={onKeyDownSearch}
           />
           <Search className="absolute left-3 top-2.5 text-gray-400" size={20} />
+
+          {/* Dropdown hasil search */}
+          {showResults && (
+            <div className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-md max-h-60 overflow-y-auto shadow-lg z-50">
+              {loading ? (
+                <p className="p-3 text-center text-gray-500">Memuat...</p>
+              ) : searchResults.length === 0 ? (
+                <p className="p-3 text-center text-gray-500">Tidak ada hasil</p>
+              ) : (
+              searchResults.map((prod) => (
+                <div
+                  key={prod.id}
+                  onMouseDown={() => onSelectProduct(prod.nama)}
+                  className="cursor-pointer px-4 py-2 hover:bg-[#EDCF5D] hover:text-black"
+                >
+                  {prod.nama}
+                </div>
+              ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Ikon dan Profil */}
@@ -259,6 +342,7 @@ export default function Navbar() {
           </span>
         </div>
       </div>
+
       <ModalKonfirmasi
         isOpen={modalLogoutOpen}
         onClose={() => setModalLogoutOpen(false)}

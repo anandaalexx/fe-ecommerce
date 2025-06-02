@@ -1,25 +1,42 @@
-"use client";
+'use client';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import DashboardLayout from "../components/DashboardLayout";
 
+const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 const KurirLayout = ({ children }) => {
   const router = useRouter();
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const token = Cookies.get("token");
-    const role = Cookies.get("role");
-
-    if (!token || role !== "3") {
-      router.replace("/");
-    } else {
-      setIsAuthorized(true);
-    }
-
-    setChecked(true);
+    fetch(`${apiUrl}/me`, {
+      method: "GET",
+      credentials: "include",
+    })
+      .then((res) => {
+        console.log("Status:", res.status);
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then((data) => {
+        console.log("User data:", data);
+        setUser(data);
+        setChecked(true);
+        if (data.roleId === 3) {
+          setIsAuthorized(true);
+        } else {
+          router.back();
+        }
+      })
+      .catch((err) => {
+        console.error("Gagal ambil data user:", err);
+        setChecked(true);
+        router.push("/login");
+      });
   }, []);
 
   if (!checked) {
@@ -27,7 +44,7 @@ const KurirLayout = ({ children }) => {
   }
 
   return isAuthorized ? (
-    <DashboardLayout role="kurir" username="Mansur">
+    <DashboardLayout role="kurir" username={user?.email || "Kurir"}>
       {children}
     </DashboardLayout>
   ) : null;
