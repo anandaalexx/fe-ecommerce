@@ -113,12 +113,11 @@ export default function ProductDetailPage() {
 
       if (response.ok) {
         showToast("Produk berhasil ditambahkan ke keranjang", "success");
+      } else {
+        showToast(data.message || "Gagal menambahkan produk", "error");
       }
     } catch (err) {
-      showPopup(
-        "Gagal menambahkan ke keranjang. Varian belum dipilih.",
-        "error"
-      );
+      showToast(err.message || "Terjadi kesalahan saat menambahkan ke keranjang", "error");
     }
   };
 
