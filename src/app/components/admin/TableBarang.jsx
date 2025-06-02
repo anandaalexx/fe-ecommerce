@@ -4,7 +4,7 @@ import { Eye, Trash2, Ellipsis, ArrowUpDown } from "lucide-react";
 import ModalKonfirmasi from "../admin/modals/Konfirmasi";
 import ModalDetailProduk from "@/app/components/pengguna/modals/DetailProduk";
 
-const TableProduk = ({ produkList, setProdukList, showToast }) => {
+const TableProduk = ({ produkList, setProdukList }) => {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
