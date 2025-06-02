@@ -9,15 +9,14 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     options: [],
   });
   const [variantInput, setVariantInput] = useState("");
+  const [variantOptions, setVariantOptions] = useState([]);
   const [isAddingOptions, setIsAddingOptions] = useState(false);
   const [combinations, setCombinations] = useState([]);
   const [showCombinations, setShowCombinations] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [pendingUploads, setPendingUploads] = useState([]);
 
-
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
   // Sync initialVariants on modal open
   useEffect(() => {
@@ -115,16 +114,33 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
 
   // Tambah opsi baru ke currentVariant
   const handleAddOption = () => {
-    if (variantInput.trim() !== "") {
+    const trimmed = variantInput.trim();
+
+    if (
+      trimmed &&
+      !variantOptions.includes(trimmed) &&
+      !currentVariant.options.some((opt) => opt.nama === trimmed)
+    ) {
+      setVariantOptions([...variantOptions, trimmed]);
+
       setCurrentVariant({
         ...currentVariant,
-        options: [
-          ...currentVariant.options,
-          { nama: variantInput.trim(), gambar: null },
-        ],
+        options: [...currentVariant.options, { nama: trimmed, gambar: null }],
       });
+
       setVariantInput("");
     }
+
+    // if (variantInput.trim() !== "") {
+    //   setCurrentVariant({
+    //     ...currentVariant,
+    //     options: [
+    //       ...currentVariant.options,
+    //       { nama: variantInput.trim(), gambar: null },
+    //     ],
+    //   });
+    //   setVariantInput("");
+    // }
   };
 
   // Hapus opsi di currentVariant
@@ -133,6 +149,7 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
       ...currentVariant,
       options: currentVariant.options.filter((_, i) => i !== index),
     });
+    setVariantOptions(variantOptions.filter((_, i) => i !== index));
   };
 
   // Selesai tambah varian, simpan currentVariant ke variants
@@ -278,7 +295,7 @@ return (
                 Tambahkan Opsi untuk Varian:{" "}
                 <strong>{currentVariant.nama}</strong>
               </label>
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-2"> 
                 <input
                   type="text"
                   value={variantInput}
@@ -298,6 +315,23 @@ return (
                 >
                   Tambah
                 </button>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {variantOptions.map((option, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-200 text-sm px-3 py-1 rounded-full flex items-center space-x-2"
+                  >
+                    <span>{option}</span>
+                    <button
+                      onClick={() => handleRemoveOption(index)}
+                      className="text-red-500 hover:text-red-700 font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
               </div>
               {/* <div className="flex flex-col gap-2">
                 {currentVariant.options.map((option, index) => (

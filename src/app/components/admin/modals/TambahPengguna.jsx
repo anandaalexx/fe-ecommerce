@@ -5,6 +5,7 @@ import Button from "../../Button";
 
 const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
   const [nama, setNama] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [alamat, setAlamat] = useState("");
   const [roleId, setRoleId] = useState(1);
@@ -33,12 +34,10 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
     e.preventDefault();
     const saldoNumber = saldo === "" ? 0 : parseFloat(saldo);
 
-    if (!nama || !password) {
-      showToast("Nama dan password harus diisi.", "warning");
+    if (!nama || !email || !password) {
+      showToast("Nama, email, dan password harus diisi.", "warning");
       return;
     }
-
-    console.log([nama, password, alamat, roleId, saldo]);
 
     try {
       const response = await fetch(`${apiUrl}/admin/users`, {
@@ -48,6 +47,7 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
         },
         body: JSON.stringify({
           nama,
+          email,
           password,
           alamat,
           roleId,
@@ -64,10 +64,11 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
         throw new Error("Gagal menambahkan pengguna");
       }
 
-      showToast("Berhasil menambahkan pengguna", "error");
+      showToast("Berhasil menambahkan pengguna", "success");
 
       // Reset form & tutup modal
       setNama("");
+      setEmail("");
       setPassword("");
       setAlamat("");
       setRoleId(1);
@@ -111,6 +112,15 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
                   type="text"
                   value={nama}
                   onChange={(e) => setNama(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 text-sm font-medium">Email</label>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>

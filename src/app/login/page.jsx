@@ -63,7 +63,7 @@ export default function LoginPage() {
             break;
         }
       } else {
-        setErrorMessage("Email atau password salah!");
+        setErrorMessage(data?.error || "Email atau password salah!");
       }
     } catch (error) {
       console.error("Login error:", error);
