@@ -2,73 +2,85 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../Button";
-import ToastNotification from "../../ToastNotification";
 
-const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
-  const [nama, setNama] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [nomorTelepon, setNomorTelepon] = useState("");
-  const [nomorPolisi, setNomorPolisi] = useState("");
-  const [merkKendaraan, setMerkKendaraan] = useState("");
-  const [warnaKendaraan, setWarnaKendaraan] = useState("");
+const TambahKurir = ({ isOpen, onClose, onSuccess, showToast }) => {
+  const [formData, setFormData] = useState({
+    nama: "",
+    email: "",
+    password: "",
+    nomorTelepon: "",
+    nomorPolisi: "",
+    merkKendaraan: "",
+    warnaKendaraan: "",
+  });
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nama || !email || !password) {
+    if (!formData.nama || !formData.email || !formData.password) {
       showToast("Nama, email, dan password harus diisi.", "warning");
       return;
     }
 
+    const requestBody = {
+      userData: {
+        nama: formData.nama,
+        email: formData.email,
+        password: formData.password,
+        alamat: "", // Add default value or include in form
+        latitude: null,
+        longitude: null,
+      },
+      kurirData: {
+        nomorTelepon: formData.nomorTelepon,
+        nomorPolisi: formData.nomorPolisi,
+        merkKendaraan: formData.merkKendaraan,
+        warnaKendaraan: formData.warnaKendaraan,
+      },
+    };
+
     try {
       const response = await fetch(`${apiUrl}/admin/couriers`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          nama,
-          email,
-          password,
-          nomorTelepon,
-          nomorPolisi,
-          merkKendaraan,
-          warnaKendaraan,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
-      console.log(response);
-
       if (!response.ok) {
-        const errorMessage = await response.text();
-        console.error("Error message:", errorMessage);
-        throw new Error("Gagal menambahkan pengguna");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Gagal menambahkan kurir");
       }
 
-      setNama("");
-      setEmail("");
-      setPassword("");
-      setNomorTelepon("");
-      setNomorPolisi("");
-      setMerkKendaraan("");
-      setWarnaKendaraan("");
-      onClose();
+      // Reset form
+      setFormData({
+        nama: "",
+        email: "",
+        password: "",
+        nomorTelepon: "",
+        nomorPolisi: "",
+        merkKendaraan: "",
+        warnaKendaraan: "",
+      });
+
+      showToast("Kurir berhasil ditambahkan!", "success");
       onSuccess();
+      onClose();
     } catch (err) {
-      console.error(err);
+      console.error("Error:", err);
+      showToast(
+        err.message || "Terjadi kesalahan saat menambahkan kurir",
+        "error"
+      );
     }
   };
 
@@ -102,8 +114,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 <label className="block mb-1 text-sm font-medium">Nama</label>
                 <input
                   type="text"
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -111,8 +124,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 <label className="block mb-1 text-sm font-medium">Email</label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -122,8 +136,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -133,8 +148,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={nomorTelepon}
-                  onChange={(e) => setNomorTelepon(e.target.value)}
+                  name="nomorTelepon"
+                  value={formData.nomorTelepon}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -144,8 +160,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={nomorPolisi}
-                  onChange={(e) => setNomorPolisi(e.target.value)}
+                  name="nomorPolisi"
+                  value={formData.nomorPolisi}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -155,8 +172,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={merkKendaraan}
-                  onChange={(e) => setMerkKendaraan(e.target.value)}
+                  name="merkKendaraan"
+                  value={formData.merkKendaraan}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -166,8 +184,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={warnaKendaraan}
-                  onChange={(e) => setWarnaKendaraan(e.target.value)}
+                  name="warnaKendaraan"
+                  value={formData.warnaKendaraan}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -178,12 +197,6 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
           </motion.div>
         </motion.div>
       )}
-      <ToastNotification
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
     </AnimatePresence>
   );
 };
