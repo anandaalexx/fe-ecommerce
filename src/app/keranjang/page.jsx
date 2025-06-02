@@ -4,6 +4,7 @@ import Navbar from "../components/Navbar";
 import Button from "../components/Button";
 import Footer from "../components/Footer";
 import KeranjangList from "../components/KeranjangList";
+import ToastNotification from "../components/ToastNotification";
 
 const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -14,6 +15,16 @@ const KeranjangPage = () => {
     tokoIdx: null,
     produkIdx: null,
   });
+
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchKeranjang = async () => {
     const res = await fetch(`${apiUrl}/cart/view`, {
@@ -102,7 +113,7 @@ const KeranjangPage = () => {
       setGroupedProducts(updated);
     } catch (error) {
       console.error(error);
-      alert("Gagal update kuantitas");
+      showToast("Gagal update kuantitas", "error");
     }
   };
 
@@ -132,7 +143,7 @@ const KeranjangPage = () => {
       setPendingDelete({ tokoIdx: null, produkIdx: null });
     } catch (error) {
       console.error(error);
-      alert("Gagal hapus produk");
+      showToast("Gagal hapus produk", "error");
     }
   };
 
@@ -157,7 +168,7 @@ const KeranjangPage = () => {
       .map((item) => item.idDetailKeranjang);
 
     if (selectedDetailIds.length === 0) {
-      alert("Pilih minimal 1 produk untuk checkout.");
+      showToast("Pilih minimal 1 produk untuk checkout.", "warning");
       return;
     }
 
@@ -239,6 +250,12 @@ const KeranjangPage = () => {
         </div>
       )}
       <Footer />
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
     </div>
   );
 };

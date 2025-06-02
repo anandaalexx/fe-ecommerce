@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
 import ModalKonfirmasi from "../components/admin/modals/Konfirmasi";
+import ToastNotification from "../components/ToastNotification";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
@@ -29,14 +30,18 @@ export default function CheckoutPage() {
   const [selectedKurir, setSelectedKurir] = useState({});
   const [finalCheckoutData, setFinalCheckoutData] = useState([]);
   const [alamatPembeli, setAlamatPembeli] = useState([]);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   function isSameKota(alamatPenjual, alamatBuyer, targetKota = "balikpapan") {
-    console.log(
-      "alamatPenjual:",
-      alamatPenjual,
-      "alamatPembeli:",
-      alamatBuyer
-    );
+    console.log("alamatPenjual:", alamatPenjual, "alamatPembeli:", alamatBuyer);
     if (!alamatPenjual || !alamatPembeli) return false;
     const lowerPenjual = alamatPenjual.toLowerCase();
     const lowerPembeli = alamatPembeli.toLowerCase();
@@ -233,7 +238,7 @@ export default function CheckoutPage() {
       if (!res.ok) {
         const errorText = await res.text();
         console.error("Checkout gagal:", res.status, errorText);
-        alert("Gagal melakukan checkout");
+        showToast("Gagal melakukan checkout", "error");
         return;
       }
 
@@ -241,7 +246,7 @@ export default function CheckoutPage() {
       router.push("/pesanan");
     } catch (error) {
       console.error("Terjadi kesalahan saat checkout:", error);
-      alert("Terjadi kesalahan saat checkout");
+      showToast("Terjadi kesalahan saat checkout", "error");
     }
   };
 
@@ -357,7 +362,11 @@ export default function CheckoutPage() {
 
   const handleAutocompleteChange = async (e) => {
     const text = e.target.value;
-    setForm((prev) => ({ ...prev, autocomplete: text }));
+    setForm((prev) => ({
+      ...prev,
+      autocomplete: text,
+      jalan: text, // <-- tambahan penting ini
+    }));
 
     if (text.length < 3) {
       setSuggestions([]);
@@ -365,7 +374,6 @@ export default function CheckoutPage() {
     }
 
     try {
-      // Dapatkan koordinat kecamatan dan kabupaten
       const namaKecamatan = kecamatanList.find(
         (k) => String(k.kode_kecamatan) === String(form.kecamatan)
       )?.nama_kecamatan;
@@ -553,7 +561,7 @@ export default function CheckoutPage() {
       form.latitude === null ||
       form.longitude === null
     ) {
-      alert("Mohon lengkapi semua data!");
+      showToast("Mohon lengkapi semua data!", "warning");
       return;
     }
 
@@ -596,13 +604,13 @@ export default function CheckoutPage() {
       if (res.ok) {
         setAlamat(alamatBaru);
         setShowModal(false);
-        alert("Alamat berhasil diperbarui!");
+        showToast("Alamat berhasil diperbarui!", "success");
       } else {
         throw new Error("Gagal mengupdate alamat");
       }
     } catch (err) {
       console.error(err);
-      alert("Terjadi kesalahan saat menyimpan alamat");
+      showToast("Terjadi kesalahan saat menyimpan alamat", "error");
     }
   };
 
@@ -876,6 +884,12 @@ export default function CheckoutPage() {
         message={`Apakah Anda yakin ingin membayar sekarang? Saldo Anda akan terpotong sebesar Rp ${totalHargaAkhir?.toLocaleString()}!`}
         confirmText="Bayar"
         confirmColor="yellow"
+      />
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </>
   );

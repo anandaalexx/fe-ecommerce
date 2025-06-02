@@ -6,7 +6,47 @@ const PesananCard = () => {
   const [daftarPesanan, setDaftarPesanan] = useState([]);
   const [reviewProduk, setReviewProduk] = useState(null);
   const [reviewedProducts, setReviewedProducts] = useState(new Set());
+  const [modalReviewData, setModalReviewData] = useState(null);
+  // modalReviewData = { order, item }
+
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const handleKomplain = async (item) => {
+    try {
+      const fullId = item.id; // contoh: "TRX-12345"
+      if (!fullId) {
+        alert("ID transaksi tidak ditemukan.");
+        return;
+      }
+
+      const idTransaksiNumber = Number(fullId.match(/\d+/)[0]);
+
+      if (isNaN(idTransaksiNumber)) {
+        alert("Format ID transaksi tidak valid.");
+        return;
+      }
+
+      const res = await fetch(`${apiUrl}/pengiriman/complain`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idTransaksi: idTransaksiNumber,
+          statusTujuan: "dikomplain",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Gagal update status ke 'dikomplain'.");
+
+      await fetchPesanan();
+      alert("Status pesanan telah dikomplain.");
+    } catch (err) {
+      console.error("Gagal komplain pesanan:", err);
+      alert("Terjadi kesalahan saat mengirim komplain.");
+    }
+  };
 
   const handleSampai = async (item) => {
     try {
@@ -139,26 +179,18 @@ const PesananCard = () => {
     }
   };
 
-  const ubahStatusPesanan = (id, statusBaru) => {
-    const update = daftarPesanan.map((p) =>
-      p.id === id && p.status === "sampai di tujuan"
-        ? { ...p, status: statusBaru }
-        : p
-    );
-    setDaftarPesanan(update);
-  };
+  const handleOpenReview = (order, item) => {
+    setModalReviewData({ order, item });
+    console.log("Data produk untuk review:", item);
+    console.log("idUser:", item.idUser);
+    console.log("idProduk:", item.idProduk);
+    console.log("idDetailTransaksi:", item.idDetailTransaksi);
 
-  const handleOpenReview = (produk) => {
-    console.log("Data produk untuk review:", produk);
-    console.log("idUser:", produk.idUser);
-    console.log("idProduk:", produk.idProduk);
-    console.log("idDetailTransaksi:", produk.idDetailTransaksi);
-
-    if (!produk.idUser || !produk.idProduk || !produk.idDetailTransaksi) {
+    if (!item.idUser || !item.idProduk || !item.idDetailTransaksi) {
       console.error("Data tidak lengkap:", {
-        idUser: produk.idUser,
-        idProduk: produk.idProduk,
-        idDetailTransaksi: produk.idDetailTransaksi,
+        idUser: item.idUser,
+        idProduk: item.idProduk,
+        idDetailTransaksi: item.idDetailTransaksi,
       });
       alert(
         "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi."
@@ -167,10 +199,10 @@ const PesananCard = () => {
     }
 
     setReviewProduk({
-      idUser: produk.idUser,
-      idProduk: produk.idProduk,
-      idDetailTransaksi: produk.idDetailTransaksi,
-      namaProduk: produk.namaProduk,
+      idUser: item.idUser,
+      idProduk: item.idProduk,
+      idDetailTransaksi: item.idDetailTransaksi,
+      namaProduk: item.namaProduk,
     });
   };
 
@@ -270,7 +302,7 @@ const PesananCard = () => {
                     return (
                       <button
                         key={i}
-                        onClick={() => handleOpenReview(item)}
+                        onClick={() => handleOpenReview(order, item)}
                         disabled={!order.barangSesuai || alreadyReviewed}
                         className={`w-full inline-flex items-center justify-center gap-2 py-2 rounded font-medium transition duration-200 mt-1 ${
                           alreadyReviewed
@@ -286,6 +318,8 @@ const PesananCard = () => {
                       </button>
                     );
                   })}
+
+                {/* Tambahkan tombol komplain per order di sini */}
               </td>
             </tr>
           ))}
@@ -294,8 +328,12 @@ const PesananCard = () => {
       {reviewProduk && (
         <ReviewModal
           isOpen={true}
-          onClose={handleCloseReview}
+          onClose={() => {
+            setModalReviewData(null);
+            setReviewProduk(null);
+          }}
           onSuccess={handleReviewSuccess}
+          onConfirmKomplain={() => handleKomplain(modalReviewData.order)}
           idUser={reviewProduk.idUser}
           idProduk={reviewProduk.idProduk}
           idDetailTransaksi={reviewProduk.idDetailTransaksi}

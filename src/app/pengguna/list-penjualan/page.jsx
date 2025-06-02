@@ -23,6 +23,28 @@ const TableListPenjualan = () => {
   const [selectedOrderNo, setSelectedOrderNo] = useState(null);
   const [selectedIdPengiriman, setSelectedIdPengiriman] = useState(null);
   const [modalCetakOpen, setModalCetakOpen] = useState(false);
+  const [modalKomplainOpen, setModalKomplainOpen] = useState(false);
+  const [selectedKomplainId, setSelectedKomplainId] = useState(null);
+
+  const handleSetujuiKomplain = async (idPengiriman) => {
+    try {
+      const res = await fetch(
+        `${apiUrl}/pengiriman/complain/setujui/${idPengiriman}`,
+        {
+          method: "PATCH",
+          credentials: "include",
+        }
+      );
+
+      if (!res.ok) throw new Error("Gagal menyetujui komplain");
+
+      alert("Komplain telah disetujui.");
+      fetchData(); // Refresh data
+    } catch (err) {
+      console.error(err);
+      alert("Terjadi kesalahan saat menyetujui komplain.");
+    }
+  };
 
   const handleCetakLabel = async (orderNo, page) => {
     try {
@@ -247,6 +269,17 @@ const TableListPenjualan = () => {
                         Cetak Label
                       </button>
                     )}
+                    {status === "dikomplain" && (
+                      <button
+                        onClick={() => {
+                          setSelectedKomplainId(item.idPengiriman);
+                          setModalKomplainOpen(true);
+                        }}
+                        className="bg-red-500 hover:brightness-110 text-white text-sm px-3 py-1 rounded"
+                      >
+                        Setujui Komplain
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -261,6 +294,21 @@ const TableListPenjualan = () => {
           </table>
         </div>
       </div>
+
+      <ModalKonfirmasi
+        isOpen={modalKomplainOpen}
+        onClose={() => setModalKomplainOpen(false)}
+        onConfirm={() => {
+          if (selectedKomplainId) {
+            handleSetujuiKomplain(selectedKomplainId);
+            setModalKomplainOpen(false);
+          }
+        }}
+        title="Setujui Komplain"
+        message="Apakah Anda yakin ingin menyetujui permintaan komplain ini? Tindakan ini tidak dapat dibatalkan."
+        confirmText="Setujui"
+      />
+
       <ModalKonfirmasi
         isOpen={modalAksiOpen}
         onClose={() => setModalAksiOpen(false)}

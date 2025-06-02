@@ -194,7 +194,11 @@ export default function ProfilePage() {
 
   const handleAutocompleteChange = async (e) => {
     const text = e.target.value;
-    setForm((prev) => ({ ...prev, autocomplete: text }));
+    setForm((prev) => ({
+      ...prev,
+      autocomplete: text,
+      jalan: text, // <-- tambahan penting ini
+    }));
 
     if (text.length < 3) {
       setSuggestions([]);
@@ -202,7 +206,6 @@ export default function ProfilePage() {
     }
 
     try {
-      // Dapatkan koordinat kecamatan dan kabupaten
       const namaKecamatan = kecamatanList.find(
         (k) => String(k.kode_kecamatan) === String(form.kecamatan)
       )?.nama_kecamatan;
@@ -782,7 +785,10 @@ export default function ProfilePage() {
                 className="w-full border border-gray-300 rounded-sm px-3 py-2 mb-3"
               />
               <div className="flex justify-end space-x-2">
-                <Button onClick={() => setShowUpgradeModal(false)}>
+                <Button
+                  className="bg-gray-400"
+                  onClick={() => setShowUpgradeModal(false)}
+                >
                   Batal
                 </Button>
                 <Button onClick={handleUpgradeToSeller}>Upgrade</Button>
