@@ -8,7 +8,11 @@ const CardProduk = ({ product }) => {
       {/* Gambar Produk dengan Icon */}
       <div className="w-full h-52 bg-gray-500/10 rounded-lg relative p-4">
         <img
-          src={product.gambarUrls?.[0]?.url || "/no-pictures.png"}
+          src={
+            product.gambarUrls?.[0]?.url ||
+            product.varianProduk?.[0]?.gambarVarian?.[0]?.url ||
+            "/no-pictures.png"
+          }
           alt={product.nama}
           className="w-full h-40 object-contain transition-transform group-hover:scale-110"
         />
