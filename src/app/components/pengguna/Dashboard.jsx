@@ -22,8 +22,17 @@ const Dashboard = () => {
           credentials: "include",
         });
 
+        const resProdukMenunggu = await fetch(
+          `${apiUrl}/penjual/produk-status?status=${"menunggu_kurir"}`,
+          {
+            credentials: "include",
+          }
+        );
+
         const products = await resProducts.json();
         setJumlahBarang(products.length);
+        const ProdukMenunggu = await resProdukMenunggu.json();
+        setJumlahPesanan(ProdukMenunggu.length);
       } catch (err) {
         console.error("Gagal memuat data:", err);
       }
@@ -42,10 +51,10 @@ const Dashboard = () => {
     },
     {
       title: "Jumlah Pesanan",
-      value: 20,
+      value: jumlahPesanan,
       icon: <ChartBarStacked className="w-6 h-6 text-white" />,
       bg: "from-red-400 to-red-600",
-      targetPath: "/pengguna/pesanan",
+      targetPath: "/pengguna/list-penjualan",
     },
   ];
 

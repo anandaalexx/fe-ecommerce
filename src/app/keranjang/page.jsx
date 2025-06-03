@@ -15,15 +15,6 @@ const KeranjangPage = () => {
     tokoIdx: null,
     produkIdx: null,
   });
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-  };
 
   const [toast, setToast] = useState({
     show: false,

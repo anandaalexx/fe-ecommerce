@@ -11,7 +11,6 @@ import { includes } from "lodash";
 import { useSearchParams } from "next/navigation";
 import ModalKonfirmasi from "../components/admin/modals/Konfirmasi";
 import ToastNotification from "../components/ToastNotification";
-import ToastNotification from "../components/ToastNotification";
 
 // Import MapPicker secara dinamis hanya di sisi client
 const MapPicker = dynamic(() => import("../components/MapPicker"), {
@@ -31,15 +30,6 @@ export default function CheckoutPage() {
   const [selectedKurir, setSelectedKurir] = useState({});
   const [finalCheckoutData, setFinalCheckoutData] = useState([]);
   const [alamatPembeli, setAlamatPembeli] = useState([]);
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-  };
 
   function isSameKota(alamatPenjual, alamatBuyer, targetKota = "balikpapan") {
     console.log("alamatPenjual:", alamatPenjual, "alamatPembeli:", alamatBuyer);

@@ -292,88 +292,89 @@ const PesananCard = () => {
                   </div>
                 </td>
 
-              <td className="px-6 py-4">{order.jumlah}</td>
-              <td className="px-6 py-4">
-                Rp {order.total.toLocaleString("id-ID")}
-              </td>
-              <td className="px-6 py-4">
-                <span
-                  className={`px-3 py-1 rounded-full text-sm ${
-                    order.status === "sedang dikirim"
-                      ? "bg-yellow-200 text-yellow-800"
-                      : order.status === "diterima pembeli"
-                      ? "bg-green-300 text-green-900"
-                      : order.status === "sampai di tujuan"
-                      ? "bg-blue-200 text-blue-800"
-                      : "bg-gray-200 text-gray-800"
-                  }`}
-                >
-                  {order.status}
-                </span>
-              </td>
-              <td className="px-6 py-4 text-center space-y-2">
-                {order.status === "sampai di tujuan" && (
-                  <button
-                    onClick={() => handleSampai(order)}
-                    className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
+                <td className="px-6 py-4">{order.jumlah}</td>
+                <td className="px-6 py-4">
+                  Rp {order.total.toLocaleString("id-ID")}
+                </td>
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${
+                      order.status === "sedang dikirim"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : order.status === "diterima pembeli"
+                        ? "bg-green-300 text-green-900"
+                        : order.status === "sampai di tujuan"
+                        ? "bg-blue-200 text-blue-800"
+                        : "bg-gray-200 text-gray-800"
+                    }`}
                   >
-                    Diterima
-                  </button>
-                )}
+                    {order.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-center space-y-2">
+                  {order.status === "sampai di tujuan" && (
+                    <button
+                      onClick={() => handleSampai(order)}
+                      className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
+                    >
+                      Diterima
+                    </button>
+                  )}
 
-                {order.status === "diterima pembeli" &&
-                  order.produk.map((item, i) => {
-                    const alreadyReviewed = isProductReviewed(
-                      item.idDetailTransaksi
-                    );
+                  {order.status === "diterima pembeli" &&
+                    order.produk.map((item, i) => {
+                      const alreadyReviewed = isProductReviewed(
+                        item.idDetailTransaksi
+                      );
 
-                    return (
-                      <button
-                        key={i}
-                        onClick={() => handleOpenReview(order, item)}
-                        disabled={!order.barangSesuai || alreadyReviewed}
-                        className={`w-full inline-flex items-center justify-center gap-2 py-2 rounded font-medium transition duration-200 mt-1 ${
-                          alreadyReviewed
-                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                            : order.barangSesuai
-                            ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
-                            : "bg-gray-300 text-gray-600 cursor-not-allowed"
-                        }`}
-                      >
-                        {alreadyReviewed
-                          ? "Sudah Diulas"
-                          : `Beri Ulasan untuk ${item.namaProduk}`}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => handleOpenReview(order, item)}
+                          disabled={!order.barangSesuai || alreadyReviewed}
+                          className={`w-full inline-flex items-center justify-center gap-2 py-2 rounded font-medium transition duration-200 mt-1 ${
+                            alreadyReviewed
+                              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                              : order.barangSesuai
+                              ? "bg-[#EDCF5D] text-white hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a]"
+                              : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                          }`}
+                        >
+                          {alreadyReviewed
+                            ? "Sudah Diulas"
+                            : `Beri Ulasan untuk ${item.namaProduk}`}
+                        </button>
+                      );
+                    })}
 
-                {/* Tambahkan tombol komplain per order di sini */}
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {reviewProduk && (
-        <ReviewModal
-          isOpen={true}
-          onClose={() => {
-            setModalReviewData(null);
-            setReviewProduk(null);
-          }}
-          onSuccess={handleReviewSuccess}
-          onConfirmKomplain={() => handleKomplain(modalReviewData.order)}
-          idUser={reviewProduk.idUser}
-          idProduk={reviewProduk.idProduk}
-          idDetailTransaksi={reviewProduk.idDetailTransaksi}
-          namaProduk={reviewProduk.namaProduk}
+                  {/* Tambahkan tombol komplain per order di sini */}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {reviewProduk && (
+          <ReviewModal
+            isOpen={true}
+            onClose={() => {
+              setModalReviewData(null);
+              setReviewProduk(null);
+            }}
+            onSuccess={handleReviewSuccess}
+            onConfirmKomplain={() => handleKomplain(modalReviewData.order)}
+            idUser={reviewProduk.idUser}
+            idProduk={reviewProduk.idProduk}
+            idDetailTransaksi={reviewProduk.idDetailTransaksi}
+            namaProduk={reviewProduk.namaProduk}
+          />
+        )}
+        <ToastNotification
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
         />
-      )}
-      <ToastNotification
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
+      </div>
     </div>
   );
 };
