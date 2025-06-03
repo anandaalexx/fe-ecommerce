@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import Button from "../../Button";
+import ToastNotification from "../../../components/ToastNotification";
 
 const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
   const [form, setForm] = useState({
@@ -13,6 +14,15 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     roleId: 1,
   });
   const [roles, setRoles] = useState([]);
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   // Menyinkronkan data form dengan initialData ketika modal dibuka
@@ -64,7 +74,6 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
     e.preventDefault();
     try {
       const { id, nama, email, alamat, roleId, saldo } = form;
-
       const saldoNumber = saldo === "" ? 0 : parseFloat(saldo);
 
       const res = await fetch(`${apiUrl}/admin/users/${id}`, {
@@ -81,17 +90,34 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
         }),
       });
 
+      // Tangani error dari response
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Gagal mengupdate pengguna");
+        let errorMessage = "Gagal mengupdate pengguna";
+
+        try {
+          const errorData = await res.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (jsonError) {
+          const text = await res.text();
+          if (text.includes("<!DOCTYPE html")) {
+            errorMessage = "Terjadi kesalahan di server";
+          } else {
+            errorMessage = text || errorMessage;
+          }
+        }
+
+        throw new Error(errorMessage);
       }
 
+      // Jika sukses
       const updatedUser = await res.json();
+      showToast("Pengguna berhasil diperbarui!", "success");
       onSubmit(updatedUser);
       onClose();
+
     } catch (err) {
       console.error("Error saat mengupdate user:", err);
-      showToast(err.message, "error");
+      showToast(err.message || "Terjadi kesalahan saat menyimpan", "error");
     }
   };
 
@@ -186,6 +212,13 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
                 <Button type="submit">Simpan</Button>
               </div>
             </form>
+          {toast.show && (
+            <ToastNotification
+              type={toast.type}
+              message={toast.message}
+              onClose={() => setToast((prev) => ({ ...prev, show: false }))}
+            />
+          )}
           </motion.div>
         </motion.div>
       )}
