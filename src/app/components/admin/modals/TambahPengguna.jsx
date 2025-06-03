@@ -3,22 +3,14 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import Button from "../../Button";
 
-const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
+const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
   const [nama, setNama] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [alamat, setAlamat] = useState("");
   const [roleId, setRoleId] = useState(1);
-  const [saldo, setSaldo] = useState(0);
+  const [saldo, setSaldo] = useState("");
   const [roles, setRoles] = useState([]);
-  const [toast, setToast] = useState({
-    show: false,
-    message: "",
-    type: "success",
-  });
-
-  const showToast = (message, type = "success") => {
-    setToast({ show: true, message, type });
-  };
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -27,6 +19,7 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
     try {
       const res = await fetch(`${apiUrl}/admin/role`);
       const data = await res.json();
+      console.log("Data roles:", data);
       setRoles(data);
     } catch (err) {
       console.error("Gagal mengambil role:", err);
@@ -39,13 +32,12 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    const saldoNumber = saldo === "" ? 0 : parseFloat(saldo);
 
-    if (!nama || !password) {
-      showToast("Nama dan password harus diisi.", "warning");
+    if (!nama || !email || !password) {
+      showToast("Nama, email, dan password harus diisi.", "warning");
       return;
     }
-
-    console.log([nama, password, alamat, roleId, saldo]);
 
     try {
       const response = await fetch(`${apiUrl}/admin/users`, {
@@ -55,10 +47,11 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
         },
         body: JSON.stringify({
           nama,
+          email,
           password,
           alamat,
           roleId,
-          saldo: saldo || 0,
+          saldo: saldoNumber,
         }),
       });
 
@@ -71,12 +64,15 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
         throw new Error("Gagal menambahkan pengguna");
       }
 
+      showToast("Berhasil menambahkan pengguna", "success");
+
       // Reset form & tutup modal
       setNama("");
+      setEmail("");
       setPassword("");
       setAlamat("");
       setRoleId(1);
-      setSaldo();
+      setSaldo("");
       onClose();
       onSuccess();
     } catch (err) {
@@ -120,6 +116,15 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
                 />
               </div>
               <div>
+                <label className="block mb-1 text-sm font-medium">Email</label>
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
+                />
+              </div>
+              <div>
                 <label className="block mb-1 text-sm font-medium">
                   Password
                 </label>
@@ -147,15 +152,22 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
                   onChange={(e) => setRoleId(Number(e.target.value))}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D] capitalize"
                 >
-                  {roles.map((role) => (
-                    <option
-                      key={role.id}
-                      value={role.id}
-                      className="capitalize"
-                    >
-                      {role.namaRole}
-                    </option>
-                  ))}
+                  {roles.map((role) => {
+                    // Add validation for role.id
+                    if (!role.id) {
+                      console.error("Role with missing id:", role);
+                      return null; // Skip rendering this option
+                    }
+                    return (
+                      <option
+                        key={role.id}
+                        value={role.id}
+                        className="capitalize"
+                      >
+                        {role.namaRole}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
               <div>
@@ -163,7 +175,10 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
                 <input
                   type="number"
                   value={saldo}
-                  onChange={(e) => setSaldo(parseFloat(e.target.value) || 0)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setSaldo(value === "" ? "" : value);
+                  }}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />
               </div>
@@ -174,12 +189,6 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess }) => {
           </motion.div>
         </motion.div>
       )}
-      <ToastNotification
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
     </AnimatePresence>
   );
 };

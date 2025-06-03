@@ -3,11 +3,21 @@ import { useState, useEffect } from "react";
 import { PlusCircle } from "lucide-react";
 import TableKategori from "./TableKategori";
 import TambahKategori from "./modals/TambahKategori";
+import ToastNotification from "../ToastNotification";
 
 const Kategori = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "success",
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
 
   const fetchCategories = async () => {
     try {
@@ -44,6 +54,14 @@ const Kategori = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchCategories}
+        showToast={showToast}
+      />
+
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
       />
     </div>
   );

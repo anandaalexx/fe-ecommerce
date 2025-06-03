@@ -17,6 +17,7 @@ const AddProduct = () => {
   const [parsedVariants, setParsedVariants] = useState([]);
   const [variantCombinations, setVariantCombinations] = useState([]);
   const [pendingUploads, setPendingUploads] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [showVariantModal, setShowVariantModal] = useState(false);
 
@@ -34,7 +35,46 @@ const AddProduct = () => {
   };
 
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [preview, setPreview] = useState(null);
 
+  const handleImageChange = (e, index) => {
+    const files = e.target.files;
+    if (files && files[0]) {
+      const file = files[0];
+      
+      // Validasi file
+      if (!file.type.startsWith('image/')) {
+        showToast("Hanya file gambar yang diperbolehkan!", "warning");
+        e.target.value = '';
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        showToast("Ukuran file terlalu besar. Maksimal 5MB", "info");
+        e.target.value = '';
+        return;
+      }
+
+      // Buat preview dan update state
+      const preview = URL.createObjectURL(file);
+      const updatedImages = [...images];
+      updatedImages[index] = { preview, file };
+      setImages(updatedImages);
+    }
+  };
+  
+  // const handleImageChange = (e, index) => {
+  //   const files = e.target.files;
+  //   if (files && files[0]) {
+  //     const file = files[0];
+  //     const preview = URL.createObjectURL(file);
+  //     const updatedImages = [...images];
+  //     updatedImages[index] = { preview, file };
+  //     setImages(updatedImages);
+  //   }
+  // };
+  
   useEffect(() => {
     const fetchKategori = async () => {
       try {
@@ -56,19 +96,12 @@ const AddProduct = () => {
     fetchKategori();
   }, [apiUrl]);
 
-  const handleImageChange = (e, index) => {
-    const files = e.target.files;
-    if (files && files[0]) {
-      const file = files[0];
-      const preview = URL.createObjectURL(file);
-      const updatedImages = [...images];
-      updatedImages[index] = { preview, file };
-      setImages(updatedImages);
-    }
-  };
 
   const handleRemoveImage = (index) => {
     const updatedImages = [...images];
+    if (updatedImages[index].preview) {
+      URL.revokeObjectURL(updatedImages[index].preview);
+    }
     updatedImages[index] = { preview: null, file: null };
     setImages(updatedImages);
     if (inputRefs.current[index]) {
@@ -95,11 +128,13 @@ const AddProduct = () => {
 
   const handleSubmit = async () => {
 
+    if (isSubmitting) return; 
+    
     if (!namaProduk || !deskripsi || !kategori) {
       showToast("Nama produk, deskripsi, dan kategori wajib diisi!", "warning");
       return;
     }
-
+    
     // Validasi untuk produk tanpa varian
     if (parsedVariants.length === 0 && (!harga || !stok)) {
       showToast(
@@ -108,7 +143,7 @@ const AddProduct = () => {
       );
       return;
     }
-
+    
     // Validasi untuk produk dengan varian
     if (parsedVariants.length > 0) {
       const incompleteCombinations = variantCombinations.some(
@@ -123,14 +158,14 @@ const AddProduct = () => {
         return;
       }
     }
-
+    
     // Siapkan payload dasar
     const payload = {
       namaProduk,
       deskripsi,
       idKategori: parseInt(kategori),
     };
-
+        
     // Jika tidak ada varian, tambahkan harga dan stok langsung
     if (parsedVariants.length === 0) {
       payload.harga = parseInt(harga);
@@ -144,7 +179,7 @@ const AddProduct = () => {
 
       variantCombinations.forEach((combo, index) => {
       });
-
+      
       payload.produkVarian = variantCombinations.map((combo) => ({
         harga: parseInt(combo.harga),
         stok: parseInt(combo.stok),
@@ -154,6 +189,8 @@ const AddProduct = () => {
         }))
       }));
     }
+    
+    setIsSubmitting(true);
 
     try {
       // 1. Tambahkan produk terlebih dahulu
@@ -258,13 +295,19 @@ const AddProduct = () => {
         {[...images, ...pendingUploads.map((item) => ({
           preview: URL.createObjectURL(item.file),
           file: item.file,
-          label: `${item.variantNama}: ${item.optionNama}`,
+          label: `${item.name}`,
           isVariant: true,
         }))].map((image, index) => (
           <div
             key={index}
             className="w-24 h-24 border-2 border-dashed border-gray-300 rounded-md flex items-center justify-center relative bg-gray-100"
           >
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
             {image.preview ? (
               <>
                 <img
@@ -454,8 +497,8 @@ const AddProduct = () => {
 
       {/* Tombol Tambah Produk */}
       <div className="flex justify-center">
-        <Button onClick={handleSubmit} className="font-medium">
-          Tambah Produk
+        <Button onClick={handleSubmit} disabled={isSubmitting} className="font-medium">
+          {isSubmitting ? "Menyimpan..." : "Tambah Produk"}
         </Button>
       </div>
 

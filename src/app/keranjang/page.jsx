@@ -26,38 +26,58 @@ const KeranjangPage = () => {
   };
 
   const fetchKeranjang = async () => {
-    const res = await fetch(`${apiUrl}/cart/view`, {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      credentials: "include",
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch(`${apiUrl}/cart/view`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
 
-    const grouped = data.reduce((acc, item) => {
-      const toko = item.namaToko;
-      const existing = acc.find((group) => group.namaToko === toko);
-      const product = {
-        ...item,
-        isSelected: false,
-        kuantitas: item.jumlah || 1,
-      };
-
-      if (existing) {
-        existing.items.push(product);
-      } else {
-        acc.push({
-          namaToko: toko,
-          isSelected: false,
-          items: [product],
-        });
+      if (!res.ok) {
+        console.error("Gagal fetch keranjang:", res.status, res.statusText);
+        return;
       }
 
-      return acc;
-    }, []);
+      const json = await res.json();
+      // console.log("RESPON KERANJANG:", json);
 
-    setGroupedProducts(grouped);
+      // Misalnya API return { data: [...] }, ambil datanya
+      const items = Array.isArray(json) ? json : json.data;
+
+      if (!Array.isArray(items)) {
+        console.error("Data keranjang bukan array:", items);
+        return;
+      }
+
+      const grouped = items.reduce((acc, item) => {
+        const toko = item.namaToko;
+        const existing = acc.find((group) => group.namaToko === toko);
+
+        const product = {
+          ...item,
+          isSelected: false,
+          kuantitas: item.jumlah || 1,
+        };
+
+        if (existing) {
+          existing.items.push(product);
+        } else {
+          acc.push({
+            namaToko: toko,
+            isSelected: false,
+            items: [product],
+          });
+        }
+
+        return acc;
+      }, []);
+
+      setGroupedProducts(grouped);
+    } catch (err) {
+      console.error("Terjadi error saat fetch keranjang:", err);
+    }
   };
 
   useEffect(() => {
@@ -104,7 +124,11 @@ const KeranjangPage = () => {
         }),
       });
 
-      if (!res.ok) throw new Error("Gagal update kuantitas");
+      if (!res.ok) {
+        const errorData = await res.json();
+        const message = errorData.message || "Gagal update kuantitas";
+        throw new Error(message);
+      }
 
       // Update frontend state
       const updated = [...groupedProducts];
@@ -112,7 +136,7 @@ const KeranjangPage = () => {
       setGroupedProducts(updated);
     } catch (error) {
       console.error(error);
-      showToast("Gagal update kuantitas", "error");
+      showToast(error.message, "error"); // Gunakan pesan dari error
     }
   };
 
@@ -171,7 +195,7 @@ const KeranjangPage = () => {
       return;
     }
 
-    console.log("Yang diceklis:", selectedDetailIds);
+    // console.log("Yang diceklis:", selectedDetailIds);
 
     const query = encodeURIComponent(JSON.stringify(selectedDetailIds));
     window.location.href = `/checkout?items=${query}`;

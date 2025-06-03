@@ -28,9 +28,32 @@ const TableProduk = ({ produkList, setProdukList }) => {
     message: "",
     type: "success",
   });
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [produkToEdit, setProdukToEdit] = useState(null);
 
   const showToast = (message, type = "success") => {
     setToast({ show: true, message, type });
+  };
+
+  useEffect(() => {
+    function handleOpenEditModal(e) {
+      setProdukToEdit(e.detail);
+      setIsEditModalOpen(true);
+      setIsDetailModalOpen(false);
+      setOpenDropdownId(null);
+    }
+    window.addEventListener("openEditModal", handleOpenEditModal);
+    return () =>
+      window.removeEventListener("openEditModal", handleOpenEditModal);
+  }, []);
+
+  const handleUpdateProduk = (updatedProduk) => {
+    setProdukList((prev) =>
+      prev.map((p) => (p.id === updatedProduk.id ? updatedProduk : p))
+    );
+    setIsEditModalOpen(false);
+    setProdukToEdit(null);
+    showToast("Produk berhasil diperbarui", "success");
   };
 
   const requestSort = (key) => {
@@ -209,7 +232,7 @@ const TableProduk = ({ produkList, setProdukList }) => {
                   <td className="px-6 py-4 text-center">
                     <button
                       onClick={(e) => handleEllipsisClick(e, produk.id)}
-                      className="hover:bg-gray-100 p-2 rounded-full"
+                      className="hover:bg-gray-100 p-2 rounded-full cursor-pointer"
                     >
                       <Ellipsis size={20} />
                     </button>
@@ -255,7 +278,7 @@ const TableProduk = ({ produkList, setProdukList }) => {
               const produk = produkList.find((p) => p.id === openDropdownId);
               if (produk) handleDetailClick(produk);
             }}
-            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm"
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm cursor-pointer"
           >
             <Eye size={16} /> Detail
           </button>
@@ -264,7 +287,7 @@ const TableProduk = ({ produkList, setProdukList }) => {
               const produk = produkList.find((p) => p.id === openDropdownId);
               if (produk) handleDeleteClick(produk);
             }}
-            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600"
+            className="flex items-center w-full px-4 py-2 hover:bg-gray-100 gap-2 text-sm text-red-600 cursor-pointer"
           >
             <Trash2 size={16} /> Hapus
           </button>
@@ -272,14 +295,22 @@ const TableProduk = ({ produkList, setProdukList }) => {
       )}
 
       <ModalDetailProduk
-        commentMore
-        actions
         isOpen={isDetailModalOpen}
         onClose={() => {
           setIsDetailModalOpen(false);
           setSelectedProduk(null);
         }}
         produk={selectedProduk}
+      />
+
+      <ModalEditProduk
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setProdukToEdit(null);
+        }}
+        produk={produkToEdit}
+        onUpdate={handleUpdateProduk}
       />
 
       <ModalKonfirmasi

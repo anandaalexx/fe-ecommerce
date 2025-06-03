@@ -15,6 +15,7 @@ export default function ProductDetailPage() {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [mainImage, setMainImage] = useState(null);
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -46,6 +47,9 @@ export default function ProductDetailPage() {
         const productData = await productRes.json();
         const reviewData = await reviewsRes.json();
 
+        console.log("Data produk:", productData);
+        console.log("Data ulasan:", reviewData);
+
         setProduct(productData);
 
         if (reviewData.success) {
@@ -71,6 +75,28 @@ export default function ProductDetailPage() {
 
     if (id) fetchProduct();
   }, [id]);
+
+  const handleImageClick = (clickedImg) => {
+    const matchedVariant = product.varianProduk.find((vp) =>
+      vp.gambarVarian.some((gv) => gv.url === clickedImg)
+    );
+
+    if (matchedVariant) {
+      const newSelected = {};
+      matchedVariant.nilaiVarian.forEach(({ varian, nilai }) => {
+        newSelected[varian] = nilai;
+      });
+
+      // Set selectedVariants ke kombinasi dari gambar
+      setSelectedVariants(newSelected);
+
+      // Update harga
+      setDisplayedPrice(parseInt(matchedVariant.harga));
+
+      // Set mainImage juga (opsional kalau belum diatur sebelumnya)
+      setMainImage(clickedImg);
+    }
+  };
 
   const handleAddToCart = async (variantId, jumlah) => {
     try {
@@ -127,16 +153,28 @@ export default function ProductDetailPage() {
 
       <div className="bg-gray-100 pt-48 pb-12">
         <div className="max-w-7xl bg-white shadow-xl rounded-md overflow-hidden mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <ProductGallery images={product.images || []} />
+          <ProductGallery
+            images={[
+              ...product.gambarUrls.map((g) => g.url),
+              ...product.varianProduk.flatMap((v) =>
+                v.gambarVarian.map((gv) => gv.url)
+              ),
+            ]}
+            mainImage={mainImage}
+            setMainImage={setMainImage}
+          />
+
           <ProductInfo
             product={product}
             quantity={quantity}
             setQuantity={setQuantity}
             onAddToCart={handleAddToCart}
+            setMainImage={setMainImage} // ✅ tambahan ini
           />
-
+          
           <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 mt-10 gap-8">
             <div className="md:col-span-2">
+              <ProductGallery product={product} />
               <TabsDetail description={product.deskripsi} reviews={reviews} />
             </div>
           </div>

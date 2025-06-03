@@ -1,6 +1,5 @@
-"use client";
 import { Dialog } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 
 const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
   const [editData, setEditData] = useState({});
@@ -275,8 +274,11 @@ const ModalEditProduk = ({ isOpen, onClose, produk, onUpdate }) => {
         headers: {
           "Content-Type": "application/json",
         },
+        headers: {
+          "Content-Type": "application/json",
+        },
         credentials: "include",
-        body: JSON.stringify(dataToSend),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {

@@ -10,6 +10,7 @@ import {
   LogOut,
   UserRound,
   ChevronDown,
+  Inbox,
 } from "lucide-react";
 import Link from "next/link";
 import Logo from "./Logo.jsx";
@@ -24,6 +25,7 @@ export default function Navbar() {
   const router = useRouter();
   const [modalLogoutOpen, setModalLogoutOpen] = useState(false);
   const [showMoreDropdown, setShowMoreDropdown] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
 
   useEffect(() => {
@@ -44,6 +46,28 @@ export default function Navbar() {
   }, [apiUrl]);
 
   useEffect(() => {
+    const fetchOrderCount = async () => {
+      try {
+        const res = await fetch(`${apiUrl}/transaksi/user`, {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        console.log("data krim:", data);
+        if (Array.isArray(data.transaksi)) {
+          setOrderCount(data.transaksi.length);
+        } else {
+          setOrderCount(0);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil pesanan:", error);
+      }
+    };
+
+    fetchOrderCount();
+  }, []);
+
+  useEffect(() => {
     const fetchCartCount = async () => {
       try {
         const res = await fetch(`${apiUrl}/cart/view`, {
@@ -52,8 +76,8 @@ export default function Navbar() {
           cache: "no-store",
         });
         const data = await res.json();
+        console.log("Data keranjang:", data);
 
-        // Hitung total semua jumlah produk dalam keranjang
         const totalItems = data.reduce((acc, item) => acc + item.jumlah, 0);
         setCartCount(totalItems);
       } catch (error) {
@@ -74,6 +98,7 @@ export default function Navbar() {
         if (!res.ok) throw new Error("Gagal fetch user");
         const data = await res.json();
         setUser(data);
+        console.log("User data:", data);  
       } catch (error) {
         console.error("Gagal mengambil data user:", error);
       }
@@ -185,6 +210,19 @@ export default function Navbar() {
             )}
             <span className="mt-1">Keranjang</span>
           </div>
+
+          {orderCount > 0 && (
+            <div
+              className="relative flex flex-col items-center text-sm cursor-pointer transition-all duration-300 hover:text-[#EDCF5D]"
+              onClick={() => router.push("/pesanan")}
+            >
+              <Inbox size={24} />
+              <span className="mt-1">Pesanan</span>
+              <span className="absolute -top-1 right-3 bg-[#EDCF5D] text-black text-xs font-medium rounded-full px-1.5">
+                {orderCount}
+              </span>
+            </div>
+          )}
 
           {/* Akun dengan Dropdown */}
           <div className="relative akun-dropdown">

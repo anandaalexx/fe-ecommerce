@@ -11,6 +11,9 @@ export default function KeranjangList({
   onQuantityChange,
   onDeleteConfirm,
 }) {
+
+  // console.log("groupedProducts", groupedProducts);
+
   return (
     <>
       {groupedProducts.map((group, tokoIdx) => (
@@ -44,9 +47,13 @@ export default function KeranjangList({
                   onChange={() => onSelectProduct(tokoIdx, produkIdx)}
                   className="w-5 h-5 mr-3 accent-[#EDCF5D]"
                 />
-                <div className="flex-1 flex items-center gap-4">
+               <div className="flex-1 flex items-center gap-4">
                   <img
-                    src={product.gambar}
+                    src={
+                      product.gambarVarianUrls?.[0]?.url ||
+                      product.gambarProdukUrls?.[0]?.url ||
+                      "/no-pictures.png"
+                    }
                     alt={product.namaProduk}
                     className="w-16 h-16 object-cover rounded-md"
                   />

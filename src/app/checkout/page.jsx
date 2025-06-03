@@ -62,6 +62,7 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error("Gagal ambil detail produk");
 
       const data = await res.json();
+      console.log("Data produk fetch: ", data);
       setItems(data); // ← simpan data produk ke state
     } catch (err) {
       console.error("Fetch gagal:", err);
@@ -445,6 +446,7 @@ export default function CheckoutPage() {
             </div>
 
             {items.map((item) => (
+              console.log("ITEM:", item),
               <div
                 key={item.idDetailKeranjang}
                 className="rounded-xl p-5 shadow-md bg-white flex gap-5 items-start hover:shadow-lg transition-all duration-300"
@@ -467,7 +469,7 @@ export default function CheckoutPage() {
                     <span className="font-medium">{item.namaVarianProduk}</span>
                   </p>
                   <p className="text-lg font-semibold mt-9">
-                    Rp {item.totalHarga.toLocaleString("id-ID")}
+                    Rp {(item.totalHarga ?? 0).toLocaleString("id-ID")}
                   </p>
                 </div>
               </div>

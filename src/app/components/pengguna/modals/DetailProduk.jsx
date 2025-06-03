@@ -10,6 +10,16 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
   const [newImages, setNewImages] = useState([]);
   const [newVariantImages, setNewVariantImages] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [kategoriList, setKategoriList] = useState([]);
+  const [editData, setEditData] = useState({
+    namaProduk: "",
+    deskripsi: "",
+    berat: 0,
+    idKategori: null,
+  });
+  const [editVarian, setEditVarian] = useState([]);
+  const [showEditVarian, setShowEditVarian] = useState(false);
+
   const [toast, setToast] = useState({
     show: false,
     message: "",
@@ -22,11 +32,90 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
 
   useEffect(() => {
     setProdukState(produk);
-    console.log("Isi produkState:", produk);
-    
+
+    console.log("Produk state updated:", produk); 
+    if (produk) {
+
+      setEditData({
+        namaProduk: produk.nama,
+        deskripsi: produk.deskripsi,
+        berat: produk.berat,
+        idKategori: produk.kategoriId || 1,
+      });
+
+      setEditVarian(
+        produk.varian.map((v) => ({
+          id: v.id,
+          nama: v.nama,
+          level: v.level,
+          nilaiVarian: v.nilaiVarian.map((nv) => ({
+            id: nv.id,
+            value: nv.value,
+          })),
+        }))
+      );
+
+    }
+
+    // Ambil semua kategori dari backend
+    const fetchKategori = async () => {
+      try {
+        const res = await fetch("http://localhost:2000/api/category/view", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        console.log("Kategori data:", data);
+        setKategoriList(data); // asumsi data = array of { id, namaKategori }
+      } catch (err) {
+        console.error("Gagal mengambil kategori:", err);
+      }
+    };
+
+    fetchKategori();
   }, [produk]);
 
   if (!produkState) return null;
+
+  const handleSaveEdit = async () => {
+    try {
+      const body = {
+        ...editData,
+        varian: editVarian,
+        varianProduk: produkState.varianProduk.map((vp) => ({
+          id: vp.id,
+          sku: vp.sku,
+          harga: vp.harga,
+          stok: vp.stok,
+          status: vp.status,
+          nilaiVarian: vp.nilaiVarian.map((nv) => ({
+            idVarian: nv.idVarian,
+            idNilai: nv.idNilai,
+          })),
+        })),
+      };
+
+      const res = await fetch(`http://localhost:2000/api/product/produk/${produkState.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error("Gagal menyimpan perubahan");
+
+      showToast("Perubahan produk disimpan!", "success");
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+      showToast("Terjadi kesalahan saat menyimpan", "error");
+    }
+  };
+
+  console.log("Edit Data updated:", editData);
+
+
 
   const handleTambahStok = async (idVarianProduk) => {
     const jumlahTambah = parseInt(stokTambah[idVarianProduk] || 0);
@@ -67,7 +156,7 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
       setStokInputVisible((prev) => ({ ...prev, [idVarianProduk]: false }));
     } catch (err) {
       console.error(err);
-      showToast("Terjadi kesalahan saat menambah stok", "error");
+      alert("Terjadi kesalahan saat menambah stok");
     }
   };
 
@@ -227,8 +316,26 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
     window.location.reload();
   };
 
+  const handleSaveAll = async () => {
+    const newImagesExist = newImages.some(img => img && img.file);
+    const newVariantImagesExist = Object.values(newVariantImages).some(arr =>
+      arr.some(img => img && img.file)
+    );
+
+    try {
+      if (newImagesExist || newVariantImagesExist) {
+        await uploadImagesToServer();
+      }
+
+      await handleSaveEdit();
+    } catch (error) {
+      console.error("Gagal menyimpan data:", error);
+      // tampilkan feedback ke user jika perlu
+    }
+  };
+
   return (
-    <Dialog as={Fragment} open={isOpen} onClose={onClose}>
+    <Dialog as="div" open={isOpen} onClose={onClose}>
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
       <Dialog.Panel className="bg-white max-w-2xl w-full rounded-lg shadow-xl">
         <div className="p-6 max-h-[90vh] overflow-y-auto">
@@ -287,96 +394,151 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
           </div>
 
           {/* Informasi Produk */}
-          <div className="mt-4 grid gap-y-1 gap-x-2" style={{ gridTemplateColumns: "max-content max-content 1fr" }}>
-            <div className="contents"><span className="font-medium">Nama</span><span>:</span><span>{produkState.nama}</span></div>
-            <div className="contents"><span className="font-medium">Deskripsi</span><span>:</span><span className="whitespace-pre-line">{produkState.deskripsi}</span></div>
-            <div className="contents"><span className="font-medium">Berat</span><span>:</span><span>{produkState.berat}</span></div>
-            <div className="contents"><span className="font-medium">Kategori</span><span>:</span><span>{produkState.kategori}</span></div>
-            <div className="contents"><span className="font-medium">Penjual</span><span>:</span><span>{produkState.penjual}</span></div>
-            <div className="contents"><span className="font-medium">Harga</span><span>:</span><span>{produkState.harga}</span></div>
+          <div className="mt-4 grid gap-y-3">
+            <label className="block">
+              <span className="text-sm font-medium">Nama Produk</span>
+              <input
+                type="text"
+                className="w-full border px-3 py-2 rounded mt-1"
+                value={editData.namaProduk}
+                onChange={(e) => setEditData({ ...editData, namaProduk: e.target.value })}
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-medium">Deskripsi</span>
+              <textarea
+                rows="3"
+                className="w-full border px-3 py-2 rounded mt-1"
+                value={editData.deskripsi}
+                onChange={(e) => setEditData({ ...editData, deskripsi: e.target.value })}
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-medium">Berat (gram)</span>
+              <input
+                type="number"
+                min="0"
+                className="w-full border px-3 py-2 rounded mt-1"
+                value={editData.berat}
+                onChange={(e) => setEditData({ ...editData, berat: parseInt(e.target.value) })}
+              />
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-medium">Kategori</span>
+              <select
+                className="w-full border px-3 py-2 rounded mt-1"
+                value={editData.idKategori}
+                onChange={(e) => setEditData({ ...editData, idKategori: parseInt(e.target.value) })}
+              >
+                <option value="" disabled>Pilih kategori</option>
+                {kategoriList.map((kat) => (
+                  <option key={kat.id} value={kat.id}>
+                    {kat.nama}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           {/* Varian Produk */}
           <div className="space-y-4">
             {produkState.varianProduk.map((vp) => (
               <div key={vp.id} className="border rounded p-3 space-y-2">
-                
                 {/* Gambar lama dan baru varian + upload */}
-                <div className="flex gap-2 overflow-x-auto">
-                  {/* Gambar lama */}
-                  {vp.gambarVarian?.length > 0 &&
-                    vp.gambarVarian.map((gambar, idx) => (
-                      <div key={`lama-${gambar.id || idx}`} className="relative w-20 h-20 flex-shrink-0">
-                        <img src={gambar.url} alt={`Varian ${vp.sku} - ${idx + 1}`} className="w-full h-full object-cover rounded border" />
-                        <button
-                          onClick={() => handleHapusGambarVarian(vp.id, idx)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600"
-                        >
-                          ×
-                        </button>
-                      </div>
-                    ))}
-
-                  {/* Gambar baru */}
-                  {(newVariantImages[vp.id] || []).map((image, index) => (
-                    <div key={index} className="w-20 h-20 relative border-2 border-dashed rounded bg-gray-100 flex-shrink-0">
-                      {image.preview ? (
-                        <>
-                          <img src={image.preview} alt="" className="w-full h-full object-cover rounded" />
+                {vp.nilaiVarian?.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto">
+                    {/* Gambar lama */}
+                    {vp.gambarVarian?.length > 0 &&
+                      vp.gambarVarian.map((gambar, idx) => (
+                        <div key={`lama-${gambar.id || idx}`} className="relative w-20 h-20 flex-shrink-0">
+                          <img src={gambar.url} alt={`Varian ${vp.sku} - ${idx + 1}`} className="w-full h-full object-cover rounded border" />
                           <button
-                            onClick={() => handleHapusGambarBaruVarian(vp.id, index)}
-                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
+                            onClick={() => handleHapusGambarVarian(vp.id, idx)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] hover:bg-red-600"
                           >
                             ×
                           </button>
-                        </>
-                      ) : (
-                        <label className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">
-                          Upload
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => handleTambahGambarVarian(e, vp.id, index)}
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                          />
-                        </label>
+                        </div>
+                      ))}
+
+                    {/* Gambar baru */}
+                    {(newVariantImages[vp.id] || []).map((image, index) => (
+                      <div key={index} className="w-20 h-20 relative border-2 border-dashed rounded bg-gray-100 flex-shrink-0">
+                        {image.preview ? (
+                          <>
+                            <img src={image.preview} alt="" className="w-full h-full object-cover rounded" />
+                            <button
+                              onClick={() => handleHapusGambarBaruVarian(vp.id, index)}
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center"
+                            >
+                              ×
+                            </button>
+                          </>
+                        ) : (
+                          <label className="absolute inset-0 flex items-center justify-center text-xs text-gray-500">
+                            Upload
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleTambahGambarVarian(e, vp.id, index)}
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                            />
+                          </label>
+                        )}
+                      </div>
+                    ))}
+
+                    {/* Tombol tambah hanya jika belum ada gambar lama maupun baru */}
+                    {vp.gambarVarian.length === 0 &&
+                      !(newVariantImages[vp.id]?.some(img => img && img.file)) &&
+                      (newVariantImages[vp.id]?.length || 0) < 1 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setNewVariantImages((prev) => ({
+                              ...prev,
+                              [vp.id]: [{ preview: null, file: null }],
+                            }))
+                          }
+                          className="w-20 h-20 border-2 border-dashed text-xl text-gray-400 rounded flex items-center justify-center cursor-pointer"
+                        >
+                          +
+                        </button>
                       )}
-                    </div>
-                  ))}
-
-                  {/* Tombol tambah hanya jika belum ada gambar lama maupun baru */}
-                  {vp.gambarVarian.length === 0 &&
-                    !(newVariantImages[vp.id]?.some(img => img && img.file)) &&
-                    (newVariantImages[vp.id]?.length || 0) < 1 && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setNewVariantImages((prev) => ({
-                            ...prev,
-                            [vp.id]: [{ preview: null, file: null }],
-                          }))
-                        }
-                        className="w-20 h-20 border-2 border-dashed text-xl text-gray-400 rounded flex items-center justify-center cursor-pointer"
-                      >
-                        +
-                      </button>
-                    )}
-                </div>
-
-                {/* Informasi SKU, harga, stok, dll */}
-                <p><span className="font-medium">SKU:</span> {vp.sku}</p>
-                <p><span className="font-medium">Harga:</span> Rp {parseInt(vp.harga).toLocaleString()}</p>
-                <p><span className="font-medium">Status:</span> {vp.status}</p>
-
-                {vp.nilaiVarian?.length > 0 && (
-                  <p>
-                    <span className="font-medium">Varian:</span>{" "}
-                    {vp.nilaiVarian.map((nv) => `${nv.varian}: ${nv.nilai}`).join(", ")}
-                  </p>
+                  </div>
                 )}
 
+                {/* Informasi varian */}
+                <p><span className="font-medium">SKU:</span> {vp.sku}</p>
+                <p><span className="font-medium">Varian:</span> {vp.nilaiVarian.map((nv) => `${nv.varian}: ${nv.nilai}`).join(", ")}</p>
+
+                {/* Input edit harga */}
+                <label className="block mt-2">
+                  <span className="text-sm">Harga (Rp):</span>
+                  <input
+                    type="number"
+                    className="border px-2 py-1 rounded w-full mt-1"
+                    value={vp.harga}
+                    onChange={(e) =>
+                      setProdukState((prev) => ({
+                        ...prev,
+                        varianProduk: prev.varianProduk.map((v) =>
+                          v.id === vp.id ? { ...v, harga: parseInt(e.target.value) } : v
+                        ),
+                      }))
+                    }
+                  />
+                </label>
+
+                <p>
+                    <span className="font-medium">Status:</span> {vp.status}
+                </p>
+
                 {/* Input tambah stok */}
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mt-2">
                   <span className="font-medium">Stok:</span> {vp.stok}
                   {!stokInputVisible[vp.id] ? (
                     <button
@@ -412,40 +574,79 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
                 </div>
               </div>
             ))}
+
+            <div className="flex justify-between items-center mb-2">
+                <h3 className="text-lg font-semibold">Edit Varian & Nilai Varian</h3>
+                <button
+                  onClick={() => setShowEditVarian(!showEditVarian)}
+                  className="text-sm px-3 py-1 rounded bg-blue-500 text-white hover:bg-blue-600"
+                >
+                  {showEditVarian ? "Sembunyikan" : "Edit Varian"}
+                </button>
+              </div>
+
+            {showEditVarian && editVarian.map((v, varianIdx) => (
+                <div key={v.id} className="border p-3 rounded mb-4">
+                  <label className="block mb-2 font-medium">Nama Varian Level {v.level}</label>
+                  <input
+                    type="text"
+                    value={v.nama}
+                    onChange={(e) => {
+                      const updated = [...editVarian];
+                      updated[varianIdx].nama = e.target.value;
+                      setEditVarian(updated);
+                    }}
+                    className="w-full border px-3 py-2 rounded mb-3"
+                  />
+
+                  {v.nilaiVarian.map((nv, nilaiIdx) => (
+                    <div key={nv.id} className="mb-2">
+                      <label className="block text-sm font-medium">Nilai Varian {nilaiIdx + 1}</label>
+                      <input
+                        type="text"
+                        value={nv.value}
+                        onChange={(e) => {
+                          const updated = [...editVarian];
+                          updated[varianIdx].nilaiVarian[nilaiIdx].value = e.target.value;
+                          setEditVarian(updated);
+                        }}
+                        className="w-full border px-3 py-2 rounded"
+                      />
+                    </div>
+                  ))}
+                </div>
+              ))}
           </div>
           {/* Tombol Aksi */}
           <div className="mt-6 flex justify-end gap-3">
             <button onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300">Tutup</button>
-
-            {(newImages.some(img => img && img.file) || Object.values(newVariantImages).some(arr => arr.some(img => img && img.file))) && (
-              <button
-                onClick={uploadImagesToServer}
-                className="px-4 py-2 bg-[#EDCF5D] text-white rounded hover:brightness-110"
-                disabled={isUploading}
-              >
-                {isUploading ? (
-                  <div className="flex items-center space-x-2">
-                    <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
-                    <span>Menyimpan...</span>
-                  </div>
-                ) : (
-                  "Simpan"
-                )}
-              </button>
-            )}
+            <button
+              onClick={handleSaveAll}
+              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <div className="flex items-center space-x-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                  </svg>
+                  <span>Menyimpan...</span>
+                </div>
+              ) : (
+                "Simpan"
+              )}
+            </button>
           </div>
         </div>
       </Dialog.Panel>
     </div>
-    <ToastNotification
-      show={toast.show}
-      message={toast.message}
-      type={toast.type}
-      onClose={() => setToast({ ...toast, show: false })}
-    />
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
   </Dialog>
   );
 };

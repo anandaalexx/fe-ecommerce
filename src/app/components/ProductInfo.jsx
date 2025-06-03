@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import Button from "./Button";
 
-const ProductInfo = ({ product, onAddToCart, quantity, setQuantity }) => {
+const ProductInfo = ({ product, onAddToCart, quantity, setQuantity, setMainImage }) => {
   const [selectedVariants, setSelectedVariants] = useState({});
   const [displayedPrice, setDisplayedPrice] = useState(null);
 
@@ -53,11 +53,22 @@ const ProductInfo = ({ product, onAddToCart, quantity, setQuantity }) => {
 
       if (matched) {
         setDisplayedPrice(parseInt(matched.harga));
+
+        // ✅ Tambahan: Set gambar utama dari varian yang cocok
+        if (matched.gambarVarian && matched.gambarVarian.length > 0) {
+          const sorted = [...matched.gambarVarian].sort((a, b) => a.urutan - b.urutan);
+          setMainImage(sorted[0].url); // gunakan gambar urutan pertama
+        } else {
+          setMainImage(null); // jika tidak ada gambar varian
+        }
+
       } else {
         setDisplayedPrice("Varian tidak tersedia");
+        setMainImage(null);
       }
     } else {
       setDisplayedPrice(null); // Reset harga jika tidak semua varian dipilih
+      setMainImage(null);      // Reset gambar juga
     }
   };
 

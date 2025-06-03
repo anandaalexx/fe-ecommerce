@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import ToastNotification from "../../../components/ToastNotification";
 
 const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
   const [variants, setVariants] = useState([]);
@@ -8,15 +9,14 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     options: [],
   });
   const [variantInput, setVariantInput] = useState("");
+  const [variantOptions, setVariantOptions] = useState([]);
   const [isAddingOptions, setIsAddingOptions] = useState(false);
   const [combinations, setCombinations] = useState([]);
   const [showCombinations, setShowCombinations] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const [pendingUploads, setPendingUploads] = useState([]);
 
-
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
 
   // Sync initialVariants on modal open
   useEffect(() => {
@@ -36,9 +36,27 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     }
   }, [show]);
 
-  const generateCombinations = () => {
-    if (variants.length === 0) return;
+  useEffect(() => {
+    if (variants.length > 0) {
+      generateCombinations();
+    } else {
+      setCombinations([]);
+      setPendingUploads([]);
+    }
+  }, [variants]);
 
+
+  const [toast, setToast] = useState({
+    show: false,
+    message: "",
+    type: "info", // bisa juga "success", "warning", "error"
+  });
+
+  const showToast = (message, type = "success") => {
+    setToast({ show: true, message, type });
+  };
+
+  const generateCombinationsFromVariants = (variants) => {
     const combine = (arrays) => {
       if (arrays.length === 0) return [[]];
       const [first, ...rest] = arrays;
@@ -52,55 +70,77 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
       v.options.map((opt) => ({
         value: {
           nama: opt.nama,
-          gambar: opt.gambar || null, // Pastikan struktur konsisten
-        }
+          gambar: opt.gambar || null,
+        },
       }))
     );
 
-    const allCombinations = combine(variantOptions);
+    return combine(variantOptions).map((options) => ({
+      nama: options.map((opt) => opt.value.nama).join(" / "),
+      nilai: options.map((opt) => opt.value),
+      harga: "",
+      stok: "",
+    }));
+  };
 
-    const namedCombinations = allCombinations.map((options) => {
-      return {
-        nama: options.map(option => option.value.nama).join(" / "),
-        nilai: options.map(option => option.value), // ← ini akan dipakai di handleSubmit
-        harga: "",
-        stok: ""
-      };
-    });
-
-    setCombinations(namedCombinations);
+  const generateCombinations = () => {
+    if (variants.length === 0) return;
+    const result = generateCombinationsFromVariants(variants);
+    setCombinations(result);
     setShowCombinations(true);
   };
 
   // Mulai input opsi varian setelah isi nama varian
   const handleStartAddVariant = () => {
+    if (variants.length >= 2) {
+      showToast("Maksimal hanya 2 varian yang diperbolehkan!", "warning");
+      return;
+    }
+
     if (currentVariant.nama.trim() !== "") {
       setIsAddingOptions(true);
     }
   };
 
-  const handleFileChange = (e, variantNama, optionNama) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // const handleFileChange = (e, variantNama, optionNama) => {
+  //   const file = e.target.files[0];
+  //   if (!file) return;
 
-    setPendingUploads((prev) => [
-      ...prev,
-      { variantNama, optionNama, file },
-    ]);
-  };
+  //   setPendingUploads((prev) => [
+  //     ...prev,
+  //     { variantNama, optionNama, file },
+  //   ]);
+  // };
 
   // Tambah opsi baru ke currentVariant
   const handleAddOption = () => {
-    if (variantInput.trim() !== "") {
+    const trimmed = variantInput.trim();
+
+    if (
+      trimmed &&
+      !variantOptions.includes(trimmed) &&
+      !currentVariant.options.some((opt) => opt.nama === trimmed)
+    ) {
+      setVariantOptions([...variantOptions, trimmed]);
+
       setCurrentVariant({
         ...currentVariant,
-        options: [
-          ...currentVariant.options,
-          { nama: variantInput.trim(), gambar: null },
-        ],
+        options: [...currentVariant.options, { nama: trimmed, gambar: null }],
       });
+
       setVariantInput("");
     }
+
+    // if (variantInput.trim() !== "") {
+    //   setCurrentVariant({
+    //     ...currentVariant,
+    //     options: [
+    //       ...currentVariant.options,
+    //       { nama: variantInput.trim(), gambar: null },
+    //     ],
+    //   });
+    //   setVariantInput("");
+    // }
   };
 
   // Hapus opsi di currentVariant
@@ -109,10 +149,16 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
       ...currentVariant,
       options: currentVariant.options.filter((_, i) => i !== index),
     });
+    setVariantOptions(variantOptions.filter((_, i) => i !== index));
   };
 
   // Selesai tambah varian, simpan currentVariant ke variants
   const handleFinishVariant = () => {
+    if (variants.length >= 2) {
+      showToast("Maksimal hanya 2 varian yang diperbolehkan!", "warning");
+      return;
+    }
+
     if (currentVariant.nama.trim() !== "") {
       setVariants([...variants, currentVariant]);
       setCurrentVariant({ nama: "", options: [] });
@@ -123,8 +169,20 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
 
   // Hapus varian dari daftar varian
   const handleRemoveVariant = (index) => {
-    setVariants(variants.filter((_, i) => i !== index));
+    const newVariants = variants.filter((_, i) => i !== index);
+    setVariants(newVariants);
+
+    // Regenerate valid combinations
+    const validCombinations = generateCombinationsFromVariants(newVariants);
+
+    // Ambil hanya nama-nama kombinasi valid
+    const validNames = validCombinations.map((c) => c.nama);
+
+    // Sinkronisasi combinations & pendingUploads
+    setCombinations((prev) => prev.filter((combo) => validNames.includes(combo.nama)));
+    setPendingUploads((prev) => prev.filter((item) => validNames.includes(item.name)));
   };
+
 
   const handleCancel = () => {
     setCurrentVariant({ nama: "", options: [] });
@@ -150,23 +208,76 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
     setCombinations(newCombos);
   };
 
-  // Simpan semua data varian + kombinasi ke parent lalu tutup modal
-  const handleSave = () => {
-    onSave({ 
-      variants, 
-      combinations, 
-      pendingUploads
-    });
-    onClose();
-  };
+  const handleCombinationImageChange = (index, file) => {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showToast("Hanya file gambar yang diperbolehkan!", "warning");
+      return;
+    }
+
+    // Validasi ukuran file maksimal 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      showToast("Ukuran gambar maksimal 5MB!", "warning");
+      return;
+    }
+
+    const newCombos = [...combinations];
+    newCombos[index].image = file;
+    newCombos[index].imagePreview = URL.createObjectURL(file); // <- ini buat preview
+    setCombinations(newCombos);
+
+    const combo = newCombos[index];
+    setPendingUploads((prev) => [
+      ...prev,
+      {
+        name: combo.nama,
+          file,
+        },
+      ]);
+    };
+
+    // Simpan semua data varian + kombinasi ke parent lalu tutup modal
+    const handleSave = () => {
+      onSave({ 
+        variants, 
+        combinations, 
+        pendingUploads
+      });
+
+      console.log("Data yang akan disimpan:", pendingUploads);
+      onClose();
+    };
+    if (!file.type.startsWith("image/")) {
+      showToast("Hanya file gambar yang diperbolehkan!", "warning");
+      fileInputsRef.current[index].value = ""; // reset
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+        showToast("Hanya file gambar yang diperbolehkan!", "warning");
+        fileInputsRef.current[index].value = ""; // reset
+        return;
+      }
 
   if (!show && !isVisible) return null;
 
-  return (
+return (
+  <>
+    {/* Toast di luar modal */}
+    <div className="fixed top-4 right-4 z-70">
+      <ToastNotification
+        show={toast.show}
+        message={toast.message}
+        type={toast.type}
+        onClose={() => setToast({ ...toast, show: false })}
+      />
+    </div>
+
+    {/* Modal overlay */}
     <div
       className={`fixed inset-0 flex justify-center items-center z-50 transition-opacity duration-300 ${
         show ? "opacity-100" : "opacity-0 pointer-events-none"
-      } backdrop-blur-xs  `}
+      } backdrop-blur-xs`}
     >
       <div
         className={`bg-white rounded p-6 w-[600px] max-h-[80vh] overflow-auto shadow-lg transform transition-all duration-300 ${
@@ -205,7 +316,7 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
                 Tambahkan Opsi untuk Varian:{" "}
                 <strong>{currentVariant.nama}</strong>
               </label>
-              <div className="flex gap-2 mb-2">
+              <div className="flex gap-2 mb-2"> 
                 <input
                   type="text"
                   value={variantInput}
@@ -226,19 +337,35 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
                   Tambah
                 </button>
               </div>
-              <div className="flex flex-col gap-2">
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {variantOptions.map((option, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-200 text-sm px-3 py-1 rounded-full flex items-center space-x-2"
+                  >
+                    <span>{option}</span>
+                    <button
+                      onClick={() => handleRemoveOption(index)}
+                      className="text-red-500 hover:text-red-700 font-bold"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              {/* <div className="flex flex-col gap-2">
                 {currentVariant.options.map((option, index) => (
                   <div key={index} className="flex items-center gap-2">
-                    {/* Kotak background abu */}
                     <div className="flex items-center gap-2 bg-gray-100 p-2 rounded">
                       <span className="text-sm font-medium">{option.nama}</span>
                       <input
                         type="file"
-                        onChange={(e) => handleFileChange(e, currentVariant.nama, option.nama)}
+                        onChange={(e) =>
+                          handleFileChange(e, currentVariant.nama, option.nama)
+                        }
                       />
                     </div>
-
-                    {/* Tombol hapus (×) di luar background abu-abu */}
                     <button
                       onClick={() => handleRemoveOption(index)}
                       className="text-gray-700 hover:text-red-600 text-xl"
@@ -248,7 +375,7 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
                     </button>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
             <div className="mt-6 flex justify-end">
               <button
@@ -308,14 +435,17 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
             {combinations.map((combo, index) => (
               <div
                 key={index}
-                className="mb-4 border-b border-gray-300 pb-2 flex justify-between items-center"
+                className="mb-4 border-b border-gray-300 pb-2"
               >
-                <span>{combo.name}</span>
-                <div className="flex gap-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span>{combo.nama}</span>
+                </div>
+
+                <div className="flex gap-4 items-center">
                   <input
                     type="number"
                     placeholder="Harga"
-                    value={combo.harga}
+                    value={combo.harga ?? ''}
                     onChange={(e) =>
                       handleCombinationChange(index, "harga", e.target.value)
                     }
@@ -330,6 +460,25 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
                     }
                     className="p-2 border border-gray-300 rounded w-24"
                   />
+
+                  {/* Upload file */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleCombinationImageChange(index, e.target.files[0])
+                    }
+                    className="w-48"
+                  />
+
+                  {/* Preview image */}
+                  {combo.imagePreview && (
+                    <img
+                      src={combo.imagePreview}
+                      alt={`Preview ${combo.nama}`}
+                      className="w-16 h-16 object-cover rounded border"
+                    />
+                  )}
                 </div>
               </div>
             ))}
@@ -349,14 +498,15 @@ const TambahVarian = ({ show, onClose, onSave, initialVariants = [] }) => {
             onClick={handleSave}
             className="px-4 py-2 bg-[#EDCF5D] text-white rounded hover:brightness-110"
             type="button"
-            disabled={isAddingOptions} // disable kalau masih input opsi
+            disabled={isAddingOptions}
           >
             Simpan Varian
           </button>
         </div>
       </div>
     </div>
-  );
+  </>
+);
 };
 
 export default TambahVarian;

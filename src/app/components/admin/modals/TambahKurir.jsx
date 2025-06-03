@@ -34,7 +34,7 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nama || !email || !password) {
+    if (!formData.nama || !formData.email || !formData.password) {
       showToast("Nama, email, dan password harus diisi.", "warning");
       return;
     }
@@ -143,8 +143,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={nama}
-                  onChange={(e) => setNama(e.target.value)}
+                  name="nama"
+                  value={formData.nama}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                   required
@@ -156,8 +157,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   placeholder="contoh@gmail.com"
                   disabled={isLoading}
@@ -171,8 +173,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                   required
@@ -184,8 +187,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={nomorTelepon}
-                  onChange={(e) => setNomorTelepon(e.target.value)}
+                  name="nomorTelepon"
+                  value={formData.nomorTelepon}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                 />
@@ -196,8 +200,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={nomorPolisi}
-                  onChange={(e) => setNomorPolisi(e.target.value)}
+                  name="nomorPolisi"
+                  value={formData.nomorPolisi}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                 />
@@ -208,8 +213,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={merkKendaraan}
-                  onChange={(e) => setMerkKendaraan(e.target.value)}
+                  name="merkKendaraan"
+                  value={formData.merkKendaraan}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                 />
@@ -220,8 +226,9 @@ const TambahKurir = ({ isOpen, onClose, onSuccess }) => {
                 </label>
                 <input
                   type="text"
-                  value={warnaKendaraan}
-                  onChange={(e) => setWarnaKendaraan(e.target.value)}
+                  name="warnaKendaraan"
+                  value={formData.warnaKendaraan}
+                  onChange={handleChange}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                   disabled={isLoading}
                 />

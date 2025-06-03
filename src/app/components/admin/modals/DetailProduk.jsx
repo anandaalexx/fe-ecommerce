@@ -1,110 +1,36 @@
 "use client";
 import { Dialog } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
-import ModalEditProduk from "./EditProduk";
 
 const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
-  const [produkState, setProdukState] = useState(null);
-  const [stokTambah, setStokTambah] = useState({});
-  const [stokInputVisible, setStokInputVisible] = useState({});
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-
-  useEffect(() => {
-    setProdukState(produk);
-  }, [produk]);
-
-  if (!produkState) return null;
-
-  const handleTambahStok = async (idVarianProduk) => {
-    const jumlahTambah = parseInt(stokTambah[idVarianProduk] || 0);
-
-    if (isNaN(jumlahTambah) || jumlahTambah <= 0) {
-      alert("Masukkan jumlah stok yang valid!");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${apiUrl}/product/add-stock/${idVarianProduk}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({ jumlahTambah }),
-      });
-
-      if (!res.ok) throw new Error("Gagal menambah stok");
-
-      alert("Stok berhasil ditambahkan!");
-
-      // Update stok di state
-      setProdukState((prev) => ({
-        ...prev,
-        varianProduk: prev.varianProduk.map((vp) =>
-          vp.id === idVarianProduk
-            ? { ...vp, stok: vp.stok + jumlahTambah }
-            : vp
-        ),
-      }));
-
-      setStokTambah((prev) => ({ ...prev, [idVarianProduk]: "" }));
-      setStokInputVisible((prev) => ({ ...prev, [idVarianProduk]: false }));
-    } catch (err) {
-      console.error(err);
-      alert("Terjadi kesalahan saat menambah stok");
-    }
-  };
-
-  const handleUpdateProduk = (updatedProduk) => {
-    setProdukState(updatedProduk);
-    setIsEditModalOpen(false);
-  };
+  if (!produk) return null;
 
   return (
-    <>
-      <Dialog as={Fragment} open={isOpen} onClose={onClose}>
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-          <Dialog.Panel className="bg-white max-w-4xl w-full rounded-lg shadow-xl">
-            <div className="p-6 max-h-[90vh] overflow-y-auto">
-              <Dialog.Title className="text-xl font-semibold mb-4 flex items-center justify-between">
-                Detail Produk
-                <button
-                  onClick={() => setIsEditModalOpen(true)}
-                  className="bg-[#EDCF5D] text-white px-4 py-2 rounded hover:brightness-110 cursor-pointer transition-colors text-sm"
-                >
-                  Edit Produk
-                </button>
-              </Dialog.Title>
+    <Dialog as="div" open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/20" aria-hidden="true" />
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="bg-white rounded-xl shadow-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+          <Dialog.Title className="text-xl font-bold mb-6 text-center text-gray-800">
+            Detail Produk
+          </Dialog.Title>
 
-              <div className="flex gap-4">
-                <img
-                  src="/iphone1.png"
-                  alt={produkState.namaProduk}
-                  className="w-32 h-32 object-cover rounded"
-                />
-                <div className="flex-1">
-                  <p>
-                    <span className="font-medium">Nama:</span>{" "}
-                    {produkState.namaProduk}
-                  </p>
-                  <p>
-                    <span className="font-medium">Deskripsi:</span>{" "}
-                    {produkState.deskripsi}
-                  </p>
-                  <p>
-                    <span className="font-medium">Kategori:</span>{" "}
-                    {produkState.kategori.nama}
-                  </p>
-                  <p>
-                    <span className="font-medium">Penjual:</span>{" "}
-                    {produkState.penjual.storeName}
-                  </p>
-                  <p>
-                    <span className="font-medium">Harga:</span>{" "}
-                    {produkState.varianProduk.harga}
-                  </p>
-                </div>
+          {/* Header: Gambar + Informasi */}
+          <div className="flex flex-col md:flex-row gap-6 mb-6">
+            {/* Gambar Produk */}
+            <div className="flex-shrink-0 self-center md:self-start">
+              <img
+                src="/iphone1.png"
+                alt={produk.nama}
+                className="w-32 h-32 object-contain"
+              />
+            </div>
+
+            {/* Informasi Produk */}
+            <div className="flex-1 space-y-4 text-sm">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  {produk.nama}
+                </h2>
+                <p className="text-gray-600 mt-1">{produk.deskripsi}</p>
               </div>
 
               <div className="mt-6">
@@ -204,30 +130,103 @@ const ModalDetailProduk = ({ isOpen, onClose, produk }) => {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
 
-              <div className="mt-6 flex justify-end gap-2">
-                <button
-                  onClick={onClose}
-                  className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition-colors"
-                >
-                  Tutup
-                </button>
+          <hr className="my-4" />
+
+          {/* Varian Produk */}
+          {produk.varianProduk?.length > 0 && (
+            <div>
+              <h4 className="text-base font-semibold mb-4 text-gray-800">
+                Varian Produk
+              </h4>
+              <div className="space-y-4">
+                {produk.varianProduk.map((vp) => (
+                  <div
+                    key={vp.id}
+                    className="border border-gray-200 rounded-lg p-4 bg-gray-50"
+                  >
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">SKU</span>
+                        <p className="font-medium">{vp.sku}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Harga</span>
+                        <p className="font-medium">
+                          Rp {vp.harga.toLocaleString()}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Stok</span>
+                        <p className="font-medium">{vp.stok}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Status</span>
+                        <span
+                          className={`block mt-1 px-2 py-0.5 text-xs font-semibold rounded ${
+                            vp.status === "aktif"
+                              ? "bg-red-100 text-red-700"
+                              : "bg-green-100 text-green-700"
+                          }`}
+                        >
+                          {vp.status}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Nilai Varian */}
+                    {vp.nilaiVarian?.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-sm font-medium text-gray-700">
+                          Varian:
+                        </p>
+                        <div className="mt-1 flex flex-wrap gap-2">
+                          {vp.nilaiVarian.map((nv, idx) => (
+                            <span
+                              key={idx}
+                              className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full"
+                            >
+                              {nv.varian}: {nv.nilai}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
-          </Dialog.Panel>
-        </div>
-      </Dialog>
+          )}
 
-      {/* Modal Edit Produk */}
-      {isEditModalOpen && (
-        <ModalEditProduk
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          produk={produkState}
-          onUpdate={handleUpdateProduk}
-        />
-      )}
-    </>
+          {/* Tombol Tutup */}
+          <div className="flex justify-end mt-8">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 text-sm mr-3 cursor-pointer font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100"
+            >
+              Tutup
+            </button>
+            <button
+              onClick={() => {
+                onClose(); // Tutup modal detail
+                // Pastikan Anda set modal edit dari luar
+                if (typeof window !== "undefined") {
+                  const event = new CustomEvent("openEditModal", {
+                    detail: produk,
+                  });
+                  window.dispatchEvent(event);
+                }
+              }}
+              className="px-5 py-2 text-sm cursor-pointer font-medium text-white bg-[#EDCF5D] rounded hover:brightness-110"
+            >
+              Edit
+            </button>
+          </div>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
   );
 };
 
