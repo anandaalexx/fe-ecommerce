@@ -166,8 +166,8 @@ const ModalTambahPengguna = ({ isOpen, onClose, onSuccess, showToast }) => {
                   type="number"
                   value={saldo}
                   onChange={(e) => {
-                    const value = e.target.value;
-                    setSaldo(value === "" ? "" : value);
+                    const newSaldo = parseFloat(e.target.value);
+                    setSaldo(newSaldo < 0 ? 0 : newSaldo || 0);
                   }}
                   className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring focus:border-[#EDCF5D]"
                 />

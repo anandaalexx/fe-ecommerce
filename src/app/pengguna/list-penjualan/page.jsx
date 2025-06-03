@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ArrowUpDown } from "lucide-react"; // Pastikan ikon ini terimpor
 import ModalKonfirmasi from "@/app/components/admin/modals/Konfirmasi";
 import ModalRequestPickup from "@/app/components/pengguna/modals/RequestPickup";
 import ModalCetakLabel from "@/app/components/pengguna/modals/CetakLabel";
@@ -25,6 +26,14 @@ const TableListPenjualan = () => {
   const [modalCetakOpen, setModalCetakOpen] = useState(false);
   const [modalKomplainOpen, setModalKomplainOpen] = useState(false);
   const [selectedKomplainId, setSelectedKomplainId] = useState(null);
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+  const itemsPerPage = 10;
+
+  useEffect(() => {
+    fetchData();
+  }, [status, apiUrl]);
 
   const handleSetujuiKomplain = async (idPengiriman) => {
     try {
@@ -45,6 +54,46 @@ const TableListPenjualan = () => {
       alert("Terjadi kesalahan saat menyetujui komplain.");
     }
   };
+
+  // Fungsi untuk menangani pengurutan
+  const requestSort = (key) => {
+    let direction = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
+  // Fungsi untuk mengurutkan data
+  const sortedData = [...data].sort((a, b) => {
+    if (!sortConfig.key) return 0;
+    const aValue = a[sortConfig.key]?.toString().toLowerCase() || "";
+    const bValue = b[sortConfig.key]?.toString().toLowerCase() || "";
+
+    if (aValue < bValue) return sortConfig.direction === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortConfig.direction === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  // Filter data berdasarkan pencarian
+  const filteredData = sortedData.filter((item) => {
+    const lowerSearch = search.toLowerCase();
+    return (
+      item.namaPembeli.toLowerCase().includes(lowerSearch) ||
+      item.orderNo?.toLowerCase().includes(lowerSearch) ||
+      item.idPengiriman?.toString().toLowerCase().includes(lowerSearch) ||
+      item.produk.some((p) => p.namaProduk.toLowerCase().includes(lowerSearch))
+    );
+  });
+
+  // Menghitung total halaman untuk pagination
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+  // Menentukan data yang ditampilkan pada halaman saat ini
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const handleCetakLabel = async (orderNo, page) => {
     try {
@@ -164,12 +213,21 @@ const TableListPenjualan = () => {
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [status, apiUrl]);
-
   return (
     <div className="mt-4">
+      {/* Search Bar di luar tabel */}
+      <div className="flex justify-between items-center mb-4">
+        <input
+          type="text"
+          placeholder="Cari pembeli atau produk...."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)} // Update pencarian saat user mengetik
+          className="border border-gray-200 px-3 py-2 text-sm rounded"
+        />
+        <div className="text-sm">
+          Halaman {currentPage} dari {totalPages}
+        </div>
+      </div>
       {/* Tabs */}
       <div className="flex space-x-4 border-b border-gray-200 mb-4">
         {statusTabs.map((tab) => (
@@ -193,15 +251,83 @@ const TableListPenjualan = () => {
           <table className="min-w-full text-sm divide-y divide-gray-200">
             <thead className="bg-gray-100 sticky top-0 z-10 text-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left">ID Pengiriman</th>
-                <th className="px-6 py-3 text-left">Nomor Order Komship</th>
-                <th className="px-6 py-3 text-left">Pembeli</th>
-                <th className="px-6 py-3 text-left">Produk</th>
+                <th
+                  className="px-6 py-3 text-left cursor-pointer"
+                  onClick={() => requestSort("idPengiriman")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>ID Pengiriman</span>
+                    {sortConfig.key === "idPengiriman" && (
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.direction === "asc"
+                            ? "text-yellow-500 transform rotate-180"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left cursor-pointer"
+                  onClick={() => requestSort("orderNo")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Nomor Order Komship</span>
+                    {sortConfig.key === "orderNo" && (
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.direction === "asc"
+                            ? "text-yellow-500 transform rotate-180"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left cursor-pointer"
+                  onClick={() => requestSort("namaPembeli")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Pembeli</span>
+                    {sortConfig.key === "namaPembeli" && (
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.direction === "asc"
+                            ? "text-yellow-500 transform rotate-180"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    )}
+                  </div>
+                </th>
+                <th
+                  className="px-6 py-3 text-left cursor-pointer"
+                  onClick={() => requestSort("produk")}
+                >
+                  <div className="flex items-center gap-2">
+                    <span>Produk</span>
+                    {sortConfig.key === "produk" && (
+                      <ArrowUpDown
+                        size={12}
+                        className={`${
+                          sortConfig.direction === "asc"
+                            ? "text-yellow-500 transform rotate-180"
+                            : "text-gray-500"
+                        }`}
+                      />
+                    )}
+                  </div>
+                </th>
                 <th className="px-6 py-3 text-left">Aksi</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {data.map((item) => (
+              {paginatedData.map((item) => (
                 <tr key={item.idPengiriman}>
                   <td className="px-6 py-4">{item.idPengiriman}</td>
                   <td className="px-6 py-4">{item.orderNo || "-"}</td>
@@ -292,6 +418,28 @@ const TableListPenjualan = () => {
               )}
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center p-3 text-sm mt-4">
+        <div>
+          Menampilkan {paginatedData.length} dari {filteredData.length} produk
+        </div>
+        <div className="space-x-2">
+          <button
+            onClick={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Sebelumnya
+          </button>
+          <button
+            onClick={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            disabled={currentPage === totalPages}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Selanjutnya
+          </button>
         </div>
       </div>
 
