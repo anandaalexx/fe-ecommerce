@@ -7,6 +7,9 @@ const PesananCard = () => {
   const [daftarPesanan, setDaftarPesanan] = useState([]);
   const [reviewProduk, setReviewProduk] = useState(null);
   const [reviewedProducts, setReviewedProducts] = useState(new Set());
+  const [modalReviewData, setModalReviewData] = useState(null);
+  // modalReviewData = { order, item }
+
   const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [toast, setToast] = useState({
     show: false,
@@ -25,42 +28,142 @@ const PesananCard = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const fetchPesanan = async () => {
-      try {
-        const res = await fetch(`${apiUrl}/transaksi/user`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-        });
-
-        const data = await res.json();
-        console.log("Data dari backend:", data);
-
-        if (!data || !Array.isArray(data.transaksi)) {
-          console.error("Data transaksi tidak valid:", data);
-          return;
-        }
-
-        const formatted = data.transaksi.map((trx) => ({
-          id: `#TRX-${trx.idTransaksi}`,
-          jumlah: trx.produk.length,
-          total: parseInt(trx.totalHarga),
-          status:
-            trx.statusPengiriman?.replace(/_/g, " ") || "menunggu penjual",
-          barangSesuai: true,
-          produk: trx.produk,
-        }));
-
-        setDaftarPesanan(formatted);
-        fetchExistingReviews(formatted);
-      } catch (err) {
-        console.error("Gagal memuat data transaksi:", err);
+  const handleKomplain = async (item) => {
+    try {
+      const fullId = item.id; // contoh: "TRX-12345"
+      if (!fullId) {
+        alert("ID transaksi tidak ditemukan.");
+        return;
       }
-    };
 
+      const idTransaksiNumber = Number(fullId.match(/\d+/)[0]);
+
+      if (isNaN(idTransaksiNumber)) {
+        alert("Format ID transaksi tidak valid.");
+        return;
+      }
+
+      const res = await fetch(`${apiUrl}/pengiriman/complain`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idTransaksi: idTransaksiNumber,
+          statusTujuan: "dikomplain",
+        }),
+      });
+
+      if (!res.ok) throw new Error("Gagal update status ke 'dikomplain'.");
+
+      await fetchPesanan();
+      alert("Status pesanan telah dikomplain.");
+    } catch (err) {
+      console.error("Gagal komplain pesanan:", err);
+      alert("Terjadi kesalahan saat mengirim komplain.");
+    }
+  };
+
+  const handleSampai = async (item) => {
+    try {
+      const fullId = item.id; // contoh: "TRX-12345"
+      if (!fullId) {
+        alert("ID transaksi tidak ditemukan.");
+        return;
+      }
+      // Ambil angka setelah "TRX-"
+      const idTransaksiNumber = Number(fullId.match(/\d+/)[0]);
+      console.log(idTransaksiNumber);
+
+      if (isNaN(idTransaksiNumber)) {
+        alert("Format ID transaksi tidak valid.");
+        return;
+      }
+
+      // 1. Kirim ke endpoint inject-order (jika perlu)
+      if (item.orderNo && item.resi) {
+        const injectRes = await fetch(
+          `${apiUrl}/komship/callback/inject-order`,
+          {
+            method: "POST",
+            credentials: "include",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              order_no: item.orderNo,
+              cnote: item.resi,
+              status: "received",
+            }),
+          }
+        );
+
+        if (!injectRes.ok) throw new Error("Inject order gagal.");
+      }
+
+      // 2. Kirim hanya idPengiriman, karena idKurir akan diambil dari token di server
+      const res1 = await fetch(`${apiUrl}/pengiriman/received`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          idTransaksi: idTransaksiNumber,
+          statusTujuan: "diterima_pembeli",
+        }),
+      });
+
+      if (!res1.ok) throw new Error("Gagal update status pengiriman.");
+
+      // 3. Refresh data
+      await fetchPesanan();
+      alert("Pesanan berhasil diambil.");
+    } catch (err) {
+      console.error("Gagal ambil pesanan:", err);
+      alert("Terjadi kesalahan saat ambil pesanan.");
+    }
+  };
+
+  const fetchPesanan = async () => {
+    try {
+      const res = await fetch(`${apiUrl}/transaksi/user`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      const data = await res.json();
+      console.log("Data dari backend:", data);
+
+      if (!data || !Array.isArray(data.transaksi)) {
+        console.error("Data transaksi tidak valid:", data);
+        return;
+      }
+
+      const formatted = data.transaksi.map((trx) => ({
+        id: `#TRX-${trx.idTransaksi}`,
+        jumlah: trx.produk.length,
+        total: parseInt(trx.totalHarga),
+        status: trx.statusPengiriman?.replace(/_/g, " ") || "menunggu penjual",
+        barangSesuai: true,
+        produk: trx.produk,
+        idPengiriman: trx.idPengiriman,
+        orderNo: trx.orderNo,
+        resi: trx.resi,
+      }));
+
+      setDaftarPesanan(formatted);
+      fetchExistingReviews(formatted);
+    } catch (err) {
+      console.error("Gagal memuat data transaksi:", err);
+    }
+  };
+
+  useEffect(() => {
     fetchPesanan();
   }, []);
 
@@ -97,26 +200,18 @@ const PesananCard = () => {
     }
   };
 
-  const ubahStatusPesanan = (id, statusBaru) => {
-    const update = daftarPesanan.map((p) =>
-      p.id === id && p.status === "sampai di tujuan"
-        ? { ...p, status: statusBaru }
-        : p
-    );
-    setDaftarPesanan(update);
-  };
+  const handleOpenReview = (order, item) => {
+    setModalReviewData({ order, item });
+    console.log("Data produk untuk review:", item);
+    console.log("idUser:", item.idUser);
+    console.log("idProduk:", item.idProduk);
+    console.log("idDetailTransaksi:", item.idDetailTransaksi);
 
-  const handleOpenReview = (produk) => {
-    console.log("Data produk untuk review:", produk);
-    console.log("idUser:", produk.idUser);
-    console.log("idProduk:", produk.idProduk);
-    console.log("idDetailTransaksi:", produk.idDetailTransaksi);
-
-    if (!produk.idUser || !produk.idProduk || !produk.idDetailTransaksi) {
+    if (!item.idUser || !item.idProduk || !item.idDetailTransaksi) {
       console.error("Data tidak lengkap:", {
-        idUser: produk.idUser,
-        idProduk: produk.idProduk,
-        idDetailTransaksi: produk.idDetailTransaksi,
+        idUser: item.idUser,
+        idProduk: item.idProduk,
+        idDetailTransaksi: item.idDetailTransaksi,
       });
       showToast(
         "Data tidak lengkap. idUser, idProduk, idDetailTransaksi wajib diisi.",
@@ -126,10 +221,10 @@ const PesananCard = () => {
     }
 
     setReviewProduk({
-      idUser: produk.idUser,
-      idProduk: produk.idProduk,
-      idDetailTransaksi: produk.idDetailTransaksi,
-      namaProduk: produk.namaProduk,
+      idUser: item.idUser,
+      idProduk: item.idProduk,
+      idDetailTransaksi: item.idDetailTransaksi,
+      namaProduk: item.namaProduk,
     });
   };
 
@@ -166,7 +261,7 @@ const PesananCard = () => {
             </tr>
           </thead>
           <tbody>
-            {daftarPesanan.map((order, index) => (
+            {daftarPesanan.map((order) => (
               <tr key={order.id} className="border-b border-gray-200">
                 <td className="px-6 py-4">{order.id}</td>
                 <td className="px-6 py-4">
@@ -219,14 +314,13 @@ const PesananCard = () => {
                 <td className="px-6 py-4 text-center space-y-2">
                   {order.status === "sampai di tujuan" && (
                     <button
-                      onClick={() =>
-                        ubahStatusPesanan(order.id, "diterima pembeli")
-                      }
+                      onClick={() => handleSampai(order)}
                       className="w-full px-4 py-2 bg-[#EDCF5D] hover:brightness-110 active:translate-y-[2px] active:shadow-sm shadow-[0_4px_0_#d4b84a] rounded text-white font-medium"
                     >
                       Diterima
                     </button>
                   )}
+
                   {order.status === "diterima pembeli" &&
                     order.produk.map((item, i) => {
                       const alreadyReviewed = isProductReviewed(
@@ -236,7 +330,7 @@ const PesananCard = () => {
                       return (
                         <button
                           key={i}
-                          onClick={() => handleOpenReview(item)}
+                          onClick={() => handleOpenReview(order, item)}
                           disabled={!order.barangSesuai || alreadyReviewed}
                           className={`w-full inline-flex items-center justify-center gap-2 py-2 rounded font-medium transition duration-200 mt-1 ${
                             alreadyReviewed
@@ -252,29 +346,35 @@ const PesananCard = () => {
                         </button>
                       );
                     })}
+
+                  {/* Tambahkan tombol komplain per order di sini */}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      {reviewProduk && (
-        <ReviewModal
-          isOpen={true}
-          onClose={handleCloseReview}
-          onSuccess={handleReviewSuccess}
-          idUser={reviewProduk.idUser}
-          idProduk={reviewProduk.idProduk}
-          idDetailTransaksi={reviewProduk.idDetailTransaksi}
-          namaProduk={reviewProduk.namaProduk}
+        {reviewProduk && (
+          <ReviewModal
+            isOpen={true}
+            onClose={() => {
+              setModalReviewData(null);
+              setReviewProduk(null);
+            }}
+            onSuccess={handleReviewSuccess}
+            onConfirmKomplain={() => handleKomplain(modalReviewData.order)}
+            idUser={reviewProduk.idUser}
+            idProduk={reviewProduk.idProduk}
+            idDetailTransaksi={reviewProduk.idDetailTransaksi}
+            namaProduk={reviewProduk.namaProduk}
+          />
+        )}
+        <ToastNotification
+          show={toast.show}
+          message={toast.message}
+          type={toast.type}
+          onClose={() => setToast({ ...toast, show: false })}
         />
-      )}
-      <ToastNotification
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
+      </div>
     </div>
   );
 };

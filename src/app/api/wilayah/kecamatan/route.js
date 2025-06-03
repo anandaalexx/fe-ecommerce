@@ -1,6 +1,6 @@
 export async function GET(req) {
   const url = new URL(req.url); // Membaca URL untuk mengambil query parameter
-  const kodeKabupaten = url.searchParams.get('kode_kabupaten'); // Mengambil kode_kabupaten dari query parameter
+  const kodeKabupaten = url.searchParams.get("kode_kabupaten"); // Mengambil kode_kabupaten dari query parameter
 
   if (!kodeKabupaten) {
     return new Response(
@@ -15,10 +15,12 @@ export async function GET(req) {
   }
 
   try {
-    const response = await fetch(`http://127.0.0.1:8000/kecamatan?kode_kabupaten=${kodeKabupaten}`);
+    const response = await fetch(
+      `https://wilayahtokoloko.vercel.app/kecamatan?kode_kabupaten=${kodeKabupaten}`
+    );
     const data = await response.json();
 
-    return new Response(JSON.stringify(data), { 
+    return new Response(JSON.stringify(data), {
       status: 200,
       headers: {
         "Content-Type": "application/json",

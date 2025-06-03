@@ -56,16 +56,14 @@ const ModalEditPengguna = ({ isOpen, onClose, initialData, onSubmit }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "saldo" && Number(value) < 0) {
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
-      [name]:
-        name === "roleId"
-          ? Number(value)
-          : name === "saldo"
-          ? value === ""
-            ? ""
-            : value // Biarkan empty string
-          : value,
+      [name]: name === "saldo" || name === "roleId" ? Number(value) : value,
     }));
   };
 

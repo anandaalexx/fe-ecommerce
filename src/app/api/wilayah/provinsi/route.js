@@ -1,6 +1,6 @@
 export async function GET() {
   try {
-    const response = await fetch("http://127.0.0.1:8000/provinsi");
+    const response = await fetch("https://wilayahtokoloko.vercel.app/provinsi");
     const data = await response.json();
 
     return Response.json(data); // ✔ ini penting!

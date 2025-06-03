@@ -13,7 +13,7 @@ const typeConfig = {
     icon: <XCircle className="w-5 h-5 text-white" />,
   },
   warning: {
-    color: "bg-yellow-500",
+    color: "bg-[#EDCF5D]",
     icon: <AlertCircle className="w-5 h-5 text-white" />,
   },
   info: {
